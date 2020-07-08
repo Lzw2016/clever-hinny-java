@@ -19,5 +19,9 @@
             <artifactId>clever-data-common</artifactId>
         </dependency>
         <!--other-->
+        <dependency>
+            <groupId>org.springframework.amqp</groupId>
+            <artifactId>spring-rabbit</artifactId>
+        </dependency>
     </dependencies>
 </project>
