@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--统一版本修改 versions:set -DnewVersion=0.0.1-SNAPSHOT-->
+    <artifactId>clever-data</artifactId>
+    <version>${revision}</version>
+    <packaging>pom</packaging>
+
+    <description>clever框架数据库操作模块</description>
+    <url>https://github.com/Lzw2016/clever-data.git</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://github.com/Lzw2016/clever-data/raw/master/LICENSE</url>
+        </license>
+    </licenses>
+
+    <parent>
+        <groupId>org.clever</groupId>
+        <artifactId>clever-parent</artifactId>
+        <version>2.1.15.0.RELEASE</version>
+        <relativePath/>
+    </parent>
+
+    <repositories>
+        <repository>
+            <id>nexus-central</id>
+            <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+        </repository>
+        <repository>
+            <id>nexus-central-2</id>
+            <url>http://central.maven.org/maven2/</url>
+        </repository>
+        <repository>
+            <id>nexus-spring</id>
+            <url>https://repo.spring.io/libs-release/</url>
+        </repository>
+        <repository>
+            <id>nexus-snapshots</id>
+            <url>http://nexus.msvc.top:8081/repository/maven-snapshots/</url>
+        </repository>
+        <repository>
+            <id>nexus-releases</id>
+            <url>http://nexus.msvc.top:8081/repository/maven-releases/</url>
+        </repository>
+    </repositories>
+
+    <modules>
+        <module>clever-data-common</module>
+        <module>clever-data-elasticsearch</module>
+        <module>clever-data-jdbc</module>
+        <module>clever-data-kafka</module>
+        <module>clever-data-rabbitmq</module>
+        <module>clever-data-redis</module>
+    </modules>
+
+    <properties>
+        <revision>1.0.0-SNAPSHOT</revision>
+        <common.version>2.0.0-SNAPSHOT</common.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!--当前项目模块-->
+            <dependency>
+                <groupId>org.clever</groupId>
+                <artifactId>clever-data-common</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.clever</groupId>
+                <artifactId>clever-data-elasticsearch</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.clever</groupId>
+                <artifactId>clever-data-jdbc</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.clever</groupId>
+                <artifactId>clever-data-kafka</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.clever</groupId>
+                <artifactId>clever-data-rabbitmq</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.clever</groupId>
+                <artifactId>clever-data-redis</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!--clever common-->
+            <dependency>
+                <groupId>org.clever</groupId>
+                <artifactId>clever-common-utils</artifactId>
+                <version>${common.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.clever</groupId>
+                <artifactId>clever-common-model</artifactId>
+                <version>${common.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.clever</groupId>
+                <artifactId>clever-common-server</artifactId>
+                <version>${common.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.clever</groupId>
+                <artifactId>clever-common-client</artifactId>
+                <version>${common.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>
