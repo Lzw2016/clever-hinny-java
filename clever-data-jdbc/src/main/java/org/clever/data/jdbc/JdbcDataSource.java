@@ -3,16 +3,13 @@ package org.clever.data.jdbc;
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
-import com.baomidou.mybatisplus.core.parser.SqlInfo;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.toolkit.JdbcUtils;
-import com.baomidou.mybatisplus.extension.toolkit.SqlParserUtils;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.clever.common.model.request.QueryByPage;
 import org.clever.common.model.request.QueryBySort;
 import org.clever.common.utils.tuples.TupleTow;
 import org.clever.data.jdbc.support.*;
@@ -41,9 +38,6 @@ import java.util.function.Consumer;
  */
 @Slf4j
 public class JdbcDataSource {
-    private static final String ASC = "ASC";
-    private static final String DESC = "DESC";
-    private static final String COMMA = ",";
     /**
      * 分页时最大的页大小
      */
@@ -54,14 +48,9 @@ public class JdbcDataSource {
     private static final int Fetch_Size = 500;
 
     /**
-     * Count Sql 缓存(最大3K条数据)
-     */
-    private static final Cache<String, String> Count_Sql_Cache = CacheBuilder.newBuilder().maximumSize(4096).initialCapacity(256).build();
-    /**
      * 数据源
      */
     private final DataSource dataSource;
-
     // TODO 事务控制 TransactionTemplate DataSourceTransactionManager
     private final NamedParameterJdbcTemplate jdbcTemplate;
     /**
@@ -155,6 +144,7 @@ public class JdbcDataSource {
      * @param paramMap 参数(可选)，参数格式[:param]
      */
     public Map<String, Object> queryMap(String sql, Map<String, Object> paramMap) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.queryForObject(sql, paramMap, new ColumnMapRowMapper());
     }
 
@@ -164,6 +154,7 @@ public class JdbcDataSource {
      * @param sql sql脚本，参数格式[:param]
      */
     public Map<String, Object> queryMap(String sql) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), new ColumnMapRowMapper());
     }
 
@@ -174,6 +165,7 @@ public class JdbcDataSource {
      * @param paramMap 参数(可选)，参数格式[:param]
      */
     public List<Map<String, Object>> queryList(String sql, Map<String, Object> paramMap) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.queryForList(sql, paramMap);
     }
 
@@ -183,6 +175,7 @@ public class JdbcDataSource {
      * @param sql sql脚本，参数格式[:param]
      */
     public List<Map<String, Object>> queryList(String sql) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.queryForList(sql, Collections.emptyMap());
     }
 
@@ -192,6 +185,7 @@ public class JdbcDataSource {
      * @param sql sql脚本，参数格式[:param]
      */
     public String queryString(String sql) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), String.class);
     }
 
@@ -202,6 +196,7 @@ public class JdbcDataSource {
      * @param paramMap 参数(可选)，参数格式[:param]
      */
     public String queryString(String sql, Map<String, Object> paramMap) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.queryForObject(sql, paramMap, String.class);
     }
 
@@ -211,6 +206,7 @@ public class JdbcDataSource {
      * @param sql sql脚本，参数格式[:param]
      */
     public Long queryLong(String sql) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), Long.class);
     }
 
@@ -221,6 +217,7 @@ public class JdbcDataSource {
      * @param paramMap 参数(可选)，参数格式[:param]
      */
     public Long queryLong(String sql, Map<String, Object> paramMap) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.queryForObject(sql, paramMap, Long.class);
     }
 
@@ -230,6 +227,7 @@ public class JdbcDataSource {
      * @param sql sql脚本，参数格式[:param]
      */
     public Double queryDouble(String sql) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), Double.class);
     }
 
@@ -240,6 +238,7 @@ public class JdbcDataSource {
      * @param paramMap 参数(可选)，参数格式[:param]
      */
     public Double queryDouble(String sql, Map<String, Object> paramMap) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.queryForObject(sql, paramMap, Double.class);
     }
 
@@ -249,6 +248,7 @@ public class JdbcDataSource {
      * @param sql sql脚本，参数格式[:param]
      */
     public BigDecimal queryBigDecimal(String sql) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), BigDecimal.class);
     }
 
@@ -259,6 +259,7 @@ public class JdbcDataSource {
      * @param paramMap 参数(可选)，参数格式[:param]
      */
     public BigDecimal queryBigDecimal(String sql, Map<String, Object> paramMap) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.queryForObject(sql, paramMap, BigDecimal.class);
     }
 
@@ -268,6 +269,7 @@ public class JdbcDataSource {
      * @param sql sql脚本，参数格式[:param]
      */
     public Boolean queryBoolean(String sql) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), Boolean.class);
     }
 
@@ -278,6 +280,7 @@ public class JdbcDataSource {
      * @param paramMap 参数(可选)，参数格式[:param]
      */
     public Boolean queryBoolean(String sql, Map<String, Object> paramMap) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.queryForObject(sql, paramMap, Boolean.class);
     }
 
@@ -287,6 +290,7 @@ public class JdbcDataSource {
      * @param sql sql脚本，参数格式[:param]
      */
     public Date queryDate(String sql) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), Date.class);
     }
 
@@ -297,6 +301,7 @@ public class JdbcDataSource {
      * @param paramMap 参数(可选)，参数格式[:param]
      */
     public Date queryDate(String sql, Map<String, Object> paramMap) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.queryForObject(sql, paramMap, Date.class);
     }
 
@@ -309,6 +314,8 @@ public class JdbcDataSource {
      * @param consumer  游标批次读取数据消费者
      */
     public void query(String sql, Map<String, Object> paramMap, int batchSize, Consumer<BatchData> consumer) {
+        Assert.hasText(sql, "sql不能为空");
+        Assert.notNull(consumer, "数据消费者不能为空");
         final BatchDataReaderCallback batchDataReaderCallback = new BatchDataReaderCallback(batchSize, consumer);
         ResultSetExtractor<Void> resultSetExtractor = rs -> {
             while (rs.next()) {
@@ -343,6 +350,8 @@ public class JdbcDataSource {
      * @param consumer 游标读取数据消费者
      */
     public void query(String sql, Map<String, Object> paramMap, Consumer<RowData> consumer) {
+        Assert.hasText(sql, "sql不能为空");
+        Assert.notNull(consumer, "数据消费者不能为空");
         final RowDataReaderCallback rowDataReaderCallback = new RowDataReaderCallback(consumer);
         if (paramMap == null) {
             jdbcTemplate.query(sql, rowDataReaderCallback);
@@ -368,6 +377,7 @@ public class JdbcDataSource {
      * @param paramMap 参数(可选)，参数格式[:param]
      */
     public int update(String sql, Map<String, Object> paramMap) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.update(sql, paramMap);
     }
 
@@ -377,6 +387,7 @@ public class JdbcDataSource {
      * @param sql sql脚本，参数格式[:param]
      */
     public int update(String sql) {
+        Assert.hasText(sql, "sql不能为空");
         return jdbcTemplate.update(sql, Collections.emptyMap());
     }
 
@@ -389,7 +400,10 @@ public class JdbcDataSource {
      * @param camelToUnderscore 字段驼峰转下划线(可选)
      */
     public int updateTable(String tableName, Map<String, Object> fields, Map<String, Object> whereMap, boolean camelToUnderscore) {
-        TupleTow<String, Map<String, Object>> tupleTow = updateSql(tableName, fields, whereMap, camelToUnderscore);
+        Assert.hasText(tableName, "更新表名称不能为空");
+        Assert.notEmpty(fields, "更新字段不能为空");
+        Assert.notEmpty(whereMap, "更新条件不能为空");
+        TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.updateSql(tableName, fields, whereMap, camelToUnderscore);
         return update(tupleTow.getValue1(), tupleTow.getValue2());
     }
 
@@ -405,12 +419,41 @@ public class JdbcDataSource {
     }
 
     /**
+     * 更新数据库表数据
+     *
+     * @param tableName         表名称
+     * @param fields            更新字段值
+     * @param where             自定义where条件(不用写where关键字)
+     * @param camelToUnderscore 字段驼峰转下划线(可选)
+     */
+    public int updateTable(String tableName, Map<String, Object> fields, String where, boolean camelToUnderscore) {
+        Assert.hasText(tableName, "更新表名称不能为空");
+        Assert.notEmpty(fields, "更新字段不能为空");
+        Assert.hasText(where, "更新条件不能为空");
+        TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.updateSql(tableName, fields, null, camelToUnderscore);
+        String sql = String.format("%s where %s", tupleTow.getValue1(), where);
+        return update(sql, tupleTow.getValue2());
+    }
+
+    /**
+     * 更新数据库表数据
+     *
+     * @param tableName 表名称
+     * @param fields    更新字段值
+     * @param where     自定义where条件(不用写where关键字)
+     */
+    public int updateTable(String tableName, Map<String, Object> fields, String where) {
+        return updateTable(tableName, fields, where, false);
+    }
+
+    /**
      * 执行insert SQL，返回数据库自增主键值和新增数据量
      *
      * @param sql      sql脚本，参数格式[:param]
      * @param paramMap 参数(可选)，参数格式[:param]
      */
     public InsertResult insert(String sql, Map<String, Object> paramMap) {
+        Assert.hasText(sql, "sql不能为空");
         SqlParameterSource sqlParameterSource;
         if (paramMap != null && paramMap.size() > 0) {
             sqlParameterSource = new MapSqlParameterSource(paramMap);
@@ -441,7 +484,9 @@ public class JdbcDataSource {
      * @param camelToUnderscore 字段驼峰转下划线(可选)
      */
     public InsertResult insertTable(String tableName, Map<String, Object> fields, boolean camelToUnderscore) {
-        TupleTow<String, Map<String, Object>> tupleTow = insertSql(tableName, fields, camelToUnderscore);
+        Assert.hasText(tableName, "插入表名称不能为空");
+        Assert.notEmpty(fields, "插入字段不能为空");
+        TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.insertSql(tableName, fields, camelToUnderscore);
         return insert(tupleTow.getValue1(), tupleTow.getValue2());
     }
 
@@ -452,21 +497,22 @@ public class JdbcDataSource {
      * @param fields    字段名
      */
     public InsertResult insertTable(String tableName, Map<String, Object> fields) {
-        TupleTow<String, Map<String, Object>> tupleTow = insertSql(tableName, fields, false);
-        return insert(tupleTow.getValue1(), tupleTow.getValue2());
+        return insertTable(tableName, fields, false);
     }
 
     /**
      * 数据插入到表
      *
      * @param tableName         表名称
-     * @param fieldsArray       字段名集合
+     * @param fieldsList        字段名集合
      * @param camelToUnderscore 字段驼峰转下划线(可选)
      */
-    public List<InsertResult> insertTables(String tableName, Collection<Map<String, Object>> fieldsArray, boolean camelToUnderscore) {
-        List<InsertResult> resultList = new ArrayList<>(fieldsArray.size());
-        fieldsArray.forEach(fields -> {
-            TupleTow<String, Map<String, Object>> tupleTow = insertSql(tableName, fields, camelToUnderscore);
+    public List<InsertResult> insertTables(String tableName, Collection<Map<String, Object>> fieldsList, boolean camelToUnderscore) {
+        Assert.hasText(tableName, "插入表名称不能为空");
+        Assert.notEmpty(fieldsList, "插入字段不能为空");
+        List<InsertResult> resultList = new ArrayList<>(fieldsList.size());
+        fieldsList.forEach(fields -> {
+            TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.insertSql(tableName, fields, camelToUnderscore);
             InsertResult insertResult = insert(tupleTow.getValue1(), tupleTow.getValue2());
             resultList.add(insertResult);
         });
@@ -476,88 +522,75 @@ public class JdbcDataSource {
     /**
      * 数据插入到表
      *
-     * @param tableName   表名称
-     * @param fieldsArray 字段名集合
+     * @param tableName  表名称
+     * @param fieldsList 字段名集合
      */
-    public List<InsertResult> insertTables(String tableName, Collection<Map<String, Object>> fieldsArray) {
-        return insertTables(tableName, fieldsArray, false);
+    public List<InsertResult> insertTables(String tableName, Collection<Map<String, Object>> fieldsList) {
+        return insertTables(tableName, fieldsList, false);
     }
 
     /**
      * 批量执行更新SQL，返回更新影响数据量
      *
-     * @param sql           sql脚本，参数格式[:param]
-     * @param arrayParamMap 参数数组，参数格式[:param]
+     * @param sql          sql脚本，参数格式[:param]
+     * @param paramMapList 参数数组，参数格式[:param]
      */
-    public int[] batchUpdate(String sql, Map<String, Object>[] arrayParamMap) {
-        List<SqlParameterSource> paramMapList = new ArrayList<>(arrayParamMap.length);
-        for (Map<String, Object> map : arrayParamMap) {
-            paramMapList.add(new MapSqlParameterSource(map));
+    public int[] batchUpdate(String sql, Collection<Map<String, Object>> paramMapList) {
+        Assert.hasText(sql, "sql不能为空");
+        Assert.notNull(paramMapList, "参数数组不能为空");
+        SqlParameterSource[] paramMapArray = new SqlParameterSource[paramMapList.size()];
+        int index = 0;
+        for (Map<String, Object> map : paramMapList) {
+            paramMapArray[index] = new MapSqlParameterSource(map);
+            index++;
         }
-        return jdbcTemplate.batchUpdate(sql, paramMapList.toArray(new SqlParameterSource[0]));
-    }
-
-    /**
-     * 批量执行更新SQL，返回更新影响数据量
-     *
-     * @param sql           sql脚本，参数格式[:param]
-     * @param arrayParamMap 参数数组，参数格式[:param]
-     */
-    public int[] batchUpdate(String sql, Collection<Map<String, Object>> arrayParamMap) {
-        List<SqlParameterSource> paramMapList = new ArrayList<>(arrayParamMap.size());
-        for (Map<String, Object> map : arrayParamMap) {
-            paramMapList.add(new MapSqlParameterSource(map));
-        }
-        return jdbcTemplate.batchUpdate(sql, paramMapList.toArray(new SqlParameterSource[0]));
+        return jdbcTemplate.batchUpdate(sql, paramMapArray);
     }
 
     /**
      * 排序查询
      *
-     * @param sql
-     * @param paramMap
-     * @param countQuery
+     * @param sql      sql脚本，参数格式[:param]
+     * @param sort     排序配置
+     * @param paramMap 参数，参数格式[:param]
      */
-    public List<Map<String, Object>> queryBySort(String sql, Map<String, Object> paramMap, boolean countQuery) {
+    public List<Map<String, Object>> queryBySort(String sql, QueryBySort sort, Map<String, Object> paramMap) {
+        Assert.hasText(sql, "sql不能为空");
+        // 构造排序以及分页sql
+        String sortSql = SqlUtils.concatOrderBy(sql, sort);
+        log.info("sortSql --> \n {}", sortSql);
+        return jdbcTemplate.queryForList(sortSql, paramMap);
+    }
 
+    /**
+     * 排序查询
+     *
+     * @param sql  sql脚本，参数格式[:param]
+     * @param sort 排序配置
+     */
+    public List<Map<String, Object>> queryBySort(String sql, QueryBySort sort) {
+        Assert.hasText(sql, "sql不能为空");
+        // 构造排序以及分页sql
+        String sortSql = SqlUtils.concatOrderBy(sql, sort);
+        log.info("sortSql --> \n {}", sortSql);
+        return jdbcTemplate.queryForList(sortSql, Collections.emptyMap());
     }
 
     /**
      * 分页查询(支持排序)，返回分页对象
      *
      * @param sql        sql脚本，参数格式[:param]
-     * @param paramMap   参数，参数格式[:param] | { orderFields: [], sorts: [], fieldsMapping: { orderField: "sqlField"}, pageSize: 10, pageNo: 1}
+     * @param pagination 分页配置(支持排序)
+     * @param paramMap   参数，参数格式[:param]
      * @param countQuery 是否要执行count查询(可选)
      */
-    public IPage<Map<String, Object>> queryByPage(String sql, Map<String, Object> paramMap, boolean countQuery) {
-        // 读取排序 和 分页数据
-        final List<String> orderFields = toStringArray(paramMap.get("orderFields"), "orderFields 必须是字符串数组");
-        final List<String> sorts = toStringArray(paramMap.get("sorts"), "sorts 必须是字符串数组");
-        final int pageSize = toInt(paramMap.get("pageSize"), 10, "pageSize 必须是Number型");
-        final int pageNo = toInt(paramMap.get("pageNo"), 1, "pageNo 必须是Number型");
-        QueryBySort queryBySort = new QueryBySort();
-        queryBySort.setOrderFields(orderFields);
-        queryBySort.setSorts(sorts);
-        // 读取排序字段映射
-        Object fieldsMappingObject = paramMap.get("fieldsMapping");
-        if (fieldsMappingObject instanceof Map) {
-            Map<?, ?> map = (Map) fieldsMappingObject;
-            map.forEach((orderField, sqlField) -> {
-                if (!(orderField instanceof String) || !(sqlField instanceof String)) {
-                    throw new RuntimeException("fieldsMapping 必须是字符串类型Map");
-                }
-                queryBySort.addOrderFieldMapping((String) orderField, (String) sqlField);
-            });
-        }
-        Page<Map<String, Object>> page = new Page<>(pageNo, Math.min(pageSize, Max_Page_Size));
+    public IPage<Map<String, Object>> queryByPage(String sql, QueryByPage pagination, Map<String, Object> paramMap, boolean countQuery) {
+        Assert.hasText(sql, "sql不能为空");
+        Assert.notNull(pagination, "分页配置不能为空");
+        Page<Map<String, Object>> page = new Page<>(pagination.getPageNo(), Math.min(pagination.getPageSize(), Max_Page_Size));
         // 执行 count 查询
         if (countQuery) {
-            String countSql = Count_Sql_Cache.getIfPresent(StringUtils.trim(sql));
-            if (StringUtils.isBlank(countSql)) {
-                SqlInfo sqlInfo = SqlParserUtils.getOptimizeCountSql(true, null, sql);
-                countSql = sqlInfo.getSql();
-                Count_Sql_Cache.put(sql, countSql);
-            }
+            String countSql = SqlUtils.getCountSql(sql);
             log.info("countSql --> \n {}", countSql);
             Long total = jdbcTemplate.queryForObject(countSql, paramMap, Long.class);
             if (total == null) {
@@ -574,7 +607,7 @@ public class JdbcDataSource {
             page.setTotal(-1);
         }
         // 构造排序以及分页sql
-        String sortSql = concatOrderBy(sql, queryBySort);
+        String sortSql = SqlUtils.concatOrderBy(sql, pagination);
         String pageSql = DialectFactory.buildPaginationSql(page, sortSql, paramMap, dbType, null);
         // 执行 pageSql
         log.info("pageSql --> \n {}", pageSql);
@@ -582,14 +615,14 @@ public class JdbcDataSource {
         // 设置返回数据
         page.setRecords(listData);
         // 排序信息
-        List<String> orderFieldsTmp = queryBySort.getOrderFieldsSql();
-        List<String> sortsTmp = queryBySort.getSortsSql();
+        List<String> orderFieldsTmp = pagination.getOrderFieldsSql();
+        List<String> sortsTmp = pagination.getSortsSql();
         for (int i = 0; i < orderFieldsTmp.size(); i++) {
             String fieldSql = orderFieldsTmp.get(i);
             String sort = sortsTmp.get(i);
             OrderItem orderItem = new OrderItem();
             orderItem.setColumn(fieldSql);
-            orderItem.setAsc(ASC.equalsIgnoreCase(StringUtils.trim(sort)));
+            orderItem.setAsc(SqlUtils.ASC.equalsIgnoreCase(StringUtils.trim(sort)));
             page.addOrder(orderItem);
         }
         return page;
@@ -598,178 +631,23 @@ public class JdbcDataSource {
     /**
      * 分页查询(支持排序)，返回分页对象
      *
-     * @param sql      sql脚本，参数格式[:param]
-     * @param paramMap 参数，参数格式[:param] | { orderFields: [], sorts: [], fieldsMapping: { orderField: "sqlField"}, pageSize: 10, pageNo: 1}
+     * @param sql        sql脚本，参数格式[:param]
+     * @param pagination 分页配置(支持排序)
+     * @param countQuery 是否要执行count查询(可选)
      */
-    public IPage<Map<String, Object>> queryByPage(String sql, Map<String, Object> paramMap) {
-        return queryByPage(sql, paramMap, true);
-    }
-
-    // TODO 动态sql支持(mybatis标准)
-
-    /**
-     * 查询SQL拼接Order By
-     *
-     * @param originalSql 需要拼接的SQL
-     * @param queryBySort 排序对象
-     * @return ignore
-     */
-    private static String concatOrderBy(String originalSql, QueryBySort queryBySort) {
-        if (null != queryBySort && queryBySort.getOrderFields() != null && queryBySort.getOrderFields().size() > 0) {
-            List<String> orderFields = queryBySort.getOrderFieldsSql();
-            List<String> sorts = queryBySort.getSortsSql();
-            StringBuilder buildSql = new StringBuilder(originalSql);
-            StringBuilder orderBySql = new StringBuilder();
-            for (int index = 0; index < orderFields.size(); index++) {
-                String orderField = orderFields.get(index);
-                if (orderField != null) {
-                    orderField = orderField.trim();
-                }
-                if (orderField == null || orderField.length() <= 0) {
-                    continue;
-                }
-                String sort = ASC;
-                if (sorts.size() > index) {
-                    sort = sorts.get(index);
-                    if (sort != null) {
-                        sort = sort.trim();
-                    }
-                    if (!DESC.equalsIgnoreCase(sort) && !ASC.equalsIgnoreCase(sort)) {
-                        sort = ASC;
-                    }
-                }
-                String orderByStr = concatOrderBuilder(orderField, sort.toUpperCase());
-                if (StringUtils.isNotBlank(orderByStr)) {
-                    if (orderBySql.length() > 0) {
-                        orderBySql.append(COMMA).append(' ');
-                    }
-                    orderBySql.append(orderByStr.trim());
-                }
-            }
-            if (orderBySql.length() > 0) {
-                buildSql.append(" ORDER BY ").append(orderBySql.toString());
-            }
-            return buildSql.toString();
-        }
-        return originalSql;
+    public IPage<Map<String, Object>> queryByPage(String sql, QueryByPage pagination, boolean countQuery) {
+        return queryByPage(sql, pagination, Collections.emptyMap(), countQuery);
     }
 
     /**
-     * 拼接多个排序方法
+     * 分页查询(支持排序)，返回分页对象
      *
-     * @param column    ignore
-     * @param orderWord ignore
+     * @param sql        sql脚本，参数格式[:param]
+     * @param pagination 分页配置(支持排序)
      */
-    private static String concatOrderBuilder(String column, String orderWord) {
-        if (StringUtils.isNotBlank(column)) {
-            return column + ' ' + orderWord;
-        }
-        return StringUtils.EMPTY;
+    public IPage<Map<String, Object>> queryByPage(String sql, QueryByPage pagination) {
+        return queryByPage(sql, pagination, Collections.emptyMap(), true);
     }
 
-    /**
-     * 参数转 int
-     *
-     * @param object           参数
-     * @param defaultInt       装换失败的默认值
-     * @param exceptionMessage 异常消息
-     */
-    private static int toInt(Object object, int defaultInt, String exceptionMessage) {
-        int result = defaultInt;
-        if (object != null) {
-            object = ObjectConvertUtils.jsBaseToJava(object);
-            if (!(object instanceof Number)) {
-                throw new RuntimeException(exceptionMessage);
-            }
-            result = ((Number) object).intValue();
-        }
-        return result;
-    }
-
-    private static TupleTow<String, Map<String, Object>> updateSql(String tableName, Map<String, Object> fields, Map<String, Object> whereMap, boolean camelToUnderscore) {
-        if (StringUtils.isBlank(tableName)) {
-            throw new RuntimeException("更新表名称不能为空");
-        }
-        if (fields.isEmpty()) {
-            throw new RuntimeException("更新字段不能为空");
-        }
-        if (whereMap.isEmpty()) {
-            throw new RuntimeException("更新条件不能为空");
-        }
-        Map<String, Object> paramMap = new HashMap<>(fields.size() + whereMap.size());
-        StringBuilder sb = new StringBuilder();
-        sb.append("update ").append(tableName).append(" set");
-        int index = 0;
-        for (Map.Entry<String, ?> field : fields.entrySet()) {
-            String fieldName = field.getKey();
-            Object value = field.getValue();
-            String fieldParam = "set_" + fieldName;
-            if (index == 0) {
-                sb.append(' ');
-            } else {
-                sb.append(", ");
-            }
-            sb.append(getFieldName(fieldName, camelToUnderscore)).append("=:").append(fieldParam);
-            paramMap.put(fieldParam, value);
-            index++;
-        }
-        sb.append(" where");
-        index = 0;
-        for (Map.Entry<String, ?> where : whereMap.entrySet()) {
-            String fieldName = where.getKey();
-            Object value = where.getValue();
-            String fieldParam = "where_" + fieldName;
-            if (index == 0) {
-                sb.append(' ');
-            } else {
-                sb.append(" and ");
-            }
-            sb.append(getFieldName(fieldName, camelToUnderscore)).append("=:").append(fieldParam);
-            paramMap.put(fieldParam, value);
-            index++;
-        }
-        return TupleTow.creat(sb.toString(), paramMap);
-    }
-
-    private static TupleTow<String, Map<String, Object>> insertSql(String tableName, Map<String, Object> fields, boolean camelToUnderscore) {
-        if (StringUtils.isBlank(tableName)) {
-            throw new RuntimeException("插入表名称不能为空");
-        }
-        if (fields.isEmpty()) {
-            throw new RuntimeException("插入字段不能为空");
-        }
-        Map<String, Object> paramMap = new HashMap<>(fields.size());
-        StringBuilder sb = new StringBuilder();
-        sb.append("insert into ").append(tableName).append(" (");
-        int index = 0;
-        for (Map.Entry<String, ?> field : fields.entrySet()) {
-            String fieldName = field.getKey();
-            if (index != 0) {
-                sb.append(", ");
-            }
-            sb.append(getFieldName(fieldName, camelToUnderscore));
-            index++;
-        }
-        sb.append(") values (");
-        index = 0;
-        for (Map.Entry<String, ?> field : fields.entrySet()) {
-            String fieldName = field.getKey();
-            Object value = field.getValue();
-            if (index != 0) {
-                sb.append(", ");
-            }
-            sb.append(":").append(fieldName);
-            paramMap.put(fieldName, value);
-            index++;
-        }
-        sb.append(")");
-        return TupleTow.creat(sb.toString(), paramMap);
-    }
-
-    private static String getFieldName(String fieldName, boolean camelToUnderscore) {
-        if (!camelToUnderscore) {
-            return fieldName;
-        }
-        return StrFormatter.camelToUnderline(fieldName);
-    }
+    // TODO 动态sql支持(mybatis标准?)
 }
