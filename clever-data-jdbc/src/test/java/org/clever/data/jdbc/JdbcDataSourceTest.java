@@ -50,8 +50,12 @@ public class JdbcDataSourceTest {
         String sql = "select * from tb_order_main where site_id=:siteId limit 10";
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("siteId", 1111111112);
+
+        // 简单查询
         List<Map<String, Object>> res = jdbcDataSource.queryList(sql, paramMap);
         log.info("### res -> {}", res);
+
+        // sql count 查询
         long count = jdbcDataSource.queryCount(sql, paramMap);
         log.info("### count -> {}", count);
     }
