@@ -172,6 +172,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public Map<String, Object> queryMap(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.queryForObject(sql, paramMap, new ColumnMapRowMapper());
     }
 
@@ -182,6 +183,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public Map<String, Object> queryMap(String sql) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), new ColumnMapRowMapper());
     }
 
@@ -193,6 +195,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public List<Map<String, Object>> queryList(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.queryForList(sql, paramMap);
     }
 
@@ -203,6 +206,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public List<Map<String, Object>> queryList(String sql) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.queryForList(sql, Collections.emptyMap());
     }
 
@@ -213,6 +217,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public String queryString(String sql) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), String.class);
     }
 
@@ -224,6 +229,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public String queryString(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.queryForObject(sql, paramMap, String.class);
     }
 
@@ -234,6 +240,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public Long queryLong(String sql) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), Long.class);
     }
 
@@ -245,6 +252,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public Long queryLong(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.queryForObject(sql, paramMap, Long.class);
     }
 
@@ -255,6 +263,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public Double queryDouble(String sql) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), Double.class);
     }
 
@@ -266,6 +275,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public Double queryDouble(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.queryForObject(sql, paramMap, Double.class);
     }
 
@@ -276,6 +286,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public BigDecimal queryBigDecimal(String sql) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), BigDecimal.class);
     }
 
@@ -287,6 +298,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public BigDecimal queryBigDecimal(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.queryForObject(sql, paramMap, BigDecimal.class);
     }
 
@@ -297,6 +309,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public Boolean queryBoolean(String sql) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), Boolean.class);
     }
 
@@ -308,6 +321,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public Boolean queryBoolean(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.queryForObject(sql, paramMap, Boolean.class);
     }
 
@@ -318,6 +332,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public Date queryDate(String sql) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), Date.class);
     }
 
@@ -329,6 +344,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public Date queryDate(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.queryForObject(sql, paramMap, Date.class);
     }
 
@@ -341,7 +357,7 @@ public class JdbcDataSource extends AbstractDataSource {
     public long queryCount(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
         String countSql = SqlUtils.getCountSql(sql);
-        log.info("countSql --> \n{}", countSql);
+        countSql = StringUtils.trim(countSql);
         Long total = jdbcTemplate.queryForObject(countSql, paramMap, Long.class);
         if (total == null) {
             total = 0L;
@@ -360,6 +376,7 @@ public class JdbcDataSource extends AbstractDataSource {
     public void query(String sql, Map<String, Object> paramMap, int batchSize, Consumer<BatchData> consumer) {
         Assert.hasText(sql, "sql不能为空");
         Assert.notNull(consumer, "数据消费者不能为空");
+        sql = StringUtils.trim(sql);
         final BatchDataReaderCallback batchDataReaderCallback = new BatchDataReaderCallback(batchSize, consumer);
         ResultSetExtractor<Void> resultSetExtractor = rs -> {
             while (rs.next()) {
@@ -396,6 +413,7 @@ public class JdbcDataSource extends AbstractDataSource {
     public void query(String sql, Map<String, Object> paramMap, Consumer<RowData> consumer) {
         Assert.hasText(sql, "sql不能为空");
         Assert.notNull(consumer, "数据消费者不能为空");
+        sql = StringUtils.trim(sql);
         final RowDataReaderCallback rowDataReaderCallback = new RowDataReaderCallback(consumer);
         if (paramMap == null) {
             jdbcTemplate.query(sql, rowDataReaderCallback);
@@ -422,6 +440,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public int update(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.update(sql, paramMap);
     }
 
@@ -432,6 +451,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public int update(String sql) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         return jdbcTemplate.update(sql, Collections.emptyMap());
     }
 
@@ -447,6 +467,7 @@ public class JdbcDataSource extends AbstractDataSource {
         Assert.hasText(tableName, "更新表名称不能为空");
         Assert.notEmpty(fields, "更新字段不能为空");
         Assert.notEmpty(whereMap, "更新条件不能为空");
+        tableName = StringUtils.trim(tableName);
         TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.updateSql(tableName, fields, whereMap, camelToUnderscore);
         return update(tupleTow.getValue1(), tupleTow.getValue2());
     }
@@ -474,6 +495,7 @@ public class JdbcDataSource extends AbstractDataSource {
         Assert.hasText(tableName, "更新表名称不能为空");
         Assert.notEmpty(fields, "更新字段不能为空");
         Assert.hasText(where, "更新条件不能为空");
+        tableName = StringUtils.trim(tableName);
         TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.updateSql(tableName, fields, null, camelToUnderscore);
         String sql = String.format("%s where %s", tupleTow.getValue1(), where);
         return update(sql, tupleTow.getValue2());
@@ -498,6 +520,7 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public InsertResult insert(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         SqlParameterSource sqlParameterSource;
         if (paramMap != null && paramMap.size() > 0) {
             sqlParameterSource = new MapSqlParameterSource(paramMap);
@@ -530,6 +553,7 @@ public class JdbcDataSource extends AbstractDataSource {
     public InsertResult insertTable(String tableName, Map<String, Object> fields, boolean camelToUnderscore) {
         Assert.hasText(tableName, "插入表名称不能为空");
         Assert.notEmpty(fields, "插入字段不能为空");
+        tableName = StringUtils.trim(tableName);
         TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.insertSql(tableName, fields, camelToUnderscore);
         return insert(tupleTow.getValue1(), tupleTow.getValue2());
     }
@@ -554,12 +578,13 @@ public class JdbcDataSource extends AbstractDataSource {
     public List<InsertResult> insertTables(String tableName, Collection<Map<String, Object>> fieldsList, boolean camelToUnderscore) {
         Assert.hasText(tableName, "插入表名称不能为空");
         Assert.notEmpty(fieldsList, "插入字段不能为空");
+        tableName = StringUtils.trim(tableName);
         List<InsertResult> resultList = new ArrayList<>(fieldsList.size());
-        fieldsList.forEach(fields -> {
+        for (Map<String, Object> fields : fieldsList) {
             TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.insertSql(tableName, fields, camelToUnderscore);
             InsertResult insertResult = insert(tupleTow.getValue1(), tupleTow.getValue2());
             resultList.add(insertResult);
-        });
+        }
         return resultList;
     }
 
@@ -582,6 +607,7 @@ public class JdbcDataSource extends AbstractDataSource {
     public int[] batchUpdate(String sql, Collection<Map<String, Object>> paramMapList) {
         Assert.hasText(sql, "sql不能为空");
         Assert.notNull(paramMapList, "参数数组不能为空");
+        sql = StringUtils.trim(sql);
         SqlParameterSource[] paramMapArray = new SqlParameterSource[paramMapList.size()];
         int index = 0;
         for (Map<String, Object> map : paramMapList) {
@@ -600,9 +626,9 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public List<Map<String, Object>> queryBySort(String sql, QueryBySort sort, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         // 构造排序以及分页sql
         String sortSql = SqlUtils.concatOrderBy(sql, sort);
-        log.info("sortSql --> \n{}", sortSql);
         return jdbcTemplate.queryForList(sortSql, paramMap);
     }
 
@@ -614,9 +640,9 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     public List<Map<String, Object>> queryBySort(String sql, QueryBySort sort) {
         Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
         // 构造排序以及分页sql
         String sortSql = SqlUtils.concatOrderBy(sql, sort);
-        log.info("sortSql --> \n{}", sortSql);
         return jdbcTemplate.queryForList(sortSql, Collections.emptyMap());
     }
 
@@ -631,6 +657,7 @@ public class JdbcDataSource extends AbstractDataSource {
     public IPage<Map<String, Object>> queryByPage(String sql, QueryByPage pagination, Map<String, Object> paramMap, boolean countQuery) {
         Assert.hasText(sql, "sql不能为空");
         Assert.notNull(pagination, "分页配置不能为空");
+        sql = StringUtils.trim(sql);
         Page<Map<String, Object>> page = new Page<>(pagination.getPageNo(), Math.min(pagination.getPageSize(), Max_Page_Size));
         // 执行 count 查询
         if (countQuery) {
@@ -649,7 +676,6 @@ public class JdbcDataSource extends AbstractDataSource {
         String sortSql = SqlUtils.concatOrderBy(sql, pagination);
         String pageSql = DialectFactory.buildPaginationSql(page, sortSql, paramMap, dbType, null);
         // 执行 pageSql
-        log.info("pageSql --> \n{}", pageSql);
         List<Map<String, Object>> listData = jdbcTemplate.queryForList(pageSql, paramMap);
         // 设置返回数据
         page.setRecords(listData);
@@ -716,9 +742,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @see org.springframework.transaction.TransactionDefinition
      */
     public <T> T beginTX(TransactionCallback<T> action, int propagationBehavior, int timeout, int isolationLevel) {
-        Assert.notNull(action, "分页配置不能为空");
-        TransactionTemplate transactionTemplate = createTransactionDefinition(isolationLevel, propagationBehavior, false, timeout);
-        return transactionTemplate.execute(action);
+        return beginTX(action, propagationBehavior, timeout, isolationLevel, false);
     }
 
     /**
@@ -731,9 +755,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @see org.springframework.transaction.TransactionDefinition
      */
     public <T> T beginTX(TransactionCallback<T> action, int propagationBehavior, int timeout) {
-        Assert.notNull(action, "分页配置不能为空");
-        TransactionTemplate transactionTemplate = createTransactionDefinition(TransactionDefinition.ISOLATION_DEFAULT, propagationBehavior, false, timeout);
-        return transactionTemplate.execute(action);
+        return beginTX(action, propagationBehavior, timeout, TransactionDefinition.ISOLATION_DEFAULT, false);
     }
 
     /**
@@ -745,9 +767,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @see org.springframework.transaction.TransactionDefinition
      */
     public <T> T beginTX(TransactionCallback<T> action, int propagationBehavior) {
-        Assert.notNull(action, "分页配置不能为空");
-        TransactionTemplate transactionTemplate = createTransactionDefinition(TransactionDefinition.ISOLATION_DEFAULT, propagationBehavior, false, -1);
-        return transactionTemplate.execute(action);
+        return beginTX(action, propagationBehavior, -1, TransactionDefinition.ISOLATION_DEFAULT, false);
     }
 
     /**
@@ -758,9 +778,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @see org.springframework.transaction.TransactionDefinition
      */
     public <T> T beginTX(TransactionCallback<T> action) {
-        Assert.notNull(action, "分页配置不能为空");
-        TransactionTemplate transactionTemplate = createTransactionDefinition(TransactionDefinition.ISOLATION_DEFAULT, TransactionDefinition.PROPAGATION_REQUIRED, false, -1);
-        return transactionTemplate.execute(action);
+        return beginTX(action, TransactionDefinition.PROPAGATION_REQUIRED, -1, TransactionDefinition.ISOLATION_DEFAULT, false);
     }
 
     /**
@@ -773,10 +791,8 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param <T>                 返回值类型
      * @see org.springframework.transaction.TransactionDefinition
      */
-    public <T> T readOnlyTX(TransactionCallback<T> action, int propagationBehavior, int timeout, int isolationLevel) {
-        Assert.notNull(action, "分页配置不能为空");
-        TransactionTemplate transactionTemplate = createTransactionDefinition(isolationLevel, propagationBehavior, true, timeout);
-        return transactionTemplate.execute(action);
+    public <T> T beginReadOnlyTX(TransactionCallback<T> action, int propagationBehavior, int timeout, int isolationLevel) {
+        return beginTX(action, propagationBehavior, timeout, isolationLevel, true);
     }
 
     /**
@@ -784,14 +800,12 @@ public class JdbcDataSource extends AbstractDataSource {
      *
      * @param action              事务内数据库操作
      * @param propagationBehavior 设置事务传递性 {@link org.springframework.transaction.TransactionDefinition#PROPAGATION_REQUIRED}
-     * @param isolationLevel      设置事务隔离级别 @link org.springframework.transaction.TransactionDefinition#ISOLATION_DEFAULT}
+     * @param timeout             设置事务超时时间，-1表示不超时(单位：秒)
      * @param <T>                 返回值类型
      * @see org.springframework.transaction.TransactionDefinition
      */
-    public <T> T readOnlyTX(TransactionCallback<T> action, int propagationBehavior, int isolationLevel) {
-        Assert.notNull(action, "分页配置不能为空");
-        TransactionTemplate transactionTemplate = createTransactionDefinition(isolationLevel, propagationBehavior, true, -1);
-        return transactionTemplate.execute(action);
+    public <T> T beginReadOnlyTX(TransactionCallback<T> action, int propagationBehavior, int timeout) {
+        return beginTX(action, propagationBehavior, timeout, TransactionDefinition.ISOLATION_DEFAULT, true);
     }
 
     /**
@@ -802,10 +816,8 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param <T>                 返回值类型
      * @see org.springframework.transaction.TransactionDefinition
      */
-    public <T> T readOnlyTX(TransactionCallback<T> action, int propagationBehavior) {
-        Assert.notNull(action, "分页配置不能为空");
-        TransactionTemplate transactionTemplate = createTransactionDefinition(TransactionDefinition.ISOLATION_DEFAULT, propagationBehavior, true, -1);
-        return transactionTemplate.execute(action);
+    public <T> T beginReadOnlyTX(TransactionCallback<T> action, int propagationBehavior) {
+        return beginTX(action, propagationBehavior, -1, TransactionDefinition.ISOLATION_DEFAULT, true);
     }
 
     /**
@@ -815,10 +827,8 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param <T>    返回值类型
      * @see org.springframework.transaction.TransactionDefinition
      */
-    public <T> T readOnlyTX(TransactionCallback<T> action) {
-        Assert.notNull(action, "分页配置不能为空");
-        TransactionTemplate transactionTemplate = createTransactionDefinition(TransactionDefinition.ISOLATION_DEFAULT, TransactionDefinition.PROPAGATION_REQUIRED, true, -1);
-        return transactionTemplate.execute(action);
+    public <T> T beginReadOnlyTX(TransactionCallback<T> action) {
+        return beginTX(action, TransactionDefinition.PROPAGATION_REQUIRED, -1, TransactionDefinition.ISOLATION_DEFAULT, true);
     }
 
     /**

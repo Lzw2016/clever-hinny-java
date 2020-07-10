@@ -69,7 +69,7 @@ public class JdbcDataSourceTest {
         log.info("### data -> {}", data);
 
         // 嵌套事务
-        jdbcDataSource.readOnlyTX(status1 -> {
+        jdbcDataSource.beginReadOnlyTX(status1 -> {
             Map<String, Object> dataTmp1 = jdbcDataSource.queryMap(sql);
             log.info("### dataTmp1 -> {}", dataTmp1.size());
             // 开启新事物
