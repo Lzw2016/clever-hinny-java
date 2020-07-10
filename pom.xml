@@ -60,7 +60,7 @@
 
     <properties>
         <revision>1.0.0-SNAPSHOT</revision>
-        <common.version>2.0.0-SNAPSHOT</common.version>
+        <clever-common.version>2.0.0-SNAPSHOT</clever-common.version>
     </properties>
 
     <dependencyManagement>
@@ -100,24 +100,49 @@
             <dependency>
                 <groupId>org.clever</groupId>
                 <artifactId>clever-common-utils</artifactId>
-                <version>${common.version}</version>
+                <version>${clever-common.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.clever</groupId>
                 <artifactId>clever-common-model</artifactId>
-                <version>${common.version}</version>
+                <version>${clever-common.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.clever</groupId>
                 <artifactId>clever-common-server</artifactId>
-                <version>${common.version}</version>
+                <version>${clever-common.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.clever</groupId>
                 <artifactId>clever-common-client</artifactId>
-                <version>${common.version}</version>
+                <version>${clever-common.version}</version>
             </dependency>
-
+            <!--jdbc driver-->
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>8.0.20</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mariadb.jdbc</groupId>
+                <artifactId>mariadb-java-client</artifactId>
+                <version>2.4.4</version>
+            </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>42.2.14</version>
+            </dependency>
+            <dependency>
+                <groupId>com.oracle.ojdbc</groupId>
+                <artifactId>ojdbc8</artifactId>
+                <version>19.3.0.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.microsoft.sqlserver</groupId>
+                <artifactId>mssql-jdbc</artifactId>
+                <version>6.4.0.jre8</version>
+            </dependency>
             <!--other-->
             <dependency>
                 <groupId>com.google.guava</groupId>

@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.clever.common.model.request.QueryByPage;
 import org.clever.common.model.request.QueryBySort;
 import org.clever.common.utils.tuples.TupleTow;
+import org.clever.data.common.AbstractDataSource;
 import org.clever.data.jdbc.support.*;
 import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -37,7 +38,7 @@ import java.util.function.Consumer;
  * 创建时间：2020/07/08 20:55 <br/>
  */
 @Slf4j
-public class JdbcDataSource {
+public class JdbcDataSource extends AbstractDataSource {
     /**
      * 分页时最大的页大小
      */
@@ -650,4 +651,18 @@ public class JdbcDataSource {
     }
 
     // TODO 动态sql支持(mybatis标准?)
+
+
+    @Override
+    public void close() throws Exception {
+        if (dataSource instanceof HikariDataSource) {
+            HikariDataSource hikariDataSource = (HikariDataSource) dataSource;
+            if (!hikariDataSource.isClosed()) {
+                hikariDataSource.close();
+                super.close();
+            }
+        } else {
+            throw new UnsupportedOperationException("当前数据源不支持close");
+        }
+    }
 }

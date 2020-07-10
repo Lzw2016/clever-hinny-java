@@ -6,6 +6,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.clever.common.model.request.QueryBySort;
+import org.clever.common.utils.StrFormatter;
 import org.clever.common.utils.tuples.TupleTow;
 
 import java.util.HashMap;
