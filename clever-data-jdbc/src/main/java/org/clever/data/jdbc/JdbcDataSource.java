@@ -652,6 +652,14 @@ public class JdbcDataSource extends AbstractDataSource {
 
     // TODO 动态sql支持(mybatis标准?)
 
+    @Override
+    public boolean isClosed() {
+        if (dataSource instanceof HikariDataSource) {
+            HikariDataSource hikariDataSource = (HikariDataSource) dataSource;
+            return hikariDataSource.isClosed();
+        }
+        return closed;
+    }
 
     @Override
     public void close() throws Exception {

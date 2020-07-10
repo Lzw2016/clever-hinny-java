@@ -17,6 +17,9 @@ public abstract class AbstractDataSource implements AutoCloseable {
         return closed;
     }
 
+    /**
+     * 关闭当前数据源
+     */
     @Override
     public void close() throws Exception {
         closed = true;
