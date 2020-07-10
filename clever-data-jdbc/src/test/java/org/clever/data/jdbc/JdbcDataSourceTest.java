@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.transaction.TransactionDefinition;
 
 import java.util.HashMap;
 import java.util.List;
@@ -53,5 +54,27 @@ public class JdbcDataSourceTest {
         log.info("### res -> {}", res);
         long count = jdbcDataSource.queryCount(sql, paramMap);
         log.info("### count -> {}", count);
+    }
+
+    @Test
+    public void transaction() {
+        String sql = "select * from tb_order_main where site_id=1111111112 limit 1";
+
+        // 简单事务
+        Map<String, Object> data = jdbcDataSource.beginTX(status -> jdbcDataSource.queryMap(sql));
+        log.info("### data -> {}", data);
+
+        // 嵌套事务
+        jdbcDataSource.readOnlyTX(status1 -> {
+            Map<String, Object> dataTmp1 = jdbcDataSource.queryMap(sql);
+            log.info("### dataTmp1 -> {}", dataTmp1.size());
+            // 开启新事物
+            jdbcDataSource.beginTX(status2 -> {
+                Map<String, Object> dataTmp2 = jdbcDataSource.queryMap(sql);
+                log.info("### dataTmp2 -> {}", dataTmp2.size());
+                return null;
+            }, TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+            return null;
+        });
     }
 }

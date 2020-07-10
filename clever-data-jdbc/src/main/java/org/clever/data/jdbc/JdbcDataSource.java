@@ -21,14 +21,20 @@ import org.springframework.jdbc.core.namedparam.EmptySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**
@@ -47,17 +53,31 @@ public class JdbcDataSource extends AbstractDataSource {
      * 设置游标读取数据时，单批次的数据读取量(值不能太大也不能太小)
      */
     private static final int Fetch_Size = 500;
-
     /**
-     * 数据源
+     * 事务名称前缀
      */
-    private final DataSource dataSource;
-    // TODO 事务控制 TransactionTemplate DataSourceTransactionManager
-    private final NamedParameterJdbcTemplate jdbcTemplate;
+    private static final String Transaction_Name_Prefix = "TX";
+
     /**
      * 数据库类型
      */
     private final DbType dbType;
+    /**
+     * 数据源
+     */
+    private final DataSource dataSource;
+    /**
+     * JDBC API操作
+     */
+    private final NamedParameterJdbcTemplate jdbcTemplate;
+    /**
+     * 事务序列号
+     */
+    private final AtomicInteger transactionSerialNumber = new AtomicInteger(0);
+    /**
+     * 数据源管理器
+     */
+    private final DataSourceTransactionManager transactionManager;
 
     /**
      * 使用Hikari连接池配置初始化数据源，创建对象
@@ -70,6 +90,7 @@ public class JdbcDataSource extends AbstractDataSource {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(this.dataSource);
         this.jdbcTemplate.getJdbcTemplate().setFetchSize(Fetch_Size);
         this.dbType = getDbType();
+        this.transactionManager = new DataSourceTransactionManager(this.dataSource);
         initCheck();
     }
 
@@ -84,6 +105,7 @@ public class JdbcDataSource extends AbstractDataSource {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(this.dataSource);
         this.jdbcTemplate.getJdbcTemplate().setFetchSize(Fetch_Size);
         this.dbType = getDbType();
+        this.transactionManager = new DataSourceTransactionManager(this.dataSource);
         initCheck();
     }
 
@@ -93,9 +115,11 @@ public class JdbcDataSource extends AbstractDataSource {
     public JdbcDataSource(JdbcTemplate jdbcTemplate) {
         Assert.notNull(jdbcTemplate, "JdbcTemplate不能为空");
         this.dataSource = jdbcTemplate.getDataSource();
+        Assert.notNull(this.dataSource, "DataSource不能为空");
         this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
         this.jdbcTemplate.getJdbcTemplate().setFetchSize(Fetch_Size);
         this.dbType = getDbType();
+        this.transactionManager = new DataSourceTransactionManager(this.dataSource);
         initCheck();
     }
 
@@ -105,9 +129,11 @@ public class JdbcDataSource extends AbstractDataSource {
     public JdbcDataSource(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
         Assert.notNull(namedParameterJdbcTemplate, "NamedParameterJdbcTemplate不能为空");
         this.dataSource = namedParameterJdbcTemplate.getJdbcTemplate().getDataSource();
+        Assert.notNull(this.dataSource, "DataSource不能为空");
         this.jdbcTemplate = namedParameterJdbcTemplate;
         this.jdbcTemplate.getJdbcTemplate().setFetchSize(Fetch_Size);
         this.dbType = getDbType();
+        this.transactionManager = new DataSourceTransactionManager(this.dataSource);
         initCheck();
     }
 
@@ -315,7 +341,7 @@ public class JdbcDataSource extends AbstractDataSource {
     public long queryCount(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
         String countSql = SqlUtils.getCountSql(sql);
-        log.info("countSql --> \n {}", countSql);
+        log.info("countSql --> \n{}", countSql);
         Long total = jdbcTemplate.queryForObject(countSql, paramMap, Long.class);
         if (total == null) {
             total = 0L;
@@ -576,7 +602,7 @@ public class JdbcDataSource extends AbstractDataSource {
         Assert.hasText(sql, "sql不能为空");
         // 构造排序以及分页sql
         String sortSql = SqlUtils.concatOrderBy(sql, sort);
-        log.info("sortSql --> \n {}", sortSql);
+        log.info("sortSql --> \n{}", sortSql);
         return jdbcTemplate.queryForList(sortSql, paramMap);
     }
 
@@ -590,7 +616,7 @@ public class JdbcDataSource extends AbstractDataSource {
         Assert.hasText(sql, "sql不能为空");
         // 构造排序以及分页sql
         String sortSql = SqlUtils.concatOrderBy(sql, sort);
-        log.info("sortSql --> \n {}", sortSql);
+        log.info("sortSql --> \n{}", sortSql);
         return jdbcTemplate.queryForList(sortSql, Collections.emptyMap());
     }
 
@@ -623,7 +649,7 @@ public class JdbcDataSource extends AbstractDataSource {
         String sortSql = SqlUtils.concatOrderBy(sql, pagination);
         String pageSql = DialectFactory.buildPaginationSql(page, sortSql, paramMap, dbType, null);
         // 执行 pageSql
-        log.info("pageSql --> \n {}", pageSql);
+        log.info("pageSql --> \n{}", pageSql);
         List<Map<String, Object>> listData = jdbcTemplate.queryForList(pageSql, paramMap);
         // 设置返回数据
         page.setRecords(listData);
@@ -662,7 +688,171 @@ public class JdbcDataSource extends AbstractDataSource {
         return queryByPage(sql, pagination, Collections.emptyMap(), true);
     }
 
-    // TODO 事务支持与控制
+    /**
+     * 在事务内支持操作
+     *
+     * @param action              事务内数据库操作
+     * @param propagationBehavior 设置事务传递性 {@link org.springframework.transaction.TransactionDefinition#PROPAGATION_REQUIRED}
+     * @param timeout             设置事务超时时间，-1表示不超时(单位：秒)
+     * @param isolationLevel      设置事务隔离级别 @link org.springframework.transaction.TransactionDefinition#ISOLATION_DEFAULT}
+     * @param readOnly            设置事务是否只读
+     * @param <T>                 返回值类型
+     * @see org.springframework.transaction.TransactionDefinition
+     */
+    public <T> T beginTX(TransactionCallback<T> action, int propagationBehavior, int timeout, int isolationLevel, boolean readOnly) {
+        Assert.notNull(action, "分页配置不能为空");
+        TransactionTemplate transactionTemplate = createTransactionDefinition(isolationLevel, propagationBehavior, readOnly, timeout);
+        return transactionTemplate.execute(action);
+    }
+
+    /**
+     * 在事务内支持操作
+     *
+     * @param action              事务内数据库操作
+     * @param propagationBehavior 设置事务传递性 {@link org.springframework.transaction.TransactionDefinition#PROPAGATION_REQUIRED}
+     * @param timeout             设置事务超时时间(单位：秒)
+     * @param isolationLevel      设置事务隔离级别 @link org.springframework.transaction.TransactionDefinition#ISOLATION_DEFAULT}
+     * @param <T>                 返回值类型
+     * @see org.springframework.transaction.TransactionDefinition
+     */
+    public <T> T beginTX(TransactionCallback<T> action, int propagationBehavior, int timeout, int isolationLevel) {
+        Assert.notNull(action, "分页配置不能为空");
+        TransactionTemplate transactionTemplate = createTransactionDefinition(isolationLevel, propagationBehavior, false, timeout);
+        return transactionTemplate.execute(action);
+    }
+
+    /**
+     * 在事务内支持操作
+     *
+     * @param action              事务内数据库操作
+     * @param propagationBehavior 设置事务传递性 {@link org.springframework.transaction.TransactionDefinition#PROPAGATION_REQUIRED}
+     * @param timeout             设置事务超时时间(单位：秒)
+     * @param <T>                 返回值类型
+     * @see org.springframework.transaction.TransactionDefinition
+     */
+    public <T> T beginTX(TransactionCallback<T> action, int propagationBehavior, int timeout) {
+        Assert.notNull(action, "分页配置不能为空");
+        TransactionTemplate transactionTemplate = createTransactionDefinition(TransactionDefinition.ISOLATION_DEFAULT, propagationBehavior, false, timeout);
+        return transactionTemplate.execute(action);
+    }
+
+    /**
+     * 在事务内支持操作
+     *
+     * @param action              事务内数据库操作
+     * @param propagationBehavior 设置事务传递性 {@link org.springframework.transaction.TransactionDefinition#PROPAGATION_REQUIRED}
+     * @param <T>                 返回值类型
+     * @see org.springframework.transaction.TransactionDefinition
+     */
+    public <T> T beginTX(TransactionCallback<T> action, int propagationBehavior) {
+        Assert.notNull(action, "分页配置不能为空");
+        TransactionTemplate transactionTemplate = createTransactionDefinition(TransactionDefinition.ISOLATION_DEFAULT, propagationBehavior, false, -1);
+        return transactionTemplate.execute(action);
+    }
+
+    /**
+     * 在事务内支持操作
+     *
+     * @param action 事务内数据库操作
+     * @param <T>    返回值类型
+     * @see org.springframework.transaction.TransactionDefinition
+     */
+    public <T> T beginTX(TransactionCallback<T> action) {
+        Assert.notNull(action, "分页配置不能为空");
+        TransactionTemplate transactionTemplate = createTransactionDefinition(TransactionDefinition.ISOLATION_DEFAULT, TransactionDefinition.PROPAGATION_REQUIRED, false, -1);
+        return transactionTemplate.execute(action);
+    }
+
+    /**
+     * 在事务内支持操作
+     *
+     * @param action              事务内数据库操作
+     * @param propagationBehavior 设置事务传递性 {@link org.springframework.transaction.TransactionDefinition#PROPAGATION_REQUIRED}
+     * @param timeout             设置事务超时时间，-1表示不超时(单位：秒)
+     * @param isolationLevel      设置事务隔离级别 @link org.springframework.transaction.TransactionDefinition#ISOLATION_DEFAULT}
+     * @param <T>                 返回值类型
+     * @see org.springframework.transaction.TransactionDefinition
+     */
+    public <T> T readOnlyTX(TransactionCallback<T> action, int propagationBehavior, int timeout, int isolationLevel) {
+        Assert.notNull(action, "分页配置不能为空");
+        TransactionTemplate transactionTemplate = createTransactionDefinition(isolationLevel, propagationBehavior, true, timeout);
+        return transactionTemplate.execute(action);
+    }
+
+    /**
+     * 在事务内支持操作
+     *
+     * @param action              事务内数据库操作
+     * @param propagationBehavior 设置事务传递性 {@link org.springframework.transaction.TransactionDefinition#PROPAGATION_REQUIRED}
+     * @param isolationLevel      设置事务隔离级别 @link org.springframework.transaction.TransactionDefinition#ISOLATION_DEFAULT}
+     * @param <T>                 返回值类型
+     * @see org.springframework.transaction.TransactionDefinition
+     */
+    public <T> T readOnlyTX(TransactionCallback<T> action, int propagationBehavior, int isolationLevel) {
+        Assert.notNull(action, "分页配置不能为空");
+        TransactionTemplate transactionTemplate = createTransactionDefinition(isolationLevel, propagationBehavior, true, -1);
+        return transactionTemplate.execute(action);
+    }
+
+    /**
+     * 在事务内支持操作
+     *
+     * @param action              事务内数据库操作
+     * @param propagationBehavior 设置事务传递性 {@link org.springframework.transaction.TransactionDefinition#PROPAGATION_REQUIRED}
+     * @param <T>                 返回值类型
+     * @see org.springframework.transaction.TransactionDefinition
+     */
+    public <T> T readOnlyTX(TransactionCallback<T> action, int propagationBehavior) {
+        Assert.notNull(action, "分页配置不能为空");
+        TransactionTemplate transactionTemplate = createTransactionDefinition(TransactionDefinition.ISOLATION_DEFAULT, propagationBehavior, true, -1);
+        return transactionTemplate.execute(action);
+    }
+
+    /**
+     * 在事务内支持操作
+     *
+     * @param action 事务内数据库操作
+     * @param <T>    返回值类型
+     * @see org.springframework.transaction.TransactionDefinition
+     */
+    public <T> T readOnlyTX(TransactionCallback<T> action) {
+        Assert.notNull(action, "分页配置不能为空");
+        TransactionTemplate transactionTemplate = createTransactionDefinition(TransactionDefinition.ISOLATION_DEFAULT, TransactionDefinition.PROPAGATION_REQUIRED, true, -1);
+        return transactionTemplate.execute(action);
+    }
+
+    /**
+     * 创建事务执行模板对象
+     *
+     * @param isolationLevel      设置事务隔离级别 {@link org.springframework.transaction.TransactionDefinition#ISOLATION_DEFAULT}
+     * @param propagationBehavior 设置事务传递性 {@link org.springframework.transaction.TransactionDefinition#PROPAGATION_REQUIRED}
+     * @param readOnly            设置事务是否只读
+     * @param timeout             设置事务超时时间(单位：秒)
+     * @see org.springframework.transaction.TransactionDefinition
+     */
+    private TransactionTemplate createTransactionDefinition(int isolationLevel, int propagationBehavior, boolean readOnly, int timeout) {
+        DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
+        transactionDefinition.setName(getNextTransactionName());
+        transactionDefinition.setPropagationBehavior(propagationBehavior);
+        transactionDefinition.setTimeout(timeout);
+        transactionDefinition.setIsolationLevel(isolationLevel);
+        transactionDefinition.setReadOnly(readOnly);
+        return new TransactionTemplate(transactionManager, transactionDefinition);
+    }
+
+    /**
+     * 获取下一个事务序列号
+     */
+    private String getNextTransactionName() {
+        int nextSerialNumber = transactionSerialNumber.incrementAndGet();
+        String transactionName;
+        if (nextSerialNumber < 0) {
+            transactionName = Transaction_Name_Prefix + "-" + nextSerialNumber;
+        } else {
+            transactionName = Transaction_Name_Prefix + "+" + nextSerialNumber;
+        }
+        return transactionName;
+    }
 
     // TODO 动态sql支持(mybatis标准?)
 
