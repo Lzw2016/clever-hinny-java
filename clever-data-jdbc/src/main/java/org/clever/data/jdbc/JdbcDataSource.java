@@ -307,6 +307,23 @@ public class JdbcDataSource extends AbstractDataSource {
     }
 
     /**
+     * SQL Count(获取一个SQL返回的数据总量)
+     *
+     * @param sql      sql脚本，参数格式[:param]
+     * @param paramMap 参数(可选)，参数格式[:param]
+     */
+    public long queryCount(String sql, Map<String, Object> paramMap) {
+        Assert.hasText(sql, "sql不能为空");
+        String countSql = SqlUtils.getCountSql(sql);
+        log.info("countSql --> \n {}", countSql);
+        Long total = jdbcTemplate.queryForObject(countSql, paramMap, Long.class);
+        if (total == null) {
+            total = 0L;
+        }
+        return total;
+    }
+
+    /**
      * 查询多条数据(大量数据)，使用游标读取
      *
      * @param sql       sql脚本，参数格式[:param]
@@ -591,12 +608,7 @@ public class JdbcDataSource extends AbstractDataSource {
         Page<Map<String, Object>> page = new Page<>(pagination.getPageNo(), Math.min(pagination.getPageSize(), Max_Page_Size));
         // 执行 count 查询
         if (countQuery) {
-            String countSql = SqlUtils.getCountSql(sql);
-            log.info("countSql --> \n {}", countSql);
-            Long total = jdbcTemplate.queryForObject(countSql, paramMap, Long.class);
-            if (total == null) {
-                total = 0L;
-            }
+            long total = queryCount(sql, paramMap);
             page.setTotal(total);
             // 溢出总页数，设置最后一页
             long pages = page.getPages();
@@ -649,6 +661,8 @@ public class JdbcDataSource extends AbstractDataSource {
     public IPage<Map<String, Object>> queryByPage(String sql, QueryByPage pagination) {
         return queryByPage(sql, pagination, Collections.emptyMap(), true);
     }
+
+    // TODO 事务支持与控制
 
     // TODO 动态sql支持(mybatis标准?)
 

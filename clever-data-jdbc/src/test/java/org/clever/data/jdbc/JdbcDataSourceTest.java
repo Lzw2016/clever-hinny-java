@@ -50,6 +50,8 @@ public class JdbcDataSourceTest {
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("siteId", 1111111112);
         List<Map<String, Object>> res = jdbcDataSource.queryList(sql, paramMap);
-        log.info("res -> {}", res);
+        log.info("### res -> {}", res);
+        long count = jdbcDataSource.queryCount(sql, paramMap);
+        log.info("### count -> {}", count);
     }
 }
