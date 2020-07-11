@@ -511,9 +511,6 @@ public class JdbcDataSource extends AbstractDataSource {
         tableName = StringUtils.trim(tableName);
         TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.updateSql(tableName, fields, null, camelToUnderscore);
         String sql = String.format("%s where %s", tupleTow.getValue1(), StringUtils.trim(where));
-//        SqlLoggerUtils.printfSql(sql, tupleTow.getValue2());   sql打印多次了
-//        int res = ;
-//        SqlLoggerUtils.printfUpdateTotal(res);打印多次了
         return update(sql, tupleTow.getValue2());
     }
 
