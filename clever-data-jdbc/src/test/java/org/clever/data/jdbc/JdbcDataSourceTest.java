@@ -85,4 +85,30 @@ public class JdbcDataSourceTest {
             return null;
         });
     }
+
+    @Test
+    public void queryOne() {
+        String sql = "select * from tb_order_main where order_id = 1149635824560267265";
+        // 简单查询
+        log.info("### res -> {}", jdbcDataSource.queryMap(sql));
+        // 开启事务 修改一条记录
+        String updateSql = "update tb_order_main set user_agent_id = 22222222 where order_id = 1149635824560267265 ";
+        Integer integer = jdbcDataSource.beginTX(status -> jdbcDataSource.update(updateSql));
+        log.info("### update -> {} , res -> {}", integer, jdbcDataSource.queryMap(sql));
+        // 无事务修改一条记录测试
+        String update2 = "update tb_order_main set user_agent_id = 333333 where order_id = 1149635824560267265 ";
+        log.info("### update -> {} , res -> {}", jdbcDataSource.update(update2), jdbcDataSource.queryMap(sql));
+    }
+
+    @Test
+    public void updateTable() {
+        String sql = "select * from tb_order_main where user_agent_id = 22222222";
+        log.info("### res -> {}", jdbcDataSource.queryMap(sql));
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("siteId", 0);
+        paramMap.put("storeId", 5644456);
+        int i = jdbcDataSource.beginTX(status -> jdbcDataSource.updateTable("tb_order_main", paramMap, "user_agent_id = 22222222",true));
+        //TODO where后面的条件用不用map也进行封装?
+        log.info("### res -> {}", jdbcDataSource.queryMap(sql));
+    }
 }
