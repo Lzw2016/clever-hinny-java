@@ -3,7 +3,7 @@
 > clever-data 封装常用数据库中间件API，为在函数式编程环境中提供各种数据库操作的便捷API。
 > 当前项目每个子模块对应一个数据库的封装(`clever-data-common`模块除外)
 
-# 模块说明
+### 快速开始
 
 ## clever-data-jdbc
 
