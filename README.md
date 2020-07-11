@@ -50,6 +50,35 @@ public void demo() {
 
 ### clever-data-redis
 
+1. 主要功能：操作Redis数据
+1. 主要API: JdbcDataSource
+
+#### 使用demo
+
+```java
+public void demo() {
+    RedisProperties properties = new RedisProperties();
+    properties.setPort(6379);
+    // ...省略配置
+    pool.setMaxWait(Duration.ofSeconds(1));
+    properties.getLettuce().setPool(pool);
+    redisDataSource = new RedisDataSource(properties);
+    // 使用demo
+    String key = "lzw-123456";
+    for (int i = 0; i < 10; i++) {
+        redisDataSource.hPut(key, "k_" + i, "v_" + i);
+    }
+    boolean has = redisDataSource.kHasKey(key);
+    log.info("### has -> {}", has);
+    boolean del = redisDataSource.kDelete(key);
+    log.info("### del -> {}", del);
+    has = redisDataSource.kHasKey(key);
+    log.info("### has -> {}", has);
+    // 关闭数据源
+    redisDataSource.close();
+}
+```
+
 ### clever-data-elasticsearch
 
 ### clever-data-rabbitmq
