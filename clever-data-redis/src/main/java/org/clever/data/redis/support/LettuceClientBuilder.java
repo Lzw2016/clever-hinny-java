@@ -184,7 +184,9 @@ public class LettuceClientBuilder implements DisposableBean {
 
     public LettuceConnectionFactory redisConnectionFactory(ClientResources clientResources) {
         LettuceClientConfiguration clientConfig = getLettuceClientConfiguration(clientResources, this.properties.getLettuce().getPool());
-        return createLettuceConnectionFactory(clientConfig);
+        LettuceConnectionFactory lettuceConnectionFactory = createLettuceConnectionFactory(clientConfig);
+        lettuceConnectionFactory.afterPropertiesSet();
+        return lettuceConnectionFactory;
     }
 
     private LettuceConnectionFactory createLettuceConnectionFactory(LettuceClientConfiguration clientConfiguration) {

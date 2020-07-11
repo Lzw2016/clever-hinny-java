@@ -55,6 +55,7 @@ public class RedisDataSource extends AbstractDataSource {
             ObjectMapper objectMapper) {
         this.lettuceClientBuilder = new LettuceClientBuilder(properties, sentinelConfiguration, clusterConfiguration, builderCustomizers, objectMapper);
         this.redisTemplate = this.lettuceClientBuilder.getRedisTemplate();
+        initCheck();
     }
 
     /**
@@ -104,6 +105,7 @@ public class RedisDataSource extends AbstractDataSource {
         Assert.notNull(properties, "RedisProperties不能为空");
         this.lettuceClientBuilder = new LettuceClientBuilder(properties);
         this.redisTemplate = this.lettuceClientBuilder.getRedisTemplate();
+        initCheck();
     }
 
     /**
@@ -114,6 +116,7 @@ public class RedisDataSource extends AbstractDataSource {
         Assert.notNull(redisConnectionFactory, "RedisConnectionFactory不能为空");
         this.lettuceClientBuilder = new LettuceClientBuilder(redisConnectionFactory, objectMapper);
         this.redisTemplate = this.lettuceClientBuilder.getRedisTemplate();
+        initCheck();
     }
 
     /**
@@ -123,6 +126,22 @@ public class RedisDataSource extends AbstractDataSource {
         Assert.notNull(redisConnectionFactory, "RedisConnectionFactory不能为空");
         this.lettuceClientBuilder = new LettuceClientBuilder(redisConnectionFactory);
         this.redisTemplate = this.lettuceClientBuilder.getRedisTemplate();
+        initCheck();
+    }
+
+    /**
+     * 校验数据源是否可用
+     */
+    private void initCheck() {
+        RedisCallback<Void> callback = connection -> {
+            connection.ping();
+            return null;
+        };
+        try {
+            redisTemplate.execute(callback);
+        } catch (Exception e) {
+            throw new RuntimeException("RedisDataSource创建失败", e);
+        }
     }
 
     // --------------------------------------------------------------------------------------------
@@ -1987,6 +2006,10 @@ public class RedisDataSource extends AbstractDataSource {
     }
 
     // TODO geo 地理位置操作
+
+    // TODO redisTemplate.execute()
+
+    // TODO redisTemplate.executePipelined()
 
     // --------------------------------------------------------------------------------------------
     // 事务，批量处理，其他 操作
