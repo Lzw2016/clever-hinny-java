@@ -107,8 +107,9 @@ public class JdbcDataSourceTest {
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("siteId", 0);
         paramMap.put("storeId", 5644456);
-        int i = jdbcDataSource.beginTX(status -> jdbcDataSource.updateTable("tb_order_main", paramMap, "user_agent_id = 22222222",true));
-        //TODO where后面的条件用不用map也进行封装?
-        log.info("### res -> {}", jdbcDataSource.queryMap(sql));
+        Map<String, Object> where = new HashMap<>();
+        where.put("user_agent_id", 22222222);
+        int i = jdbcDataSource.beginTX(status -> jdbcDataSource.updateTable("tb_order_main", paramMap, where, true));
+        log.info("### update -> {}  res -> {}", i, jdbcDataSource.queryMap(sql));
     }
 }
