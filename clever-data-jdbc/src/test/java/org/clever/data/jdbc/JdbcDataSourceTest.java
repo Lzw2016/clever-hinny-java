@@ -2,6 +2,7 @@ package org.clever.data.jdbc;
 
 import com.zaxxer.hikari.HikariConfig;
 import lombok.extern.slf4j.Slf4j;
+import org.clever.common.model.request.QueryByPage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -111,5 +112,13 @@ public class JdbcDataSourceTest {
         where.put("user_agent_id", 22222222);
         int i = jdbcDataSource.beginTX(status -> jdbcDataSource.updateTable("tb_order_main", paramMap, where, true));
         log.info("### update -> {}  res -> {}", i, jdbcDataSource.queryMap(sql));
+    }
+
+    @Test
+    public void queryPage() {
+        String sql = "select * from tb_order_main";
+        QueryByPage pagination = new QueryByPage();
+        pagination.setPageSize(5);
+        log.info("### res -> {}", jdbcDataSource.queryByPage(sql, pagination));
     }
 }

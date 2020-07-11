@@ -717,7 +717,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param countQuery 是否要执行count查询(可选)
      */
     public IPage<Map<String, Object>> queryByPage(String sql, QueryByPage pagination, boolean countQuery) {
-        return queryByPage(sql, pagination, Collections.emptyMap(), countQuery);
+        return queryByPage(sql, pagination, new HashMap<>(2), countQuery);
     }
 
     /**
@@ -727,7 +727,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param pagination 分页配置(支持排序)
      */
     public IPage<Map<String, Object>> queryByPage(String sql, QueryByPage pagination) {
-        return queryByPage(sql, pagination, Collections.emptyMap(), true);
+        return queryByPage(sql, pagination, new HashMap<>(2), true);
     }
 
     /**
