@@ -47,9 +47,10 @@ public class JdbcDataSourceTest {
 
     @Test
     public void query() {
-        String sql = "select * from tb_order_main where site_id=:siteId limit 10";
+        String sql = "select * from tb_order_main where site_id=:siteId and store_id=:storeId limit 10";
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("siteId", 1111111112);
+        paramMap.put("storeId", 1119829651059834882L);
 
         // 简单查询
         List<Map<String, Object>> res = jdbcDataSource.queryList(sql, paramMap);

@@ -16,7 +16,6 @@ import org.clever.data.common.AbstractDataSource;
 import org.clever.data.jdbc.support.*;
 import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.namedparam.EmptySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -173,7 +172,10 @@ public class JdbcDataSource extends AbstractDataSource {
     public Map<String, Object> queryMap(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
         sql = StringUtils.trim(sql);
-        return jdbcTemplate.queryForObject(sql, paramMap, new ColumnMapRowMapper());
+        SqlLoggerUtils.printfSql(sql, paramMap);
+        Map<String, Object> res = jdbcTemplate.queryForObject(sql, paramMap, new ColumnMapRowMapper());
+        SqlLoggerUtils.printfTotal(res);
+        return res;
     }
 
     /**
@@ -182,9 +184,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param sql sql脚本，参数格式[:param]
      */
     public Map<String, Object> queryMap(String sql) {
-        Assert.hasText(sql, "sql不能为空");
-        sql = StringUtils.trim(sql);
-        return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), new ColumnMapRowMapper());
+        return queryMap(sql, Collections.emptyMap());
     }
 
     /**
@@ -196,7 +196,10 @@ public class JdbcDataSource extends AbstractDataSource {
     public List<Map<String, Object>> queryList(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
         sql = StringUtils.trim(sql);
-        return jdbcTemplate.queryForList(sql, paramMap);
+        SqlLoggerUtils.printfSql(sql, paramMap);
+        List<Map<String, Object>> resList = jdbcTemplate.queryForList(sql, paramMap);
+        SqlLoggerUtils.printfTotal(resList);
+        return resList;
     }
 
     /**
@@ -205,20 +208,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param sql sql脚本，参数格式[:param]
      */
     public List<Map<String, Object>> queryList(String sql) {
-        Assert.hasText(sql, "sql不能为空");
-        sql = StringUtils.trim(sql);
-        return jdbcTemplate.queryForList(sql, Collections.emptyMap());
-    }
-
-    /**
-     * 查询返回一个 String
-     *
-     * @param sql sql脚本，参数格式[:param]
-     */
-    public String queryString(String sql) {
-        Assert.hasText(sql, "sql不能为空");
-        sql = StringUtils.trim(sql);
-        return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), String.class);
+        return queryList(sql, Collections.emptyMap());
     }
 
     /**
@@ -230,18 +220,19 @@ public class JdbcDataSource extends AbstractDataSource {
     public String queryString(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
         sql = StringUtils.trim(sql);
-        return jdbcTemplate.queryForObject(sql, paramMap, String.class);
+        SqlLoggerUtils.printfSql(sql, paramMap);
+        String res = jdbcTemplate.queryForObject(sql, paramMap, String.class);
+        SqlLoggerUtils.printfTotal(res);
+        return res;
     }
 
     /**
-     * 查询返回一个 Long
+     * 查询返回一个 String
      *
      * @param sql sql脚本，参数格式[:param]
      */
-    public Long queryLong(String sql) {
-        Assert.hasText(sql, "sql不能为空");
-        sql = StringUtils.trim(sql);
-        return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), Long.class);
+    public String queryString(String sql) {
+        return queryString(sql, Collections.emptyMap());
     }
 
     /**
@@ -253,18 +244,19 @@ public class JdbcDataSource extends AbstractDataSource {
     public Long queryLong(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
         sql = StringUtils.trim(sql);
-        return jdbcTemplate.queryForObject(sql, paramMap, Long.class);
+        SqlLoggerUtils.printfSql(sql, paramMap);
+        Long res = jdbcTemplate.queryForObject(sql, paramMap, Long.class);
+        SqlLoggerUtils.printfTotal(res);
+        return res;
     }
 
     /**
-     * 查询返回一个 Double
+     * 查询返回一个 Long
      *
      * @param sql sql脚本，参数格式[:param]
      */
-    public Double queryDouble(String sql) {
-        Assert.hasText(sql, "sql不能为空");
-        sql = StringUtils.trim(sql);
-        return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), Double.class);
+    public Long queryLong(String sql) {
+        return queryLong(sql, Collections.emptyMap());
     }
 
     /**
@@ -276,18 +268,20 @@ public class JdbcDataSource extends AbstractDataSource {
     public Double queryDouble(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
         sql = StringUtils.trim(sql);
-        return jdbcTemplate.queryForObject(sql, paramMap, Double.class);
+        SqlLoggerUtils.printfSql(sql, paramMap);
+        Double res = jdbcTemplate.queryForObject(sql, paramMap, Double.class);
+        SqlLoggerUtils.printfTotal(res);
+        return res;
     }
 
+
     /**
-     * 查询返回一个 BigDecimal
+     * 查询返回一个 Double
      *
      * @param sql sql脚本，参数格式[:param]
      */
-    public BigDecimal queryBigDecimal(String sql) {
-        Assert.hasText(sql, "sql不能为空");
-        sql = StringUtils.trim(sql);
-        return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), BigDecimal.class);
+    public Double queryDouble(String sql) {
+        return queryDouble(sql, Collections.emptyMap());
     }
 
     /**
@@ -299,18 +293,19 @@ public class JdbcDataSource extends AbstractDataSource {
     public BigDecimal queryBigDecimal(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
         sql = StringUtils.trim(sql);
-        return jdbcTemplate.queryForObject(sql, paramMap, BigDecimal.class);
+        SqlLoggerUtils.printfSql(sql, paramMap);
+        BigDecimal res = jdbcTemplate.queryForObject(sql, paramMap, BigDecimal.class);
+        SqlLoggerUtils.printfTotal(res);
+        return res;
     }
 
     /**
-     * 查询返回一个 Boolean
+     * 查询返回一个 BigDecimal
      *
      * @param sql sql脚本，参数格式[:param]
      */
-    public Boolean queryBoolean(String sql) {
-        Assert.hasText(sql, "sql不能为空");
-        sql = StringUtils.trim(sql);
-        return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), Boolean.class);
+    public BigDecimal queryBigDecimal(String sql) {
+        return queryBigDecimal(sql, Collections.emptyMap());
     }
 
     /**
@@ -322,18 +317,19 @@ public class JdbcDataSource extends AbstractDataSource {
     public Boolean queryBoolean(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
         sql = StringUtils.trim(sql);
-        return jdbcTemplate.queryForObject(sql, paramMap, Boolean.class);
+        SqlLoggerUtils.printfSql(sql, paramMap);
+        Boolean res = jdbcTemplate.queryForObject(sql, paramMap, Boolean.class);
+        SqlLoggerUtils.printfTotal(res);
+        return res;
     }
 
     /**
-     * 查询返回一个 Date
+     * 查询返回一个 Boolean
      *
      * @param sql sql脚本，参数格式[:param]
      */
-    public Date queryDate(String sql) {
-        Assert.hasText(sql, "sql不能为空");
-        sql = StringUtils.trim(sql);
-        return jdbcTemplate.queryForObject(sql, Collections.emptyMap(), Date.class);
+    public Boolean queryBoolean(String sql) {
+        return queryBoolean(sql, Collections.emptyMap());
     }
 
     /**
@@ -345,7 +341,19 @@ public class JdbcDataSource extends AbstractDataSource {
     public Date queryDate(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
         sql = StringUtils.trim(sql);
-        return jdbcTemplate.queryForObject(sql, paramMap, Date.class);
+        SqlLoggerUtils.printfSql(sql, paramMap);
+        Date res = jdbcTemplate.queryForObject(sql, paramMap, Date.class);
+        SqlLoggerUtils.printfTotal(res);
+        return res;
+    }
+
+    /**
+     * 查询返回一个 Date
+     *
+     * @param sql sql脚本，参数格式[:param]
+     */
+    public Date queryDate(String sql) {
+        return queryDate(sql, Collections.emptyMap());
     }
 
     /**
@@ -358,10 +366,12 @@ public class JdbcDataSource extends AbstractDataSource {
         Assert.hasText(sql, "sql不能为空");
         String countSql = SqlUtils.getCountSql(sql);
         countSql = StringUtils.trim(countSql);
+        SqlLoggerUtils.printfSql(sql, paramMap);
         Long total = jdbcTemplate.queryForObject(countSql, paramMap, Long.class);
         if (total == null) {
             total = 0L;
         }
+        SqlLoggerUtils.printfTotal(total);
         return total;
     }
 
@@ -377,19 +387,15 @@ public class JdbcDataSource extends AbstractDataSource {
         Assert.hasText(sql, "sql不能为空");
         Assert.notNull(consumer, "数据消费者不能为空");
         sql = StringUtils.trim(sql);
+        SqlLoggerUtils.printfSql(sql, paramMap);
         final BatchDataReaderCallback batchDataReaderCallback = new BatchDataReaderCallback(batchSize, consumer);
-        ResultSetExtractor<Void> resultSetExtractor = rs -> {
-            while (rs.next()) {
-                batchDataReaderCallback.processRow(rs);
-            }
-            batchDataReaderCallback.processEnd();
-            return null;
-        };
         if (paramMap == null) {
-            jdbcTemplate.query(sql, resultSetExtractor);
+            jdbcTemplate.query(sql, batchDataReaderCallback);
         } else {
-            jdbcTemplate.query(sql, paramMap, resultSetExtractor);
+            jdbcTemplate.query(sql, paramMap, batchDataReaderCallback);
         }
+        batchDataReaderCallback.processEnd();
+        SqlLoggerUtils.printfTotal(batchDataReaderCallback.getColumnCount());
     }
 
     /**
@@ -414,12 +420,14 @@ public class JdbcDataSource extends AbstractDataSource {
         Assert.hasText(sql, "sql不能为空");
         Assert.notNull(consumer, "数据消费者不能为空");
         sql = StringUtils.trim(sql);
+        SqlLoggerUtils.printfSql(sql, paramMap);
         final RowDataReaderCallback rowDataReaderCallback = new RowDataReaderCallback(consumer);
         if (paramMap == null) {
             jdbcTemplate.query(sql, rowDataReaderCallback);
         } else {
             jdbcTemplate.query(sql, paramMap, rowDataReaderCallback);
         }
+        SqlLoggerUtils.printfTotal(rowDataReaderCallback.getColumnCount());
     }
 
     /**
@@ -441,7 +449,10 @@ public class JdbcDataSource extends AbstractDataSource {
     public int update(String sql, Map<String, Object> paramMap) {
         Assert.hasText(sql, "sql不能为空");
         sql = StringUtils.trim(sql);
-        return jdbcTemplate.update(sql, paramMap);
+        SqlLoggerUtils.printfSql(sql, paramMap);
+        int res = jdbcTemplate.update(sql, paramMap);
+        SqlLoggerUtils.printfUpdateTotal(res);
+        return res;
     }
 
     /**
@@ -450,9 +461,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param sql sql脚本，参数格式[:param]
      */
     public int update(String sql) {
-        Assert.hasText(sql, "sql不能为空");
-        sql = StringUtils.trim(sql);
-        return jdbcTemplate.update(sql, Collections.emptyMap());
+        return update(sql, Collections.emptyMap());
     }
 
     /**
@@ -460,7 +469,7 @@ public class JdbcDataSource extends AbstractDataSource {
      *
      * @param tableName         表名称
      * @param fields            更新字段值
-     * @param whereMap          更新条件字段
+     * @param whereMap          更新条件字段(只支持=，and条件)
      * @param camelToUnderscore 字段驼峰转下划线(可选)
      */
     public int updateTable(String tableName, Map<String, Object> fields, Map<String, Object> whereMap, boolean camelToUnderscore) {
@@ -469,7 +478,11 @@ public class JdbcDataSource extends AbstractDataSource {
         Assert.notEmpty(whereMap, "更新条件不能为空");
         tableName = StringUtils.trim(tableName);
         TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.updateSql(tableName, fields, whereMap, camelToUnderscore);
-        return update(tupleTow.getValue1(), tupleTow.getValue2());
+        String sql = StringUtils.trim(tupleTow.getValue1());
+        SqlLoggerUtils.printfSql(sql, tupleTow.getValue2());
+        int res = update(sql, tupleTow.getValue2());
+        SqlLoggerUtils.printfUpdateTotal(res);
+        return res;
     }
 
     /**
@@ -477,7 +490,7 @@ public class JdbcDataSource extends AbstractDataSource {
      *
      * @param tableName 表名称
      * @param fields    更新字段值
-     * @param whereMap  更新条件字段
+     * @param whereMap  更新条件字段(只支持=，and条件)
      */
     public int updateTable(String tableName, Map<String, Object> fields, Map<String, Object> whereMap) {
         return updateTable(tableName, fields, whereMap, false);
@@ -497,8 +510,11 @@ public class JdbcDataSource extends AbstractDataSource {
         Assert.hasText(where, "更新条件不能为空");
         tableName = StringUtils.trim(tableName);
         TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.updateSql(tableName, fields, null, camelToUnderscore);
-        String sql = String.format("%s where %s", tupleTow.getValue1(), where);
-        return update(sql, tupleTow.getValue2());
+        String sql = String.format("%s where %s", tupleTow.getValue1(), StringUtils.trim(where));
+        SqlLoggerUtils.printfSql(sql, tupleTow.getValue2());
+        int res = update(sql, tupleTow.getValue2());
+        SqlLoggerUtils.printfUpdateTotal(res);
+        return res;
     }
 
     /**
@@ -528,7 +544,9 @@ public class JdbcDataSource extends AbstractDataSource {
             sqlParameterSource = new EmptySqlParameterSource();
         }
         KeyHolder keyHolder = new GeneratedKeyHolder();
+        SqlLoggerUtils.printfSql(sql, paramMap);
         int insertCount = jdbcTemplate.update(sql, sqlParameterSource, keyHolder);
+        SqlLoggerUtils.printfUpdateTotal(insertCount);
         List<Map<String, Object>> keysList = keyHolder.getKeyList();
         InsertResult.KeyHolder resultKeyHolder = new InsertResult.KeyHolder(keysList);
         return new InsertResult(insertCount, resultKeyHolder);
@@ -614,7 +632,10 @@ public class JdbcDataSource extends AbstractDataSource {
             paramMapArray[index] = new MapSqlParameterSource(map);
             index++;
         }
-        return jdbcTemplate.batchUpdate(sql, paramMapArray);
+        SqlLoggerUtils.printfSql(sql, paramMapList);
+        int[] res = jdbcTemplate.batchUpdate(sql, paramMapArray);
+        SqlLoggerUtils.printfUpdateTotal(res);
+        return res;
     }
 
     /**
@@ -629,7 +650,10 @@ public class JdbcDataSource extends AbstractDataSource {
         sql = StringUtils.trim(sql);
         // 构造排序以及分页sql
         String sortSql = SqlUtils.concatOrderBy(sql, sort);
-        return jdbcTemplate.queryForList(sortSql, paramMap);
+        SqlLoggerUtils.printfSql(sortSql, paramMap);
+        List<Map<String, Object>> res = jdbcTemplate.queryForList(sortSql, paramMap);
+        SqlLoggerUtils.printfTotal(res);
+        return res;
     }
 
     /**
@@ -639,11 +663,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param sort 排序配置
      */
     public List<Map<String, Object>> queryBySort(String sql, QueryBySort sort) {
-        Assert.hasText(sql, "sql不能为空");
-        sql = StringUtils.trim(sql);
-        // 构造排序以及分页sql
-        String sortSql = SqlUtils.concatOrderBy(sql, sort);
-        return jdbcTemplate.queryForList(sortSql, Collections.emptyMap());
+        return queryBySort(sql, sort, Collections.emptyMap());
     }
 
     /**
@@ -676,7 +696,9 @@ public class JdbcDataSource extends AbstractDataSource {
         String sortSql = SqlUtils.concatOrderBy(sql, pagination);
         String pageSql = DialectFactory.buildPaginationSql(page, sortSql, paramMap, dbType, null);
         // 执行 pageSql
+        SqlLoggerUtils.printfSql(pageSql, paramMap);
         List<Map<String, Object>> listData = jdbcTemplate.queryForList(pageSql, paramMap);
+        SqlLoggerUtils.printfTotal(listData);
         // 设置返回数据
         page.setRecords(listData);
         // 排序信息
