@@ -479,10 +479,7 @@ public class JdbcDataSource extends AbstractDataSource {
         tableName = StringUtils.trim(tableName);
         TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.updateSql(tableName, fields, whereMap, camelToUnderscore);
         String sql = StringUtils.trim(tupleTow.getValue1());
-        SqlLoggerUtils.printfSql(sql, tupleTow.getValue2());
-        int res = update(sql, tupleTow.getValue2());
-        SqlLoggerUtils.printfUpdateTotal(res);
-        return res;
+        return update(sql, tupleTow.getValue2());
     }
 
     /**
