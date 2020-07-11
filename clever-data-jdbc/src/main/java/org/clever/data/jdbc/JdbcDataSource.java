@@ -879,7 +879,7 @@ public class JdbcDataSource extends AbstractDataSource {
         int nextSerialNumber = transactionSerialNumber.incrementAndGet();
         String transactionName;
         if (nextSerialNumber < 0) {
-            transactionName = Transaction_Name_Prefix + "-" + nextSerialNumber;
+            transactionName = Transaction_Name_Prefix + nextSerialNumber;
         } else {
             transactionName = Transaction_Name_Prefix + "+" + nextSerialNumber;
         }
