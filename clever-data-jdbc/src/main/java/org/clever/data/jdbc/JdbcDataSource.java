@@ -873,7 +873,7 @@ public class JdbcDataSource extends AbstractDataSource {
     }
 
     /**
-     * 获取下一个事务序列号
+     * 获取下一个事务名称
      */
     private String getNextTransactionName() {
         int nextSerialNumber = transactionSerialNumber.incrementAndGet();
