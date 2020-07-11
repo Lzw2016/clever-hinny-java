@@ -31,7 +31,6 @@ public class RedisDataSourceTest {
         pool.setMinIdle(1);
         pool.setMaxWait(Duration.ofSeconds(1));
         properties.getLettuce().setPool(pool);
-        properties.getLettuce().setShutdownTimeout(Duration.ofSeconds(10));
         redisDataSource = new RedisDataSource(properties);
     }
 

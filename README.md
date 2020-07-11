@@ -51,7 +51,7 @@ public void demo() {
 ## clever-data-redis
 
 1. 主要功能：操作Redis数据
-1. 主要API: JdbcDataSource
+1. 主要API: RedisDataSource
 
 #### 使用demo
 
