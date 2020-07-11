@@ -3,6 +3,7 @@ package org.clever.data.jdbc;
 import com.zaxxer.hikari.HikariConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.clever.common.model.request.QueryByPage;
+import org.clever.common.model.request.QueryBySort;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -119,6 +120,17 @@ public class JdbcDataSourceTest {
         String sql = "select * from tb_order_main";
         QueryByPage pagination = new QueryByPage();
         pagination.setPageSize(5);
+        pagination.addOrderFieldMapping("storeId", "store_id");
+        pagination.addOrderField("storeId", QueryBySort.DESC);
         log.info("### res -> {}", jdbcDataSource.queryByPage(sql, pagination));
+    }
+
+    @Test
+    public void queryBySort() {
+        String sql = "select * from tb_order_main where user_agent_id=22222222";
+        QueryBySort queryByPage = new QueryBySort();
+        queryByPage.addOrderFieldMapping("storeId", "store_id");
+        queryByPage.addOrderField("storeId", QueryBySort.DESC);
+        log.info("### res -> {}", jdbcDataSource.queryBySort(sql, queryByPage));
     }
 }

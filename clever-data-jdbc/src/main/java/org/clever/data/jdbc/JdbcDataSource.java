@@ -366,7 +366,7 @@ public class JdbcDataSource extends AbstractDataSource {
         Assert.hasText(sql, "sql不能为空");
         String countSql = SqlUtils.getCountSql(sql);
         countSql = StringUtils.trim(countSql);
-        SqlLoggerUtils.printfSql(sql, paramMap);
+        SqlLoggerUtils.printfSql(countSql, paramMap);
         Long total = jdbcTemplate.queryForObject(countSql, paramMap, Long.class);
         if (total == null) {
             total = 0L;
