@@ -1,5 +1,6 @@
 package org.clever.data.jdbc;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.zaxxer.hikari.HikariConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.clever.common.model.request.QueryByPage;
@@ -103,14 +104,41 @@ public class JdbcDataSourceTest {
     }
 
     @Test
+    public void transactionDelivery() {
+        String sql = "select * from tb_order_main where user_agent_id = 22222222";
+        jdbcDataSource.beginTX(status1 -> {
+            Map<String, Object> queryMap = jdbcDataSource.queryMap(sql);
+            log.info("### dataTmp1 -> {}", queryMap);
+            String update2 = "update tb_order_main set store_id = 66666 where user_agent_id = 22222222 ";
+            log.info("### update -> {} , res -> {}", jdbcDataSource.update(update2), jdbcDataSource.queryMap(sql));
+            try {
+                jdbcDataSource.beginTX(status2 -> {
+                    String update3 = "update tb_order_main set store_id = 444444 where user_agent_id = 22222222 ";
+                    log.info("### update -> {} , res -> {}", jdbcDataSource.update(update3), jdbcDataSource.queryMap(sql));
+                    return null;
+                }, TransactionDefinition.PROPAGATION_NEVER);
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.error("异常,user_agent_id -> {}", queryMap.get("user_agent_id"));
+                log.info("### 当前修改数据回滚 -> {}", jdbcDataSource.queryMap(sql));
+                log.error("###     数据回滚为  -> {}", queryMap);
+                throw e;
+            }
+            return null;
+        }, TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        log.info("### res -> {}", jdbcDataSource.queryMap(sql));
+    }
+
+    @Test
     public void updateTable() {
         String sql = "select * from tb_order_main where user_agent_id = 22222222";
         log.info("### res -> {}", jdbcDataSource.queryMap(sql));
         Map<String, Object> paramMap = new HashMap<>();
-        paramMap.put("siteId", 0);
-        paramMap.put("storeId", 5644456);
+        paramMap.put("siteId", 2222);
+        paramMap.put("storeId", 1111);
         Map<String, Object> where = new HashMap<>();
         where.put("user_agent_id", 22222222);
+        where.put("order_id", 1149635824560267265L);
         int i = jdbcDataSource.beginTX(status -> jdbcDataSource.updateTable("tb_order_main", paramMap, where, true));
         log.info("### update -> {}  res -> {}", i, jdbcDataSource.queryMap(sql));
     }
@@ -132,5 +160,15 @@ public class JdbcDataSourceTest {
         queryByPage.addOrderFieldMapping("storeId", "store_id");
         queryByPage.addOrderField("storeId", QueryBySort.DESC);
         log.info("### res -> {}", jdbcDataSource.queryBySort(sql, queryByPage));
+    }
+
+    @Test
+    public void queryByPage() {
+        String sql = "select * from tb_order_main where user_agent_id=:userAgentId";
+        Map<String, Object> where = new HashMap<>();
+        where.put("userAgentId", 22222222);
+        QueryByPage page = new QueryByPage();
+        IPage<Map<String, Object>> query = jdbcDataSource.queryByPage(sql, page, where, true);
+        log.info("### res -> {}", query.getRecords().toString());
     }
 }
