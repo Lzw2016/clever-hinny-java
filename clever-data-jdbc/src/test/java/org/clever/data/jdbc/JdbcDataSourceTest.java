@@ -63,19 +63,22 @@ public class JdbcDataSourceTest {
 
     @Test
     public void transaction() {
-        String sql = "select * from tb_order_main where site_id=1111111112 limit 1";
+        String sql = "select * from tb_order_main where site_id=:siteId and store_id=:storeId limit 1";
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("siteId", 1111111112);
+        paramMap.put("storeId", 1119829651059834882L);
 
         // 简单事务
-        Map<String, Object> data = jdbcDataSource.beginTX(status -> jdbcDataSource.queryMap(sql));
+        Map<String, Object> data = jdbcDataSource.beginTX(status -> jdbcDataSource.queryMap(sql, paramMap));
         log.info("### data -> {}", data);
 
         // 嵌套事务
         jdbcDataSource.beginReadOnlyTX(status1 -> {
-            Map<String, Object> dataTmp1 = jdbcDataSource.queryMap(sql);
+            Map<String, Object> dataTmp1 = jdbcDataSource.queryMap(sql, paramMap);
             log.info("### dataTmp1 -> {}", dataTmp1.size());
             // 开启新事物
             jdbcDataSource.beginTX(status2 -> {
-                Map<String, Object> dataTmp2 = jdbcDataSource.queryMap(sql);
+                Map<String, Object> dataTmp2 = jdbcDataSource.queryMap(sql, paramMap);
                 log.info("### dataTmp2 -> {}", dataTmp2.size());
                 return null;
             }, TransactionDefinition.PROPAGATION_REQUIRES_NEW);
