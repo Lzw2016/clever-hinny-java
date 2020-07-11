@@ -899,11 +899,14 @@ public class JdbcDataSource extends AbstractDataSource {
 
     @Override
     public void close() throws Exception {
+        if (closed) {
+            return;
+        }
         if (dataSource instanceof HikariDataSource) {
             HikariDataSource hikariDataSource = (HikariDataSource) dataSource;
             if (!hikariDataSource.isClosed()) {
-                hikariDataSource.close();
                 super.close();
+                hikariDataSource.close();
             }
         } else {
             throw new UnsupportedOperationException("当前数据源不支持close");
