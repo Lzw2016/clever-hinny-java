@@ -17,7 +17,7 @@ public class SqlLoggerUtils {
     private static final String Log_Parameters /*  */ = "==>  Parameters: {}";
     private static final String Log_Batch_Param /* */ = "==>  BatchParam: {}";
     private static final String Log_Total /*       */ = "<==       Total: {}";
-    private static final String Log_Update_Total /**/ = "<== UpdateTotal: {}";
+    private static final String Log_Update_Total /**/ = "<==     Updated: {}";
     /**
      * 忽略的包前缀
      */
