@@ -30,6 +30,9 @@ public class SqlLoggerUtils {
      * @param paramMap sql参数
      */
     public static void printfSql(String sql, Map<String, Object> paramMap) {
+        if (!log.isDebugEnabled()) {
+            return;
+        }
         if (sql != null && (sql.contains("\r\n") || sql.contains("\n"))) {
             sql = sql.replaceAll("\r\n", " ").replaceAll("\n", " ");
         }
@@ -47,6 +50,9 @@ public class SqlLoggerUtils {
      * @param paramMapList 参数数组
      */
     public static void printfSql(String sql, Collection<Map<String, Object>> paramMapList) {
+        if (!log.isDebugEnabled()) {
+            return;
+        }
         if (sql != null && (sql.contains("\r\n") || sql.contains("\n"))) {
             sql = sql.replaceAll("\r\n", " ").replaceAll("\n", " ");
         }
@@ -57,32 +63,6 @@ public class SqlLoggerUtils {
                 log.debug(Log_Batch_Param, paramMapStr);
             }
         }
-    }
-
-    private static String getParamMapStr(Map<String, Object> paramMap) {
-        if (paramMap == null) {
-            return null;
-        }
-        StringBuilder sb = new StringBuilder(paramMap.size() * 15 + 32);
-        for (Map.Entry<String, Object> paramEntry : paramMap.entrySet()) {
-            String name = paramEntry.getKey();
-            Object value = paramEntry.getValue();
-            if (sb.length() > 0) {
-                sb.append(", ");
-            }
-            sb.append(name).append("=").append(value);
-            if (value != null) {
-                String valueType = value.getClass().getName();
-                for (String packagePrefix : Ignore_Package_Prefix) {
-                    if (valueType.startsWith(packagePrefix)) {
-                        valueType = value.getClass().getSimpleName();
-                        break;
-                    }
-                }
-                sb.append("(").append(valueType).append(")");
-            }
-        }
-        return sb.toString();
     }
 
     /**
@@ -146,5 +126,31 @@ public class SqlLoggerUtils {
      */
     public static void printfUpdateTotal(int[] totals) {
         log.debug(Log_Update_Total, Arrays.toString(totals));
+    }
+
+    private static String getParamMapStr(Map<String, Object> paramMap) {
+        if (paramMap == null) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder(paramMap.size() * 15 + 32);
+        for (Map.Entry<String, Object> paramEntry : paramMap.entrySet()) {
+            String name = paramEntry.getKey();
+            Object value = paramEntry.getValue();
+            if (sb.length() > 0) {
+                sb.append(", ");
+            }
+            sb.append(name).append("=").append(value);
+            if (value != null) {
+                String valueType = value.getClass().getName();
+                for (String packagePrefix : Ignore_Package_Prefix) {
+                    if (valueType.startsWith(packagePrefix)) {
+                        valueType = value.getClass().getSimpleName();
+                        break;
+                    }
+                }
+                sb.append("(").append(valueType).append(")");
+            }
+        }
+        return sb.toString();
     }
 }
