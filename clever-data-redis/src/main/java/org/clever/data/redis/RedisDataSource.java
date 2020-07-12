@@ -132,9 +132,11 @@ public class RedisDataSource extends AbstractDataSource {
     /**
      * 校验数据源是否可用
      */
-    private void initCheck() {
+    @Override
+    public void initCheck() {
         RedisCallback<Void> callback = connection -> {
-            connection.ping();
+            String res = connection.ping();
+            log.debug("ping -> {}", res);
             return null;
         };
         try {
@@ -142,6 +144,15 @@ public class RedisDataSource extends AbstractDataSource {
         } catch (Exception e) {
             throw new RuntimeException("RedisDataSource创建失败", e);
         }
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (closed) {
+            return;
+        }
+        super.close();
+        lettuceClientBuilder.destroy();
     }
 
     // --------------------------------------------------------------------------------------------
@@ -2005,6 +2016,7 @@ public class RedisDataSource extends AbstractDataSource {
         return redisTemplate.opsForGeo().position(key, members.toArray());
     }
 
+    // 事务，批量处理
     // TODO geo 地理位置操作
 
     // TODO redisTemplate.execute()
@@ -2012,7 +2024,7 @@ public class RedisDataSource extends AbstractDataSource {
     // TODO redisTemplate.executePipelined()
 
     // --------------------------------------------------------------------------------------------
-    // 事务，批量处理，其他 操作
+    // 其它 操作
     // --------------------------------------------------------------------------------------------
 
     private RedisGeoCommands.GeoLocation<Object> getGeoLocation(PointValue pointValue) {
@@ -2023,14 +2035,5 @@ public class RedisDataSource extends AbstractDataSource {
     private ZSetOperations.TypedTuple<Object> getZSetValue(ZSetValue zSetValue) {
         Assert.notNull(zSetValue, "ZSetValue不能为空");
         return new DefaultTypedTuple<>(zSetValue.getValue(), zSetValue.getScore());
-    }
-
-    @Override
-    public void close() throws Exception {
-        if (closed) {
-            return;
-        }
-        super.close();
-        lettuceClientBuilder.destroy();
     }
 }

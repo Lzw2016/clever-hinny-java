@@ -137,13 +137,6 @@ public class JdbcDataSource extends AbstractDataSource {
     }
 
     /**
-     * 校验数据源是否可用
-     */
-    private void initCheck() {
-        Assert.notNull(dbType, "DbType不能为空");
-    }
-
-    /**
      * 获取数据库类型
      */
     public DbType getDbType() {
@@ -162,6 +155,43 @@ public class JdbcDataSource extends AbstractDataSource {
             }
         }
     }
+
+    /**
+     * 校验数据源是否可用
+     */
+    @Override
+    public void initCheck() {
+        Assert.notNull(dbType, "DbType不能为空");
+    }
+
+    @Override
+    public boolean isClosed() {
+        if (dataSource instanceof HikariDataSource) {
+            HikariDataSource hikariDataSource = (HikariDataSource) dataSource;
+            return hikariDataSource.isClosed();
+        }
+        return closed;
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (closed) {
+            return;
+        }
+        if (dataSource instanceof HikariDataSource) {
+            HikariDataSource hikariDataSource = (HikariDataSource) dataSource;
+            if (!hikariDataSource.isClosed()) {
+                super.close();
+                hikariDataSource.close();
+            }
+        } else {
+            throw new UnsupportedOperationException("当前数据源不支持close");
+        }
+    }
+
+    // --------------------------------------------------------------------------------------------
+    // Query 操作
+    // --------------------------------------------------------------------------------------------
 
     /**
      * 查询一条数据，返回一个Map
@@ -441,198 +471,6 @@ public class JdbcDataSource extends AbstractDataSource {
     }
 
     /**
-     * 执行更新SQL，返回更新影响数据量
-     *
-     * @param sql      sql脚本，参数格式[:param]
-     * @param paramMap 参数(可选)，参数格式[:param]
-     */
-    public int update(String sql, Map<String, Object> paramMap) {
-        Assert.hasText(sql, "sql不能为空");
-        sql = StringUtils.trim(sql);
-        SqlLoggerUtils.printfSql(sql, paramMap);
-        int res = jdbcTemplate.update(sql, paramMap);
-        SqlLoggerUtils.printfUpdateTotal(res);
-        return res;
-    }
-
-    /**
-     * 执行更新SQL，返回更新影响数据量
-     *
-     * @param sql sql脚本，参数格式[:param]
-     */
-    public int update(String sql) {
-        return update(sql, Collections.emptyMap());
-    }
-
-    /**
-     * 更新数据库表数据
-     *
-     * @param tableName         表名称
-     * @param fields            更新字段值
-     * @param whereMap          更新条件字段(只支持=，and条件)
-     * @param camelToUnderscore 字段驼峰转下划线(可选)
-     */
-    public int updateTable(String tableName, Map<String, Object> fields, Map<String, Object> whereMap, boolean camelToUnderscore) {
-        Assert.hasText(tableName, "更新表名称不能为空");
-        Assert.notEmpty(fields, "更新字段不能为空");
-        Assert.notEmpty(whereMap, "更新条件不能为空");
-        tableName = StringUtils.trim(tableName);
-        TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.updateSql(tableName, fields, whereMap, camelToUnderscore);
-        String sql = StringUtils.trim(tupleTow.getValue1());
-        return update(sql, tupleTow.getValue2());
-    }
-
-    /**
-     * 更新数据库表数据
-     *
-     * @param tableName 表名称
-     * @param fields    更新字段值
-     * @param whereMap  更新条件字段(只支持=，and条件)
-     */
-    public int updateTable(String tableName, Map<String, Object> fields, Map<String, Object> whereMap) {
-        return updateTable(tableName, fields, whereMap, false);
-    }
-
-    /**
-     * 更新数据库表数据
-     *
-     * @param tableName         表名称
-     * @param fields            更新字段值
-     * @param where             自定义where条件(不用写where关键字)
-     * @param camelToUnderscore 字段驼峰转下划线(可选)
-     */
-    public int updateTable(String tableName, Map<String, Object> fields, String where, boolean camelToUnderscore) {
-        Assert.hasText(tableName, "更新表名称不能为空");
-        Assert.notEmpty(fields, "更新字段不能为空");
-        Assert.hasText(where, "更新条件不能为空");
-        tableName = StringUtils.trim(tableName);
-        TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.updateSql(tableName, fields, null, camelToUnderscore);
-        String sql = String.format("%s where %s", tupleTow.getValue1(), StringUtils.trim(where));
-        return update(sql, tupleTow.getValue2());
-    }
-
-    /**
-     * 更新数据库表数据
-     *
-     * @param tableName 表名称
-     * @param fields    更新字段值
-     * @param where     自定义where条件(不用写where关键字)
-     */
-    public int updateTable(String tableName, Map<String, Object> fields, String where) {
-        return updateTable(tableName, fields, where, false);
-    }
-
-    /**
-     * 执行insert SQL，返回数据库自增主键值和新增数据量
-     *
-     * @param sql      sql脚本，参数格式[:param]
-     * @param paramMap 参数(可选)，参数格式[:param]
-     */
-    public InsertResult insert(String sql, Map<String, Object> paramMap) {
-        Assert.hasText(sql, "sql不能为空");
-        sql = StringUtils.trim(sql);
-        SqlParameterSource sqlParameterSource;
-        if (paramMap != null && paramMap.size() > 0) {
-            sqlParameterSource = new MapSqlParameterSource(paramMap);
-        } else {
-            sqlParameterSource = new EmptySqlParameterSource();
-        }
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        SqlLoggerUtils.printfSql(sql, paramMap);
-        int insertCount = jdbcTemplate.update(sql, sqlParameterSource, keyHolder);
-        SqlLoggerUtils.printfUpdateTotal(insertCount);
-        List<Map<String, Object>> keysList = keyHolder.getKeyList();
-        InsertResult.KeyHolder resultKeyHolder = new InsertResult.KeyHolder(keysList);
-        return new InsertResult(insertCount, resultKeyHolder);
-    }
-
-    /**
-     * 执行insert SQL，返回数据库自增主键值和新增数据量
-     *
-     * @param sql sql脚本，参数格式[:param]
-     */
-    public InsertResult insert(String sql) {
-        return insert(sql, null);
-    }
-
-    /**
-     * 数据插入到表
-     *
-     * @param tableName         表名称
-     * @param fields            字段名
-     * @param camelToUnderscore 字段驼峰转下划线(可选)
-     */
-    public InsertResult insertTable(String tableName, Map<String, Object> fields, boolean camelToUnderscore) {
-        Assert.hasText(tableName, "插入表名称不能为空");
-        Assert.notEmpty(fields, "插入字段不能为空");
-        tableName = StringUtils.trim(tableName);
-        TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.insertSql(tableName, fields, camelToUnderscore);
-        return insert(tupleTow.getValue1(), tupleTow.getValue2());
-    }
-
-    /**
-     * 数据插入到表
-     *
-     * @param tableName 表名称
-     * @param fields    字段名
-     */
-    public InsertResult insertTable(String tableName, Map<String, Object> fields) {
-        return insertTable(tableName, fields, false);
-    }
-
-    /**
-     * 数据插入到表
-     *
-     * @param tableName         表名称
-     * @param fieldsList        字段名集合
-     * @param camelToUnderscore 字段驼峰转下划线(可选)
-     */
-    public List<InsertResult> insertTables(String tableName, Collection<Map<String, Object>> fieldsList, boolean camelToUnderscore) {
-        Assert.hasText(tableName, "插入表名称不能为空");
-        Assert.notEmpty(fieldsList, "插入字段不能为空");
-        tableName = StringUtils.trim(tableName);
-        List<InsertResult> resultList = new ArrayList<>(fieldsList.size());
-        for (Map<String, Object> fields : fieldsList) {
-            TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.insertSql(tableName, fields, camelToUnderscore);
-            InsertResult insertResult = insert(tupleTow.getValue1(), tupleTow.getValue2());
-            resultList.add(insertResult);
-        }
-        return resultList;
-    }
-
-    /**
-     * 数据插入到表
-     *
-     * @param tableName  表名称
-     * @param fieldsList 字段名集合
-     */
-    public List<InsertResult> insertTables(String tableName, Collection<Map<String, Object>> fieldsList) {
-        return insertTables(tableName, fieldsList, false);
-    }
-
-    /**
-     * 批量执行更新SQL，返回更新影响数据量
-     *
-     * @param sql          sql脚本，参数格式[:param]
-     * @param paramMapList 参数数组，参数格式[:param]
-     */
-    public int[] batchUpdate(String sql, Collection<Map<String, Object>> paramMapList) {
-        Assert.hasText(sql, "sql不能为空");
-        Assert.notNull(paramMapList, "参数数组不能为空");
-        sql = StringUtils.trim(sql);
-        SqlParameterSource[] paramMapArray = new SqlParameterSource[paramMapList.size()];
-        int index = 0;
-        for (Map<String, Object> map : paramMapList) {
-            paramMapArray[index] = new MapSqlParameterSource(map);
-            index++;
-        }
-        SqlLoggerUtils.printfSql(sql, paramMapList);
-        int[] res = jdbcTemplate.batchUpdate(sql, paramMapArray);
-        SqlLoggerUtils.printfUpdateTotal(res);
-        return res;
-    }
-
-    /**
      * 排序查询
      *
      * @param sql      sql脚本，参数格式[:param]
@@ -729,6 +567,210 @@ public class JdbcDataSource extends AbstractDataSource {
     public IPage<Map<String, Object>> queryByPage(String sql, QueryByPage pagination) {
         return queryByPage(sql, pagination, new HashMap<>(2), true);
     }
+
+    // --------------------------------------------------------------------------------------------
+    // Update 操作
+    // --------------------------------------------------------------------------------------------
+
+    /**
+     * 执行更新SQL，返回更新影响数据量
+     *
+     * @param sql      sql脚本，参数格式[:param]
+     * @param paramMap 参数(可选)，参数格式[:param]
+     */
+    public int update(String sql, Map<String, Object> paramMap) {
+        Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
+        SqlLoggerUtils.printfSql(sql, paramMap);
+        int res = jdbcTemplate.update(sql, paramMap);
+        SqlLoggerUtils.printfUpdateTotal(res);
+        return res;
+    }
+
+    /**
+     * 执行更新SQL，返回更新影响数据量
+     *
+     * @param sql sql脚本，参数格式[:param]
+     */
+    public int update(String sql) {
+        return update(sql, Collections.emptyMap());
+    }
+
+    /**
+     * 更新数据库表数据
+     *
+     * @param tableName         表名称
+     * @param fields            更新字段值
+     * @param whereMap          更新条件字段(只支持=，and条件)
+     * @param camelToUnderscore 字段驼峰转下划线(可选)
+     */
+    public int updateTable(String tableName, Map<String, Object> fields, Map<String, Object> whereMap, boolean camelToUnderscore) {
+        Assert.hasText(tableName, "更新表名称不能为空");
+        Assert.notEmpty(fields, "更新字段不能为空");
+        Assert.notEmpty(whereMap, "更新条件不能为空");
+        tableName = StringUtils.trim(tableName);
+        TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.updateSql(tableName, fields, whereMap, camelToUnderscore);
+        String sql = StringUtils.trim(tupleTow.getValue1());
+        return update(sql, tupleTow.getValue2());
+    }
+
+    /**
+     * 更新数据库表数据
+     *
+     * @param tableName 表名称
+     * @param fields    更新字段值
+     * @param whereMap  更新条件字段(只支持=，and条件)
+     */
+    public int updateTable(String tableName, Map<String, Object> fields, Map<String, Object> whereMap) {
+        return updateTable(tableName, fields, whereMap, false);
+    }
+
+    /**
+     * 更新数据库表数据
+     *
+     * @param tableName         表名称
+     * @param fields            更新字段值
+     * @param where             自定义where条件(不用写where关键字)
+     * @param camelToUnderscore 字段驼峰转下划线(可选)
+     */
+    public int updateTable(String tableName, Map<String, Object> fields, String where, boolean camelToUnderscore) {
+        Assert.hasText(tableName, "更新表名称不能为空");
+        Assert.notEmpty(fields, "更新字段不能为空");
+        Assert.hasText(where, "更新条件不能为空");
+        tableName = StringUtils.trim(tableName);
+        TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.updateSql(tableName, fields, null, camelToUnderscore);
+        String sql = String.format("%s where %s", tupleTow.getValue1(), StringUtils.trim(where));
+        return update(sql, tupleTow.getValue2());
+    }
+
+    /**
+     * 更新数据库表数据
+     *
+     * @param tableName 表名称
+     * @param fields    更新字段值
+     * @param where     自定义where条件(不用写where关键字)
+     */
+    public int updateTable(String tableName, Map<String, Object> fields, String where) {
+        return updateTable(tableName, fields, where, false);
+    }
+
+    /**
+     * 批量执行更新SQL，返回更新影响数据量
+     *
+     * @param sql          sql脚本，参数格式[:param]
+     * @param paramMapList 参数数组，参数格式[:param]
+     */
+    public int[] batchUpdate(String sql, Collection<Map<String, Object>> paramMapList) {
+        Assert.hasText(sql, "sql不能为空");
+        Assert.notNull(paramMapList, "参数数组不能为空");
+        sql = StringUtils.trim(sql);
+        SqlParameterSource[] paramMapArray = new SqlParameterSource[paramMapList.size()];
+        int index = 0;
+        for (Map<String, Object> map : paramMapList) {
+            paramMapArray[index] = new MapSqlParameterSource(map);
+            index++;
+        }
+        SqlLoggerUtils.printfSql(sql, paramMapList);
+        int[] res = jdbcTemplate.batchUpdate(sql, paramMapArray);
+        SqlLoggerUtils.printfUpdateTotal(res);
+        return res;
+    }
+
+    // --------------------------------------------------------------------------------------------
+    // Insert 操作
+    // --------------------------------------------------------------------------------------------
+
+    /**
+     * 执行insert SQL，返回数据库自增主键值和新增数据量
+     *
+     * @param sql      sql脚本，参数格式[:param]
+     * @param paramMap 参数(可选)，参数格式[:param]
+     */
+    public InsertResult insert(String sql, Map<String, Object> paramMap) {
+        Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
+        SqlParameterSource sqlParameterSource;
+        if (paramMap != null && paramMap.size() > 0) {
+            sqlParameterSource = new MapSqlParameterSource(paramMap);
+        } else {
+            sqlParameterSource = new EmptySqlParameterSource();
+        }
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        SqlLoggerUtils.printfSql(sql, paramMap);
+        int insertCount = jdbcTemplate.update(sql, sqlParameterSource, keyHolder);
+        SqlLoggerUtils.printfUpdateTotal(insertCount);
+        List<Map<String, Object>> keysList = keyHolder.getKeyList();
+        InsertResult.KeyHolder resultKeyHolder = new InsertResult.KeyHolder(keysList);
+        return new InsertResult(insertCount, resultKeyHolder);
+    }
+
+    /**
+     * 执行insert SQL，返回数据库自增主键值和新增数据量
+     *
+     * @param sql sql脚本，参数格式[:param]
+     */
+    public InsertResult insert(String sql) {
+        return insert(sql, null);
+    }
+
+    /**
+     * 数据插入到表
+     *
+     * @param tableName         表名称
+     * @param fields            字段名
+     * @param camelToUnderscore 字段驼峰转下划线(可选)
+     */
+    public InsertResult insertTable(String tableName, Map<String, Object> fields, boolean camelToUnderscore) {
+        Assert.hasText(tableName, "插入表名称不能为空");
+        Assert.notEmpty(fields, "插入字段不能为空");
+        tableName = StringUtils.trim(tableName);
+        TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.insertSql(tableName, fields, camelToUnderscore);
+        return insert(tupleTow.getValue1(), tupleTow.getValue2());
+    }
+
+    /**
+     * 数据插入到表
+     *
+     * @param tableName 表名称
+     * @param fields    字段名
+     */
+    public InsertResult insertTable(String tableName, Map<String, Object> fields) {
+        return insertTable(tableName, fields, false);
+    }
+
+    /**
+     * 数据插入到表
+     *
+     * @param tableName         表名称
+     * @param fieldsList        字段名集合
+     * @param camelToUnderscore 字段驼峰转下划线(可选)
+     */
+    public List<InsertResult> insertTables(String tableName, Collection<Map<String, Object>> fieldsList, boolean camelToUnderscore) {
+        Assert.hasText(tableName, "插入表名称不能为空");
+        Assert.notEmpty(fieldsList, "插入字段不能为空");
+        tableName = StringUtils.trim(tableName);
+        List<InsertResult> resultList = new ArrayList<>(fieldsList.size());
+        for (Map<String, Object> fields : fieldsList) {
+            TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.insertSql(tableName, fields, camelToUnderscore);
+            InsertResult insertResult = insert(tupleTow.getValue1(), tupleTow.getValue2());
+            resultList.add(insertResult);
+        }
+        return resultList;
+    }
+
+    /**
+     * 数据插入到表
+     *
+     * @param tableName  表名称
+     * @param fieldsList 字段名集合
+     */
+    public List<InsertResult> insertTables(String tableName, Collection<Map<String, Object>> fieldsList) {
+        return insertTables(tableName, fieldsList, false);
+    }
+
+    // --------------------------------------------------------------------------------------------
+    //  事务操作
+    // --------------------------------------------------------------------------------------------
 
     /**
      * 在事务内支持操作
@@ -847,6 +889,10 @@ public class JdbcDataSource extends AbstractDataSource {
         return beginTX(action, TransactionDefinition.PROPAGATION_REQUIRED, -1, TransactionDefinition.ISOLATION_DEFAULT, true);
     }
 
+    // --------------------------------------------------------------------------------------------
+    //  其它 操作
+    // --------------------------------------------------------------------------------------------
+
     /**
      * 创建事务执行模板对象
      *
@@ -881,29 +927,4 @@ public class JdbcDataSource extends AbstractDataSource {
     }
 
     // TODO 动态sql支持(mybatis标准?)
-
-    @Override
-    public boolean isClosed() {
-        if (dataSource instanceof HikariDataSource) {
-            HikariDataSource hikariDataSource = (HikariDataSource) dataSource;
-            return hikariDataSource.isClosed();
-        }
-        return closed;
-    }
-
-    @Override
-    public void close() throws Exception {
-        if (closed) {
-            return;
-        }
-        if (dataSource instanceof HikariDataSource) {
-            HikariDataSource hikariDataSource = (HikariDataSource) dataSource;
-            if (!hikariDataSource.isClosed()) {
-                super.close();
-                hikariDataSource.close();
-            }
-        } else {
-            throw new UnsupportedOperationException("当前数据源不支持close");
-        }
-    }
 }

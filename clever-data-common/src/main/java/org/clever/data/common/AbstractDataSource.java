@@ -11,6 +11,12 @@ public abstract class AbstractDataSource implements AutoCloseable {
     protected boolean closed = false;
 
     /**
+     * 校验数据源是否可用
+     */
+    public void initCheck() {
+    }
+
+    /**
      * 当前数据源是否关闭
      */
     public boolean isClosed() {
