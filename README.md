@@ -7,7 +7,7 @@
 
 ## clever-data-jdbc
 
-1. 主要功能：操作关系型数据
+1. 主要功能：操作关系型数据库
 1. 主要API: JdbcDataSource
 
 #### 使用demo
@@ -50,7 +50,7 @@ public void demo() {
 
 ## clever-data-redis
 
-1. 主要功能：操作Redis数据
+1. 主要功能：操作Redis数据库
 1. 主要API: RedisDataSource
 
 #### 使用demo
@@ -80,6 +80,36 @@ public void demo() {
 ```
 
 ## clever-data-elasticsearch
+
+1. 主要功能：操作ElasticSearch数据库
+1. 主要API: ESDataSource
+
+```java
+public void demo() {
+    JestProperties properties = new JestProperties();
+    properties.setMultiThreaded(true);
+    properties.setConnectionTimeout(Duration.ofSeconds(30));
+    // ...省略配置
+    esDataSource = new ESDataSource(properties);
+    // 使用demo
+    String index = "test-ymx";
+    String type = "role";
+    String id = "1";
+    DocRes docRes = esDataSource.getData(index, id);
+    log.info("### docRes -> {}", docRes.getJestResult().getJsonObject());
+    Map<String, Object> source = new HashMap<>();
+    source.put("name", UUID.randomUUID().toString());
+    source.put("description", "测试");
+    source.put("create_at", new Date());
+    source.put("int", 123);
+    source.put("boolean", false);
+    source.put("double", 12.36D);
+    docRes = esDataSource.addDoc(index, type, source);
+    log.info("### docRes -> {}", docRes.getJestResult().getJsonObject());
+    // 关闭数据源
+    esDataSource.close();
+}
+```
 
 ## clever-data-rabbitmq
 
