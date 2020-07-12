@@ -5,14 +5,13 @@ import com.zaxxer.hikari.HikariConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.clever.common.model.request.QueryByPage;
 import org.clever.common.model.request.QueryBySort;
+import org.clever.data.jdbc.support.InsertResult;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.transaction.TransactionDefinition;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 作者：lizw <br/>
@@ -144,6 +143,28 @@ public class JdbcDataSourceTest {
     }
 
     @Test
+    public void batchUpdate() {
+        String sql = "select * from tb_order_main where user_agent_id=:userAgentId and site_id=:siteId";
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("userAgentId", 22222222);
+        paramMap.put("siteId", 2222);
+        log.info("### res -> {}", jdbcDataSource.queryList(sql, paramMap));
+
+        Map<String, Object> paramMap2 = new HashMap<>();
+        paramMap2.put("userAgentId", 51233223);
+        paramMap2.put("siteId", 1111111112);
+
+        String update = "update tb_order_main set store_no=:storeNo where user_agent_id=:userAgentId and site_id=:siteId";
+        paramMap.put("storeNo", "kjskjdls");
+        paramMap2.put("storeNo", "kjskjdls222222222");
+        Collection<Map<String, Object>> coll = new ArrayList<>();
+        coll.add(paramMap);
+        coll.add(paramMap2);
+        int[] i = jdbcDataSource.beginTX(status -> jdbcDataSource.batchUpdate(update, coll), TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        log.info("### update -> {}  res -> {}", i, jdbcDataSource.queryList(sql, paramMap));
+    }
+
+    @Test
     public void queryPage() {
         String sql = "select * from tb_order_main";
         QueryByPage pagination = new QueryByPage();
@@ -170,5 +191,55 @@ public class JdbcDataSourceTest {
         QueryByPage page = new QueryByPage();
         IPage<Map<String, Object>> query = jdbcDataSource.queryByPage(sql, page, where, true);
         log.info("### res -> {}", query.getRecords().toString());
+    }
+
+    @Test
+    public void insertTable() {
+        Map<String, Object> insert = new HashMap<>();
+        insert.put("name", "叶茂祥");
+        insert.put("age", 21);
+        jdbcDataSource.beginTX(status -> {
+            InsertResult insertTable = jdbcDataSource.insertTable("test", insert);
+            log.info("### res -> {} ,主键值key > {}", insertTable.getInsertCount(), insertTable.getKeyHolderValue());
+            return null;
+        });
+        String sql = "select * from test where name = '叶茂祥'";
+        // TODO query可以增加一个 根据  selectFilelds(需要查询的字段) tableName(查询的表名称)  fields(where参数值)  的方法提供便利吗?
+        log.info("###  res -> {}", jdbcDataSource.queryMap(sql));
+    }
+
+    @Test
+    public void insert() {
+        String sql = "insert into test (name,age) values (:name , :age)";
+        Map<String, Object> insert = new HashMap<>();
+        insert.put("name", "危乐");
+        insert.put("age", 15);
+        jdbcDataSource.beginTX(status -> {
+            InsertResult insertTable = jdbcDataSource.insert(sql, insert);
+            log.info("### res -> {} ,主键值key > {}", insertTable.getInsertCount(), insertTable.getKeyHolderValue());
+            return null;
+        });
+        String find = "select * from test where name = :name and age =:age";
+        log.info("###  res -> {}", jdbcDataSource.queryMap(find, insert));
+    }
+
+    @Test
+    public void insertTables() {
+        Map<String, Object> insert1 = new HashMap<>();
+        insert1.put("name", "吴晓峰");
+        insert1.put("age", 23);
+        Map<String, Object> insert2 = new HashMap<>();
+        insert2.put("name", "危乐");
+        insert2.put("age", 15);
+        Collection<Map<String, Object>> coll = new ArrayList<>();
+        coll.add(insert1);
+        coll.add(insert2);
+        jdbcDataSource.beginTX(status -> {
+            List<InsertResult> insertTable = jdbcDataSource.insertTables("test", coll);
+            insertTable.forEach(e -> log.info("### res -> {} ,主键值key > {}", e.getInsertCount(), e.getKeyHolderValue()));
+            return null;
+        });
+        String find = "select * from test where name = :name and age =:age";
+        coll.forEach(e -> log.info("###  res -> {}", jdbcDataSource.queryMap(find, e)));
     }
 }
