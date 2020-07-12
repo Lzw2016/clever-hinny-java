@@ -6,6 +6,7 @@
 //import org.apache.kafka.common.Metric;
 //import org.apache.kafka.common.MetricName;
 //import org.apache.kafka.common.serialization.StringSerializer;
+//import org.clever.data.common.AbstractDataSource;
 //import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 //import org.springframework.kafka.core.KafkaTemplate;
 //import org.springframework.kafka.support.SendResult;
@@ -37,7 +38,7 @@
 //
 //    private final KafkaConfig kafkaConfig;
 //    private final DefaultKafkaProducerFactory<String, String> producerFactory;
-//    private final KafkaTemplate<String, String> kafkaTemplate;
+//    private final KafkaTemplate<String, String> kafkaTemplate; //
 //    private final AdminClient adminClient;
 //
 //    public KafkaDataSource(KafkaConfig kafkaConfig) {
@@ -52,10 +53,6 @@
 //        propsForAdmin.put(ProducerConfig.RETRIES_CONFIG, (kafkaConfig.getRetries() == null ? 0 : kafkaConfig.getRetries()));
 //        propsForAdmin.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, kafkaConfig.getRequestTimeout() == null ? 100000 : kafkaConfig.getRequestTimeout());
 //        adminClient = AdminClient.create(propsForAdmin);
-//    }
-//
-//    public KafkaConfig getKafkaConfig() {
-//        return CopyConfigUtils.copyConfig(kafkaConfig);
 //    }
 //
 //    public Map<MetricName, ? extends Metric> getMetrics() {
@@ -96,10 +93,5 @@
 //        if (exception != null) {
 //            throw exception;
 //        }
-//    }
-//
-//    @Override
-//    public String getDataSourceId() {
-//        return kafkaConfig.getDataSourceId();
 //    }
 //}
