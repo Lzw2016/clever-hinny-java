@@ -75,6 +75,8 @@ public class JestClientBuilder {
         this.jestClient = jestClient;
     }
 
+    // --------------------------------------------------------------------------------------------------------------------------------------------------------- JestAutoConfiguration
+
     private JestClient initJestClient() {
         if (jestClient != null) {
             return jestClient;

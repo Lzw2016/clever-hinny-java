@@ -113,4 +113,7 @@ public void demo() {
 
 ## clever-data-rabbitmq
 
+1. 主要功能：操作RabbitMQ消息队列
+1. 主要API: RedisDataSource
+
 ## clever-data-kafka
