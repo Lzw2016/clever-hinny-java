@@ -117,3 +117,6 @@ public void demo() {
 1. 主要API: RedisDataSource
 
 ## clever-data-kafka
+
+1. 主要功能：操作Kafka消息队列
+1. 主要API: KafkaDataSource

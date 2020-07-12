@@ -61,6 +61,7 @@ public class RabbitClientBuilder {
         }
         this.rabbitTemplate = rabbitTemplate(this.connectionFactory);
         this.rabbitAdmin = amqpAdmin(this.connectionFactory);
+        initRabbitAdmin();
         this.rabbitMessagingTemplate = rabbitMessagingTemplate(this.rabbitTemplate);
     }
 
@@ -85,6 +86,7 @@ public class RabbitClientBuilder {
         this.connectionFactory = connectionFactory;
         this.rabbitTemplate = rabbitTemplate(this.connectionFactory);
         this.rabbitAdmin = amqpAdmin(this.connectionFactory);
+        initRabbitAdmin();
         this.rabbitMessagingTemplate = rabbitMessagingTemplate(this.rabbitTemplate);
     }
 
@@ -97,6 +99,7 @@ public class RabbitClientBuilder {
         this.connectionFactory = rabbitTemplate.getConnectionFactory();
         this.rabbitTemplate = rabbitTemplate;
         this.rabbitAdmin = amqpAdmin(this.connectionFactory);
+        initRabbitAdmin();
         this.rabbitMessagingTemplate = rabbitMessagingTemplate(this.rabbitTemplate);
     }
 
@@ -148,6 +151,10 @@ public class RabbitClientBuilder {
                 }
             });
         }
+    }
+
+    private void initRabbitAdmin() {
+        this.rabbitAdmin.afterPropertiesSet();
     }
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------- RabbitAutoConfiguration
