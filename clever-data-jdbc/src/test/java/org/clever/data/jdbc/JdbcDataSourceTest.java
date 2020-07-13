@@ -224,6 +224,15 @@ public class JdbcDataSourceTest {
     }
 
     @Test
+    public void injection() {
+        String sql = "select * from tb_order_main where user_agent_id = :userAgentId";
+        Map<String, Object> select = new HashMap<>();
+        select.put("userAgentId", "22222222 or 1=1");
+        //无法注入😂😂😂😂😂    可以的
+        log.info("###  res -> {}", jdbcDataSource.queryList(sql, select).toString());
+    }
+
+    @Test
     public void insertTables() {
         Map<String, Object> insert1 = new HashMap<>();
         insert1.put("name", "吴晓峰");
@@ -241,5 +250,19 @@ public class JdbcDataSourceTest {
         });
         String find = "select * from test where name = :name and age =:age";
         coll.forEach(e -> log.info("###  res -> {}", jdbcDataSource.queryMap(find, e)));
+    }
+
+    @Test
+    public void queryCursor() {
+        String sql = "select * from tb_order_main ";
+        // fixme 游标查询时返回的 SqlLoggerUtils Total 返回数量始终为60??????
+        jdbcDataSource.query(sql, rowData -> log.info("### 行号 -> {} ,数据 > {}", rowData.getRowCount(), rowData.getRowData().toString()));
+    }
+
+    @Test
+    public void queryCursorList() {
+        String sql = "select * from tb_order_main limit 200";
+        // fixme 游标查询时返回的 SqlLoggerUtils Total 返回数量始终为60??????
+        jdbcDataSource.query(sql, 5, batchData -> log.info("### 行号 -> {} ,数据 > {}", batchData.getRowCount(), batchData.getRowDataList().toString()));
     }
 }
