@@ -226,10 +226,13 @@ public class JdbcDataSourceTest {
     @Test
     public void injection() {
         String sql = "select * from tb_order_main where user_agent_id = :userAgentId";
+        String sql2 = "select * from tb_order_main where store_no = :storeNo";
         Map<String, Object> select = new HashMap<>();
         select.put("userAgentId", "22222222 or 1=1");
+        select.put("storeNo", "22222222 or 1=1");
         //无法注入😂😂😂😂😂    可以的
         log.info("###  res -> {}", jdbcDataSource.queryList(sql, select).toString());
+        log.info("###  res -> {}", jdbcDataSource.queryList(sql2, select).toString());
     }
 
     @Test
