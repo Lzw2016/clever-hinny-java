@@ -425,7 +425,7 @@ public class JdbcDataSource extends AbstractDataSource {
             jdbcTemplate.query(sql, paramMap, batchDataReaderCallback);
         }
         batchDataReaderCallback.processEnd();
-        SqlLoggerUtils.printfTotal(batchDataReaderCallback.getColumnCount());
+        SqlLoggerUtils.printfTotal(batchDataReaderCallback.getRowCount());
     }
 
     /**
@@ -457,7 +457,7 @@ public class JdbcDataSource extends AbstractDataSource {
         } else {
             jdbcTemplate.query(sql, paramMap, rowDataReaderCallback);
         }
-        SqlLoggerUtils.printfTotal(rowDataReaderCallback.getColumnCount());
+        SqlLoggerUtils.printfTotal(rowDataReaderCallback.getRowCount());
     }
 
     /**

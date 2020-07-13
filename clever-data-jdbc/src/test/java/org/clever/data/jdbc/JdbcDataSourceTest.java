@@ -257,15 +257,15 @@ public class JdbcDataSourceTest {
 
     @Test
     public void queryCursor() {
-        String sql = "select * from tb_order_main ";
-        // fixme 游标查询时返回的 SqlLoggerUtils Total 返回数量始终为60??????
+        String sql = "select * from tb_order_main";
+        // fixed 游标查询时返回的 SqlLoggerUtils Total 返回数量始终为60??????
         jdbcDataSource.query(sql, rowData -> log.info("### 行号 -> {} ,数据 > {}", rowData.getRowCount(), rowData.getRowData().toString()));
     }
 
     @Test
     public void queryCursorList() {
-        String sql = "select * from tb_order_main limit 200";
-        // fixme 游标查询时返回的 SqlLoggerUtils Total 返回数量始终为60??????
+        String sql = "select * from tb_order_main limit 266";
+        // fixed 游标查询时返回的 SqlLoggerUtils Total 返回数量始终为60??????
         jdbcDataSource.query(sql, 5, batchData -> log.info("### 行号 -> {} ,数据 > {}", batchData.getRowCount(), batchData.getRowDataList().toString()));
     }
 }
