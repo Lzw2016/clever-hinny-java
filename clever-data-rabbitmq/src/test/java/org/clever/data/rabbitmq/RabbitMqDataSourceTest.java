@@ -41,4 +41,14 @@ public class RabbitMqDataSourceTest {
             rabbitMqDataSource.convertAndSend(null, queueName, "test_aaa_bbb" + i);
         }
     }
+
+    @Test
+    public void t02() throws InterruptedException {
+        String queueName = "lizw-test";
+        rabbitMqDataSource.consumer(queueName, false, 1, (channel, canInterruptConsumer, consumerTag, envelope, properties, body) -> {
+            log.info("### body -> {}", new String(body));
+            channel.basicAck(envelope.getDeliveryTag(), false);
+        });
+        Thread.sleep(10_000);
+    }
 }
