@@ -31,6 +31,9 @@ public class KafkaClientBuilder {
     private final KafkaTemplate<Object, Object> kafkaTemplate;
     @Getter
     private final AdminClient adminClient;
+    @Getter
+    private final ConsumerFactory<Object, Object> consumerFactory;
+
 
     public KafkaClientBuilder(KafkaProperties properties, RecordMessageConverter messageConverter) {
         Assert.notNull(properties, "KafkaProperties不能为空");
@@ -40,6 +43,7 @@ public class KafkaClientBuilder {
         this.producerListener = kafkaProducerListener();
         this.kafkaTemplate = kafkaTemplate(this.producerFactory, this.producerListener);
         this.adminClient = AdminClient.create(this.properties.buildAdminProperties());
+        this.consumerFactory = kafkaConsumerFactory();
     }
 
     public KafkaClientBuilder(KafkaProperties properties) {
@@ -54,6 +58,7 @@ public class KafkaClientBuilder {
         this.producerListener = kafkaProducerListener();
         this.kafkaTemplate = kafkaTemplate(this.producerFactory, this.producerListener);
         this.adminClient = AdminClient.create(producerFactory.getConfigurationProperties());
+        this.consumerFactory = null;
     }
 
     public KafkaClientBuilder(DefaultKafkaProducerFactory<Object, Object> producerFactory) {
@@ -76,7 +81,7 @@ public class KafkaClientBuilder {
         return new LoggingProducerListener<>();
     }
 
-    private ConsumerFactory<?, ?> kafkaConsumerFactory() {
+    private ConsumerFactory<Object, Object> kafkaConsumerFactory() {
         return new DefaultKafkaConsumerFactory<>(this.properties.buildConsumerProperties());
     }
 

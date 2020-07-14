@@ -2,6 +2,7 @@ package org.clever.data.kafka;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Metric;
@@ -11,10 +12,7 @@ import org.apache.kafka.common.TopicPartition;
 import org.clever.data.common.AbstractDataSource;
 import org.clever.data.kafka.support.KafkaClientBuilder;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.kafka.core.KafkaOperations;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.core.*;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.kafka.support.converter.RecordMessageConverter;
 import org.springframework.messaging.Message;
@@ -22,6 +20,7 @@ import org.springframework.util.concurrent.ListenableFuture;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * 作者：lizw <br/>
@@ -34,12 +33,14 @@ public class KafkaDataSource extends AbstractDataSource {
     private final ProducerFactory<Object, Object> producerFactory;
     private final KafkaTemplate<Object, Object> kafkaTemplate;
     private final AdminClient adminClient;
+    private final ConsumerFactory<Object, Object> consumerFactory;
 
     public KafkaDataSource(KafkaProperties properties, RecordMessageConverter messageConverter) {
         this.kafkaClientBuilder = new KafkaClientBuilder(properties, messageConverter);
         this.producerFactory = this.kafkaClientBuilder.getProducerFactory();
         this.kafkaTemplate = this.kafkaClientBuilder.getKafkaTemplate();
         this.adminClient = this.kafkaClientBuilder.getAdminClient();
+        this.consumerFactory = this.kafkaClientBuilder.getConsumerFactory();
     }
 
     public KafkaDataSource(KafkaProperties properties) {
@@ -51,6 +52,7 @@ public class KafkaDataSource extends AbstractDataSource {
         this.producerFactory = this.kafkaClientBuilder.getProducerFactory();
         this.kafkaTemplate = this.kafkaClientBuilder.getKafkaTemplate();
         this.adminClient = this.kafkaClientBuilder.getAdminClient();
+        this.consumerFactory = this.kafkaClientBuilder.getConsumerFactory();
     }
 
     public KafkaDataSource(DefaultKafkaProducerFactory<Object, Object> producerFactory) {
@@ -178,6 +180,25 @@ public class KafkaDataSource extends AbstractDataSource {
     }
 
     // --------------------------------------------------------------------------------------------
+    // TODO 消费数据 操作
+    // --------------------------------------------------------------------------------------------
+
+    /**
+     * 创建消费者
+     *
+     * @param groupId        组id
+     * @param clientIdPrefix 前缀
+     * @param clientIdSuffix 后缀
+     * @param properties     要覆盖的属性
+     */
+    public Consumer<Object, Object> createConsumer(String groupId, String clientIdPrefix, String clientIdSuffix, Properties properties) {
+        checkSupportConsumer();
+        return this.consumerFactory.createConsumer(groupId, clientIdPrefix, clientIdSuffix, properties);
+    }
+
+    // TODO more - 创建消费者
+
+    // --------------------------------------------------------------------------------------------
     // 其他 操作
     // --------------------------------------------------------------------------------------------
 
@@ -264,4 +285,13 @@ public class KafkaDataSource extends AbstractDataSource {
         return kafkaTemplate.metrics();
     }
 
+    // --------------------------------------------------------------------------------------------
+    // 私有 操作
+    // --------------------------------------------------------------------------------------------
+
+    private void checkSupportConsumer() {
+        if (this.consumerFactory == null) {
+            throw new UnsupportedOperationException("当前Kafka数据源不支持消费数据");
+        }
+    }
 }
