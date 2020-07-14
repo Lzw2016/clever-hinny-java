@@ -2,13 +2,17 @@ package org.clever.data.kafka;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
+import org.apache.kafka.common.PartitionInfo;
+import org.apache.kafka.common.TopicPartition;
 import org.clever.data.common.AbstractDataSource;
 import org.clever.data.kafka.support.KafkaClientBuilder;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaOperations;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.SendResult;
@@ -16,6 +20,7 @@ import org.springframework.kafka.support.converter.RecordMessageConverter;
 import org.springframework.messaging.Message;
 import org.springframework.util.concurrent.ListenableFuture;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -73,7 +78,7 @@ public class KafkaDataSource extends AbstractDataSource {
     }
 
     // --------------------------------------------------------------------------------------------
-    // 消息操作 操作 TODO 封装API
+    // 发送消息 操作
     // --------------------------------------------------------------------------------------------
 
     /**
@@ -172,20 +177,78 @@ public class KafkaDataSource extends AbstractDataSource {
         return kafkaTemplate.sendDefault(data);
     }
 
-    public void tmp() {
-//        kafkaTemplate.execute()
-//        kafkaTemplate.executeInTransaction();
-//        kafkaTemplate.getDefaultTopic();
-//        kafkaTemplate.inTransaction();
-//        kafkaTemplate.isTransactional()
-//        kafkaTemplate.partitionsFor()
-//        kafkaTemplate.sendOffsetsToTransaction();
-//        kafkaTemplate.setDefaultTopic();
-    }
-
     // --------------------------------------------------------------------------------------------
     // 其他 操作
     // --------------------------------------------------------------------------------------------
+
+    /**
+     * 自定义执行操作
+     *
+     * @param callback 操作回调函数
+     * @param <T>      返回值类型
+     */
+    public <T> T execute(KafkaOperations.ProducerCallback<Object, Object, T> callback) {
+        return kafkaTemplate.execute(callback);
+    }
+
+    /**
+     * 自定义执行操作，这些操作在本地事务中调用，不参与全局事务（如果存在）
+     *
+     * @param callback 操作回调函数
+     * @param <T>      返回值类型
+     */
+    public <T> T executeInTransaction(KafkaOperations.OperationsCallback<Object, Object, T> callback) {
+        return kafkaTemplate.executeInTransaction(callback);
+    }
+
+    /**
+     * 如果KafkaDataSource在当前调用线程上正处于事务中，则返回true
+     */
+    public boolean inTransaction() {
+        return kafkaTemplate.inTransaction();
+    }
+
+    /**
+     * 当前KafkaDataSource是否支持事务
+     */
+    public boolean isTransactional() {
+        return kafkaTemplate.isTransactional();
+    }
+
+    /**
+     * 获取topic的分区元数据
+     *
+     * @param topic the topic
+     */
+    public List<PartitionInfo> partitionsFor(String topic) {
+        return kafkaTemplate.partitionsFor(topic);
+    }
+
+    /**
+     * 在事务中运行时，向事务发送使用者偏移量。组id从ProducerFactoryUtils.getConsumerGroupId().
+     * 如果在侦听器容器线程上调用操作（并且侦听器容器配置了KafkaAwareTransactionManager），则不必调用此方法，因为容器将负责将偏移量发送到事务。
+     */
+    public void sendOffsetsToTransaction(Map<TopicPartition, OffsetAndMetadata> offsets) {
+        kafkaTemplate.sendOffsetsToTransaction(offsets);
+    }
+
+    /**
+     * 设置默认的Topic
+     *
+     * @param defaultTopic 默认的Topic
+     */
+    public void setDefaultTopic(String defaultTopic) {
+        kafkaTemplate.setDefaultTopic(defaultTopic);
+    }
+
+    /**
+     * 返回默认的Topic
+     *
+     * @return 默认的Topic
+     */
+    public String getDefaultTopic() {
+        return kafkaTemplate.getDefaultTopic();
+    }
 
     /**
      * 强制发送数据到服务端
@@ -194,6 +257,9 @@ public class KafkaDataSource extends AbstractDataSource {
         kafkaTemplate.flush();
     }
 
+    /**
+     * 获取监控指标数据
+     */
     public Map<MetricName, ? extends Metric> getMetrics() {
         return kafkaTemplate.metrics();
     }
