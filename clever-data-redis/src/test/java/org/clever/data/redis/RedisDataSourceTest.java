@@ -112,4 +112,51 @@ public class RedisDataSourceTest {
         map.forEach((o, o2) -> list.add(o));
         log.info("### res ->{}", redisDataSource.hMultiGet("test4", list));
     }
+
+    @Test
+    public void test5() {
+        log.info("### res ->{}", redisDataSource.hValues("lzw-123456"));
+//        log.info("### res ->{}", redisDataSource.lLeftPushAll("qwer","qwer","qwer22222"));
+//        log.info("### res ->{}", redisDataSource.lLeftPush("qwer","qwer","1321321313"));
+//        log.info("### res ->{}", redisDataSource.lRightPush("qwer","qwer","222"));
+        log.info("### res ->{}", redisDataSource.lRemove("qwer", 0, 2));
+//        redisDataSource.lSet("qwer", 1, "222");
+    }
+
+
+    @Test
+    public void setTest() {
+        Collection<Object> list = new ArrayList<>();
+        list.add(1);
+        list.add("3");
+        list.add("sadsa");
+        list.add(5);
+        redisDataSource.sAdd("set1", list);
+//        redisDataSource.sRemove("set1", list);
+        log.info("### res ->{}", redisDataSource.sPop("set1", 2));
+    }
+
+    @Test
+    public void zsetTest() {
+//        Collection<ZSetValue> values = new ArrayList<>();
+//        values.add(new ZSetValue("lzw", 50d));
+//        values.add(new ZSetValue("wxf", 70d));
+//        log.info("### res ->{}", redisDataSource.zsAdd("zset1", values));
+//        log.info("### res ->{}", redisDataSource.zsRemove("zset1", new ArrayList<Object>(){{
+//            add("lzw");
+//        }}));
+        // fixme redis取出的值排序正确  转成hashset时丢失排序
+        redisDataSource.zsReverseRangeWithScores("zset1", 0, 100).forEach(
+                zSetValue -> log.info("### res1 ->{}-------{}", zSetValue.getValue(), zSetValue.getScore())
+        );
+        // fixme redis取出的值排序正确  转成hashset时丢失排序
+        // fixme 排序返回Set<ZSetValue>对象有问题
+        redisDataSource.zsReverseRangeByScoreWithScores("zset1", -200, 100000).forEach(
+                zSetValue -> log.info("### res2 ->{}-------{}", zSetValue.getValue(), zSetValue.getScore())
+        );
+
+        redisDataSource.zsReverseRangeByScore("zset1", -200, 10000).forEach(
+                o -> log.info("### res3 ->{}", o)
+        );
+    }
 }
