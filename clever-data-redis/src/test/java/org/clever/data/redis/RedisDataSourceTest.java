@@ -164,6 +164,7 @@ public class RedisDataSourceTest {
     public void kExpire(){
         redisDataSource.vSet("lzw333", new Date());
         log.info("### res3 ->{}", redisDataSource.kExpire("lzw333",100000));
+        log.info("### res3 ->{}", redisDataSource.kExpireAt("lzw333","2020-07-18 18:08:00"));
         redisDataSource.vSet("lzw-123456", new Date(), 5000000L);
     }
 }
