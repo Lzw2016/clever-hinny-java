@@ -1444,12 +1444,12 @@ public class RedisDataSource extends AbstractDataSource {
      * @param start start
      * @param end   end
      */
-    public Set<ZSetValue> zsRangeWithScores(String key, Number start, Number end) {
+    public List<ZSetValue> zsRangeWithScores(String key, Number start, Number end) {
         Set<ZSetOperations.TypedTuple<Object>> set = redisTemplate.opsForZSet().rangeWithScores(key, start.longValue(), end.longValue());
         if (set == null) {
-            return Collections.emptySet();
+            return Collections.emptyList();
         }
-        Set<ZSetValue> result = new HashSet<>(set.size());
+        List<ZSetValue> result = new ArrayList<>(set.size());
         for (ZSetOperations.TypedTuple<Object> typedTuple : set) {
             result.add(new ZSetValue(typedTuple.getValue(), typedTuple.getScore()));
         }
@@ -1474,12 +1474,12 @@ public class RedisDataSource extends AbstractDataSource {
      * @param min min
      * @param max max
      */
-    public Set<ZSetValue> zsRangeByScoreWithScores(String key, Number min, Number max) {
+    public List<ZSetValue> zsRangeByScoreWithScores(String key, Number min, Number max) {
         Set<ZSetOperations.TypedTuple<Object>> set = redisTemplate.opsForZSet().rangeByScoreWithScores(key, min.doubleValue(), max.doubleValue());
         if (set == null) {
-            return Collections.emptySet();
+            return Collections.emptyList();
         }
-        Set<ZSetValue> result = new HashSet<>(set.size());
+        List<ZSetValue> result = new ArrayList<>(set.size());
         for (ZSetOperations.TypedTuple<Object> typedTuple : set) {
             result.add(new ZSetValue(typedTuple.getValue(), typedTuple.getScore()));
         }
@@ -1508,12 +1508,12 @@ public class RedisDataSource extends AbstractDataSource {
      * @param offset offset
      * @param count  count
      */
-    public Set<ZSetValue> zsRangeByScoreWithScores(String key, Number min, Number max, Number offset, Number count) {
+    public List<ZSetValue> zsRangeByScoreWithScores(String key, Number min, Number max, Number offset, Number count) {
         Set<ZSetOperations.TypedTuple<Object>> set = redisTemplate.opsForZSet().rangeByScoreWithScores(key, min.doubleValue(), max.doubleValue(), offset.longValue(), count.longValue());
         if (set == null) {
-            return Collections.emptySet();
+            return Collections.emptyList();
         }
-        Set<ZSetValue> result = new HashSet<>(set.size());
+        List<ZSetValue> result = new ArrayList<>(set.size());
         for (ZSetOperations.TypedTuple<Object> typedTuple : set) {
             result.add(new ZSetValue(typedTuple.getValue(), typedTuple.getScore()));
         }
@@ -1538,12 +1538,12 @@ public class RedisDataSource extends AbstractDataSource {
      * @param start start
      * @param end   end
      */
-    public Set<ZSetValue> zsReverseRangeWithScores(String key, Number start, Number end) {
+    public List<ZSetValue> zsReverseRangeWithScores(String key, Number start, Number end) {
         Set<ZSetOperations.TypedTuple<Object>> set = redisTemplate.opsForZSet().reverseRangeWithScores(key, start.longValue(), end.longValue());
         if (set == null) {
-            return Collections.emptySet();
+            return Collections.emptyList();
         }
-        Set<ZSetValue> result = new HashSet<>(set.size());
+        List<ZSetValue> result = new ArrayList<>(set.size());
         for (ZSetOperations.TypedTuple<Object> typedTuple : set) {
             result.add(new ZSetValue(typedTuple.getValue(), typedTuple.getScore()));
         }
@@ -1568,12 +1568,12 @@ public class RedisDataSource extends AbstractDataSource {
      * @param min min
      * @param max max
      */
-    public Set<ZSetValue> zsReverseRangeByScoreWithScores(String key, Number min, Number max) {
+    public List<ZSetValue> zsReverseRangeByScoreWithScores(String key, Number min, Number max) {
         Set<ZSetOperations.TypedTuple<Object>> set = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(key, min.doubleValue(), max.doubleValue());
         if (set == null) {
-            return Collections.emptySet();
+            return Collections.emptyList();
         }
-        Set<ZSetValue> result = new HashSet<>(set.size());
+        List<ZSetValue> result = new ArrayList<>(set.size());
         for (ZSetOperations.TypedTuple<Object> typedTuple : set) {
             result.add(new ZSetValue(typedTuple.getValue(), typedTuple.getScore()));
         }
@@ -1602,12 +1602,12 @@ public class RedisDataSource extends AbstractDataSource {
      * @param offset offset
      * @param count  count
      */
-    public Set<ZSetValue> zsReverseRangeByScoreWithScores(String key, Number min, Number max, Number offset, Number count) {
+    public List<ZSetValue> zsReverseRangeByScoreWithScores(String key, Number min, Number max, Number offset, Number count) {
         Set<ZSetOperations.TypedTuple<Object>> set = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(key, min.doubleValue(), max.doubleValue(), offset.longValue(), count.longValue());
         if (set == null) {
-            return Collections.emptySet();
+            return Collections.emptyList();
         }
-        Set<ZSetValue> result = new HashSet<>(set.size());
+        List<ZSetValue> result = new ArrayList<>(set.size());
         for (ZSetOperations.TypedTuple<Object> typedTuple : set) {
             result.add(new ZSetValue(typedTuple.getValue(), typedTuple.getScore()));
         }
