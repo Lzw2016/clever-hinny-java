@@ -159,4 +159,11 @@ public class RedisDataSourceTest {
                 o -> log.info("### res3 ->{}", o)
         );
     }
+
+    @Test
+    public void kExpire(){
+        redisDataSource.vSet("lzw333", new Date());
+        log.info("### res3 ->{}", redisDataSource.kExpire("lzw333",100000));
+        redisDataSource.vSet("lzw-123456", new Date(), 5000000L);
+    }
 }
