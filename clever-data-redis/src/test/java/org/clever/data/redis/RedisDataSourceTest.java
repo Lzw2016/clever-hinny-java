@@ -145,16 +145,12 @@ public class RedisDataSourceTest {
 //        log.info("### res ->{}", redisDataSource.zsRemove("zset1", new ArrayList<Object>(){{
 //            add("lzw");
 //        }}));
-        // fixme redis取出的值排序正确  转成hashset时丢失排序
         redisDataSource.zsReverseRangeWithScores("zset1", 0, 100).forEach(
                 zSetValue -> log.info("### res1 ->{}-------{}", zSetValue.getValue(), zSetValue.getScore())
         );
-        // fixme redis取出的值排序正确  转成hashset时丢失排序
-        // fixme 排序返回Set<ZSetValue>对象有问题
         redisDataSource.zsReverseRangeByScoreWithScores("zset1", -200, 100000).forEach(
                 zSetValue -> log.info("### res2 ->{}-------{}", zSetValue.getValue(), zSetValue.getScore())
         );
-
         redisDataSource.zsReverseRangeByScore("zset1", -200, 10000).forEach(
                 o -> log.info("### res3 ->{}", o)
         );
