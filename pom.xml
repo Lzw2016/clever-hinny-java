@@ -10,12 +10,12 @@
     <packaging>pom</packaging>
 
     <description>clever框架数据库操作模块</description>
-    <url>https://github.com/Lzw2016/clever-data.git</url>
+    <url>https://github.com/Lzw2016/clever-hinny-java.git</url>
 
     <licenses>
         <license>
             <name>MIT License</name>
-            <url>https://github.com/Lzw2016/clever-data/raw/master/LICENSE</url>
+            <url>https://github.com/Lzw2016/clever-hinny-java/raw/master/LICENSE</url>
         </license>
     </licenses>
 
@@ -72,8 +72,8 @@
                 <version>${revision}</version>
             </dependency>
             <dependency>
-                <artifactId>hinny-data-jdbc</artifactId>
                 <groupId>org.clever</groupId>
+                <artifactId>hinny-data-jdbc</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
@@ -144,11 +144,6 @@
                 <version>6.4.0.jre8</version>
             </dependency>
             <!--other-->
-            <dependency>
-                <groupId>com.google.guava</groupId>
-                <artifactId>guava</artifactId>
-                <version>29.0-jre</version>
-            </dependency>
             <dependency>
                 <groupId>io.searchbox</groupId>
                 <artifactId>jest</artifactId>
