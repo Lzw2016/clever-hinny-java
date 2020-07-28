@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!--统一版本修改 versions:set -DnewVersion=0.0.1-SNAPSHOT-->
-    <artifactId>clever-data</artifactId>
+    <artifactId>clever-hinny-java</artifactId>
     <version>${revision}</version>
     <packaging>pom</packaging>
 
@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.clever</groupId>
         <artifactId>clever-parent</artifactId>
-        <version>2.1.15.0.RELEASE</version>
+        <version>2.1.16.0.RELEASE</version>
         <relativePath/>
     </parent>
 
@@ -50,12 +50,12 @@
     </repositories>
 
     <modules>
-        <module>clever-data-common</module>
-        <module>clever-data-elasticsearch</module>
-        <module>clever-data-jdbc</module>
-        <module>clever-data-kafka</module>
-        <module>clever-data-rabbitmq</module>
-        <module>clever-data-redis</module>
+        <module>hinny-data-common</module>
+        <module>hinny-data-jdbc</module>
+        <module>hinny-data-redis</module>
+        <module>hinny-data-elasticsearch</module>
+        <module>hinny-data-rabbitmq</module>
+        <module>hinny-data-kafka</module>
     </modules>
 
     <properties>
@@ -68,32 +68,32 @@
             <!--当前项目模块-->
             <dependency>
                 <groupId>org.clever</groupId>
-                <artifactId>clever-data-common</artifactId>
+                <artifactId>hinny-data-common</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <artifactId>hinny-data-jdbc</artifactId>
+                <groupId>org.clever</groupId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>org.clever</groupId>
-                <artifactId>clever-data-elasticsearch</artifactId>
+                <artifactId>hinny-data-redis</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>org.clever</groupId>
-                <artifactId>clever-data-jdbc</artifactId>
+                <artifactId>hinny-data-elasticsearch</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>org.clever</groupId>
-                <artifactId>clever-data-kafka</artifactId>
+                <artifactId>hinny-data-rabbitmq</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>org.clever</groupId>
-                <artifactId>clever-data-rabbitmq</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.clever</groupId>
-                <artifactId>clever-data-redis</artifactId>
+                <artifactId>hinny-data-kafka</artifactId>
                 <version>${revision}</version>
             </dependency>
             <!--clever common-->
