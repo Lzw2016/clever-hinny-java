@@ -50,6 +50,7 @@
     </repositories>
 
     <modules>
+        <module>hinny-core</module>
         <module>hinny-data-common</module>
         <module>hinny-data-jdbc</module>
         <module>hinny-data-redis</module>
@@ -66,6 +67,11 @@
     <dependencyManagement>
         <dependencies>
             <!--当前项目模块-->
+            <dependency>
+                <groupId>org.clever</groupId>
+                <artifactId>hinny-core</artifactId>
+                <version>${revision}</version>
+            </dependency>
             <dependency>
                 <groupId>org.clever</groupId>
                 <artifactId>hinny-data-common</artifactId>
