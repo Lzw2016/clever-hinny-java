@@ -1,11 +1,15 @@
-# clever-data
+# clever-hinny-java
 
-> clever-data 封装常用数据库中间件API，为在函数式编程环境中提供各种数据库操作的便捷API。
-> 当前项目每个子模块对应一个数据库的封装(`clever-data-common`模块除外)
+> clever-hinny项目Java生态封装层
+
+## hinny-data-*
+
+> 封装常用数据库中间件API，为在函数式编程环境中提供各种数据库操作的便捷API。
+> 当前项目每个子模块对应一个数据库的封装(`hinny-data-common`模块除外)
 
 ### 快速开始
 
-## clever-data-jdbc
+## hinny-data-jdbc
 
 1. 主要功能：操作关系型数据库
 1. 主要API: JdbcDataSource
@@ -48,7 +52,7 @@ public void demo() {
 }
 ```
 
-## clever-data-redis
+## hinny-data-redis
 
 1. 主要功能：操作Redis数据库
 1. 主要API: RedisDataSource
@@ -79,7 +83,7 @@ public void demo() {
 }
 ```
 
-## clever-data-elasticsearch
+## hinny-data-elasticsearch
 
 1. 主要功能：操作ElasticSearch数据库
 1. 主要API: ESDataSource
@@ -111,12 +115,12 @@ public void demo() {
 }
 ```
 
-## clever-data-rabbitmq
+## hinny-data-rabbitmq
 
 1. 主要功能：操作RabbitMQ消息队列
-1. 主要API: RedisDataSource
+1. 主要API: RabbitMqDataSource
 
-## clever-data-kafka
+## hinny-data-kafka
 
 1. 主要功能：操作Kafka消息队列
 1. 主要API: KafkaDataSource
