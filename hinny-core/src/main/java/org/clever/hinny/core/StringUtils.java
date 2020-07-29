@@ -5,4 +5,10 @@ package org.clever.hinny.core;
  * 创建时间：2020/07/28 22:32 <br/>
  */
 public class StringUtils {
+    public static final StringUtils Instance = new StringUtils();
+
+    protected StringUtils() {
+    }
+
+
 }
