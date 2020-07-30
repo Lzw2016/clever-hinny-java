@@ -9,7 +9,7 @@
     <version>${revision}</version>
     <packaging>pom</packaging>
 
-    <description>clever框架数据库操作模块</description>
+    <description>clever-hinny项目Java生态封装层</description>
     <url>https://github.com/Lzw2016/clever-hinny-java.git</url>
 
     <licenses>
