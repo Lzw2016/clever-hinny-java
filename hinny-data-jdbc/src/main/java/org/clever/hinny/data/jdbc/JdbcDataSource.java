@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.toolkit.JdbcUtils;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.HikariPoolMXBean;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.clever.common.model.request.QueryByPage;
@@ -892,6 +893,43 @@ public class JdbcDataSource extends AbstractDataSource {
     // --------------------------------------------------------------------------------------------
     //  其它 操作
     // --------------------------------------------------------------------------------------------
+
+    /**
+     * 获取数据源信息
+     */
+    public JdbcInfo getInfo() {
+        if (dataSource instanceof HikariDataSource) {
+            HikariDataSource hikariDataSource = (HikariDataSource) dataSource;
+            JdbcInfo jdbcInfo = new JdbcInfo();
+            jdbcInfo.setDriverClassName(hikariDataSource.getDriverClassName());
+            jdbcInfo.setJdbcUrl(hikariDataSource.getJdbcUrl());
+            jdbcInfo.setAutoCommit(hikariDataSource.isAutoCommit());
+            jdbcInfo.setReadOnly(hikariDataSource.isReadOnly());
+            jdbcInfo.setDbType(dbType);
+            jdbcInfo.setReadOnly(hikariDataSource.isClosed());
+            return jdbcInfo;
+        } else {
+            throw new UnsupportedOperationException("当前数据源类型：" + dataSource.getClass().getName() + "，不支持此操作");
+        }
+    }
+
+    /**
+     * 获取数据源状态
+     */
+    public JdbcDataSourceStatus getStatus() {
+        if (dataSource instanceof HikariDataSource) {
+            HikariDataSource hikariDataSource = (HikariDataSource) dataSource;
+            HikariPoolMXBean poolMXBean = hikariDataSource.getHikariPoolMXBean();
+            JdbcDataSourceStatus status = new JdbcDataSourceStatus();
+            status.setTotalConnections(poolMXBean.getTotalConnections());
+            status.setActiveConnections(poolMXBean.getActiveConnections());
+            status.setIdleConnections(poolMXBean.getIdleConnections());
+            status.setThreadsAwaitingConnection(poolMXBean.getThreadsAwaitingConnection());
+            return status;
+        } else {
+            throw new UnsupportedOperationException("当前数据源类型：" + dataSource.getClass().getName() + "，不支持此操作");
+        }
+    }
 
     /**
      * 创建事务执行模板对象
