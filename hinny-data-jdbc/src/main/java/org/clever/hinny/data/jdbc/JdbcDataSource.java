@@ -553,6 +553,17 @@ public class JdbcDataSource extends AbstractDataSource {
      *
      * @param sql        sql脚本，参数格式[:param]
      * @param pagination 分页配置(支持排序)
+     * @param paramMap   参数，参数格式[:param]
+     */
+    public IPage<Map<String, Object>> queryByPage(String sql, QueryByPage pagination, Map<String, Object> paramMap) {
+        return queryByPage(sql, pagination, paramMap, true);
+    }
+
+    /**
+     * 分页查询(支持排序)，返回分页对象
+     *
+     * @param sql        sql脚本，参数格式[:param]
+     * @param pagination 分页配置(支持排序)
      * @param countQuery 是否要执行count查询(可选)
      */
     public IPage<Map<String, Object>> queryByPage(String sql, QueryByPage pagination, boolean countQuery) {
