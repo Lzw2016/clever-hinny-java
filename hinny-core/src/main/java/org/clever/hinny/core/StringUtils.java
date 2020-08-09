@@ -1968,7 +1968,14 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .replaceOnce(null, *, *)        = null
+     *  .replaceOnce("", *, *)          = ""
+     *  .replaceOnce("any", null, *)    = "any"
+     *  .replaceOnce("any", *, null)    = "any"
+     *  .replaceOnce("any", "", *)      = "any"
+     *  .replaceOnce("aba", "a", null)  = "aba"
+     *  .replaceOnce("aba", "a", "")    = "ba"
+     *  .replaceOnce("aba", "a", "z")   = "zba"
      * </pre>
      */
     public String replaceOnce(String text, String searchString, String replacement) {
@@ -1977,7 +1984,15 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .replaceOnceIgnoreCase(null, *, *)        = null
+     *  .replaceOnceIgnoreCase("", *, *)          = ""
+     *  .replaceOnceIgnoreCase("any", null, *)    = "any"
+     *  .replaceOnceIgnoreCase("any", *, null)    = "any"
+     *  .replaceOnceIgnoreCase("any", "", *)      = "any"
+     *  .replaceOnceIgnoreCase("aba", "a", null)  = "aba"
+     *  .replaceOnceIgnoreCase("aba", "a", "")    = "ba"
+     *  .replaceOnceIgnoreCase("aba", "a", "z")   = "zba"
+     *  .replaceOnceIgnoreCase("FoOFoofoo", "foo", "") = "Foofoo"
      * </pre>
      */
     public String replaceOnceIgnoreCase(String text, String searchString, String replacement) {
@@ -1986,7 +2001,14 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .replace(null, *, *)        = null
+     *  .replace("", *, *)          = ""
+     *  .replace("any", null, *)    = "any"
+     *  .replace("any", *, null)    = "any"
+     *  .replace("any", "", *)      = "any"
+     *  .replace("aba", "a", null)  = "aba"
+     *  .replace("aba", "a", "")    = "b"
+     *  .replace("aba", "a", "z")   = "zbz"
      * </pre>
      */
     public String replace(String text, String searchString, String replacement) {
@@ -1995,7 +2017,14 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .replaceIgnoreCase(null, *, *)        = null
+     *  .replaceIgnoreCase("", *, *)          = ""
+     *  .replaceIgnoreCase("any", null, *)    = "any"
+     *  .replaceIgnoreCase("any", *, null)    = "any"
+     *  .replaceIgnoreCase("any", "", *)      = "any"
+     *  .replaceIgnoreCase("aba", "a", null)  = "aba"
+     *  .replaceIgnoreCase("abA", "A", "")    = "b"
+     *  .replaceIgnoreCase("aba", "A", "z")   = "zbz"
      * </pre>
      */
     public String replaceIgnoreCase(String text, String searchString, String replacement) {
@@ -2004,7 +2033,18 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .replace(null, *, *, *)         = null
+     *  .replace("", *, *, *)           = ""
+     *  .replace("any", null, *, *)     = "any"
+     *  .replace("any", *, null, *)     = "any"
+     *  .replace("any", "", *, *)       = "any"
+     *  .replace("any", *, *, 0)        = "any"
+     *  .replace("abaa", "a", null, -1) = "abaa"
+     *  .replace("abaa", "a", "", -1)   = "b"
+     *  .replace("abaa", "a", "z", 0)   = "abaa"
+     *  .replace("abaa", "a", "z", 1)   = "zbaa"
+     *  .replace("abaa", "a", "z", 2)   = "zbza"
+     *  .replace("abaa", "a", "z", -1)  = "zbzz"
      * </pre>
      */
     public String replace(String text, String searchString, String replacement, int max) {
@@ -2013,7 +2053,18 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .replaceIgnoreCase(null, *, *, *)         = null
+     *  .replaceIgnoreCase("", *, *, *)           = ""
+     *  .replaceIgnoreCase("any", null, *, *)     = "any"
+     *  .replaceIgnoreCase("any", *, null, *)     = "any"
+     *  .replaceIgnoreCase("any", "", *, *)       = "any"
+     *  .replaceIgnoreCase("any", *, *, 0)        = "any"
+     *  .replaceIgnoreCase("abaa", "a", null, -1) = "abaa"
+     *  .replaceIgnoreCase("abaa", "a", "", -1)   = "b"
+     *  .replaceIgnoreCase("abaa", "a", "z", 0)   = "abaa"
+     *  .replaceIgnoreCase("abaa", "A", "z", 1)   = "zbaa"
+     *  .replaceIgnoreCase("abAa", "a", "z", 2)   = "zbza"
+     *  .replaceIgnoreCase("abAa", "a", "z", -1)  = "zbzz"
      * </pre>
      */
     public String replaceIgnoreCase(String text, String searchString, String replacement, int max) {
@@ -2022,7 +2073,17 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *   .replaceEach(null, *, *)        = null
+     *   .replaceEach("", *, *)          = ""
+     *   .replaceEach("aba", null, null) = "aba"
+     *   .replaceEach("aba", new String[0], null) = "aba"
+     *   .replaceEach("aba", null, new String[0]) = "aba"
+     *   .replaceEach("aba", new String[]{"a"}, null)  = "aba"
+     *   .replaceEach("aba", new String[]{"a"}, new String[]{""})  = "b"
+     *   .replaceEach("aba", new String[]{null}, new String[]{"a"})  = "aba"
+     *   .replaceEach("abcde", new String[]{"ab", "d"}, new String[]{"w", "t"})  = "wcte"
+     *   (example of how it does not repeat)
+     *   .replaceEach("abcde", new String[]{"ab", "d"}, new String[]{"d", "t"})  = "dcte"
      * </pre>
      */
     public String replaceEach(String text, String[] searchList, String[] replacementList) {
@@ -2031,16 +2092,33 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .replaceEachRepeatedly(null, *, *) = null
+     *  .replaceEachRepeatedly("", *, *) = ""
+     *  .replaceEachRepeatedly("aba", null, null) = "aba"
+     *  .replaceEachRepeatedly("aba", new String[0], null) = "aba"
+     *  .replaceEachRepeatedly("aba", null, new String[0]) = "aba"
+     *  .replaceEachRepeatedly("aba", new String[]{"a"}, null) = "aba"
+     *  .replaceEachRepeatedly("aba", new String[]{"a"}, new String[]{""}) = "b"
+     *  .replaceEachRepeatedly("aba", new String[]{null}, new String[]{"a"}) = "aba"
+     *  .replaceEachRepeatedly("abcde", new String[]{"ab", "d"}, new String[]{"w", "t"}) = "wcte"
+     *  (example of how it repeats)
+     *  .replaceEachRepeatedly("abcde", new String[]{"ab", "d"}, new String[]{"d", "t"}) = "tcte"
+     *  .replaceEachRepeatedly("abcde", new String[]{"ab", "d"}, new String[]{"d", "ab"}) = IllegalStateException
      * </pre>
      */
     public String replaceEachRepeatedly(String text, String[] searchList, String[] replacementList) {
         return org.clever.common.utils.StringUtils.replaceEachRepeatedly(text, searchList, replacementList);
     }
 
+    // Replace, character based
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
      * <pre>
-     *
+     *  .replaceChars(null, *, *)        = null
+     *  .replaceChars("", *, *)          = ""
+     *  .replaceChars("abcba", 'b', 'y') = "aycya"
+     *  .replaceChars("abcba", 'z', 'y') = "abcba"
      * </pre>
      */
     public String replaceChars(String str, char searchChar, char replaceChar) {
@@ -2049,43 +2127,101 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .replaceChars(null, *, *)           = null
+     *  .replaceChars("", *, *)             = ""
+     *  .replaceChars("abc", null, *)       = "abc"
+     *  .replaceChars("abc", "", *)         = "abc"
+     *  .replaceChars("abc", "b", null)     = "ac"
+     *  .replaceChars("abc", "b", "")       = "ac"
+     *  .replaceChars("abcba", "bc", "yz")  = "ayzya"
+     *  .replaceChars("abcba", "bc", "y")   = "ayya"
+     *  .replaceChars("abcba", "bc", "yzx") = "ayzya"
      * </pre>
      */
     public String replaceChars(String str, String searchChars, String replaceChars) {
         return org.clever.common.utils.StringUtils.replaceChars(str, searchChars, replaceChars);
     }
 
+    // Overlay
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
      * <pre>
-     *
+     *  .overlay(null, *, *, *)            = null
+     *  .overlay("", "abc", 0, 0)          = "abc"
+     *  .overlay("abcdef", null, 2, 4)     = "abef"
+     *  .overlay("abcdef", "", 2, 4)       = "abef"
+     *  .overlay("abcdef", "", 4, 2)       = "abef"
+     *  .overlay("abcdef", "zzzz", 2, 4)   = "abzzzzef"
+     *  .overlay("abcdef", "zzzz", 4, 2)   = "abzzzzef"
+     *  .overlay("abcdef", "zzzz", -1, 4)  = "zzzzef"
+     *  .overlay("abcdef", "zzzz", 2, 8)   = "abzzzz"
+     *  .overlay("abcdef", "zzzz", -2, -3) = "zzzzabcdef"
+     *  .overlay("abcdef", "zzzz", 8, 10)  = "abcdefzzzz"
      * </pre>
      */
     public String overlay(String str, String overlay, int start, int end) {
         return org.clever.common.utils.StringUtils.overlay(str, overlay, start, end);
     }
 
+    // Chomping
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
      * <pre>
-     *
+     *  .chomp(null)          = null
+     *  .chomp("")            = ""
+     *  .chomp("abc \r")      = "abc "
+     *  .chomp("abc\n")       = "abc"
+     *  .chomp("abc\r\n")     = "abc"
+     *  .chomp("abc\r\n\r\n") = "abc\r\n"
+     *  .chomp("abc\n\r")     = "abc\n"
+     *  .chomp("abc\n\rabc")  = "abc\n\rabc"
+     *  .chomp("\r")          = ""
+     *  .chomp("\n")          = ""
+     *  .chomp("\r\n")        = ""
      * </pre>
      */
     public String chomp(String str) {
         return org.clever.common.utils.StringUtils.chomp(str);
     }
 
+    // Chopping
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
      * <pre>
-     *
+     *  .chop(null)          = null
+     *  .chop("")            = ""
+     *  .chop("abc \r")      = "abc "
+     *  .chop("abc\n")       = "abc"
+     *  .chop("abc\r\n")     = "abc"
+     *  .chop("abc")         = "ab"
+     *  .chop("abc\nabc")    = "abc\nab"
+     *  .chop("a")           = ""
+     *  .chop("\r")          = ""
+     *  .chop("\n")          = ""
+     *  .chop("\r\n")        = ""
      * </pre>
      */
     public String chop(String str) {
         return org.clever.common.utils.StringUtils.chop(str);
     }
 
+    // Conversion
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
+    // Padding
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
      * <pre>
-     *
+     *  .repeat(null, 2) = null
+     *  .repeat("", 0)   = ""
+     *  .repeat("", 2)   = ""
+     *  .repeat("a", 3)  = "aaa"
+     *  .repeat("ab", 2) = "abab"
+     *  .repeat("a", -2) = ""
      * </pre>
      */
     public String repeat(String str, int repeat) {
@@ -2094,7 +2230,12 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .repeat(null, null, 2) = null
+     *  .repeat(null, "x", 2)  = null
+     *  .repeat("", null, 0)   = ""
+     *  .repeat("", "", 2)     = ""
+     *  .repeat("", "x", 3)    = "xxx"
+     *  .repeat("?", ", ", 3)  = "?, ?, ?"
      * </pre>
      */
     public String repeat(String str, String separator, int repeat) {
@@ -2103,7 +2244,9 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .repeat('e', 0)  = ""
+     *  .repeat('e', 3)  = "eee"
+     *  .repeat('e', -2) = ""
      * </pre>
      */
     public String repeat(char ch, int repeat) {
@@ -2112,7 +2255,12 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .rightPad(null, *)   = null
+     *  .rightPad("", 3)     = "   "
+     *  .rightPad("bat", 3)  = "bat"
+     *  .rightPad("bat", 5)  = "bat  "
+     *  .rightPad("bat", 1)  = "bat"
+     *  .rightPad("bat", -1) = "bat"
      * </pre>
      */
     public String rightPad(String str, int size) {
@@ -2121,7 +2269,12 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .rightPad(null, *, *)     = null
+     *  .rightPad("", 3, 'z')     = "zzz"
+     *  .rightPad("bat", 3, 'z')  = "bat"
+     *  .rightPad("bat", 5, 'z')  = "batzz"
+     *  .rightPad("bat", 1, 'z')  = "bat"
+     *  .rightPad("bat", -1, 'z') = "bat"
      * </pre>
      */
     public String rightPad(String str, int size, char padChar) {
@@ -2130,7 +2283,15 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .rightPad(null, *, *)      = null
+     *  .rightPad("", 3, "z")      = "zzz"
+     *  .rightPad("bat", 3, "yz")  = "bat"
+     *  .rightPad("bat", 5, "yz")  = "batyz"
+     *  .rightPad("bat", 8, "yz")  = "batyzyzy"
+     *  .rightPad("bat", 1, "yz")  = "bat"
+     *  .rightPad("bat", -1, "yz") = "bat"
+     *  .rightPad("bat", 5, null)  = "bat  "
+     *  .rightPad("bat", 5, "")    = "bat  "
      * </pre>
      */
     public String rightPad(String str, int size, String padStr) {
@@ -2139,7 +2300,12 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .leftPad(null, *)   = null
+     *  .leftPad("", 3)     = "   "
+     *  .leftPad("bat", 3)  = "bat"
+     *  .leftPad("bat", 5)  = "  bat"
+     *  .leftPad("bat", 1)  = "bat"
+     *  .leftPad("bat", -1) = "bat"
      * </pre>
      */
     public String leftPad(String str, int size) {
@@ -2148,7 +2314,12 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .leftPad(null, *, *)     = null
+     *  .leftPad("", 3, 'z')     = "zzz"
+     *  .leftPad("bat", 3, 'z')  = "bat"
+     *  .leftPad("bat", 5, 'z')  = "zzbat"
+     *  .leftPad("bat", 1, 'z')  = "bat"
+     *  .leftPad("bat", -1, 'z') = "bat"
      * </pre>
      */
     public String leftPad(String str, int size, char padChar) {
@@ -2157,7 +2328,15 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .leftPad(null, *, *)      = null
+     *  .leftPad("", 3, "z")      = "zzz"
+     *  .leftPad("bat", 3, "yz")  = "bat"
+     *  .leftPad("bat", 5, "yz")  = "yzbat"
+     *  .leftPad("bat", 8, "yz")  = "yzyzybat"
+     *  .leftPad("bat", 1, "yz")  = "bat"
+     *  .leftPad("bat", -1, "yz") = "bat"
+     *  .leftPad("bat", 5, null)  = "  bat"
+     *  .leftPad("bat", 5, "")    = "  bat"
      * </pre>
      */
     public String leftPad(String str, int size, String padStr) {
@@ -2165,17 +2344,23 @@ public class StringUtils {
     }
 
     /**
-     * <pre>
-     *
-     * </pre>
+     * 获取CharSequence长度，如果CharSequence为null，则获取0
      */
     public int length(CharSequence cs) {
         return org.clever.common.utils.StringUtils.length(cs);
     }
 
+    // Centering
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
      * <pre>
-     *
+     *  .center(null, *)   = null
+     *  .center("", 4)     = "    "
+     *  .center("ab", -1)  = "ab"
+     *  .center("ab", 4)   = " ab "
+     *  .center("abcd", 2) = "abcd"
+     *  .center("a", 4)    = " a  "
      * </pre>
      */
     public String center(String str, int size) {
@@ -2184,7 +2369,13 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .center(null, *, *)     = null
+     *  .center("", 4, ' ')     = "    "
+     *  .center("ab", -1, ' ')  = "ab"
+     *  .center("ab", 4, ' ')   = " ab "
+     *  .center("abcd", 2, ' ') = "abcd"
+     *  .center("a", 4, ' ')    = " a  "
+     *  .center("a", 4, 'y')    = "yayy"
      * </pre>
      */
     public String center(String str, int size, char padChar) {
@@ -2193,16 +2384,29 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .center(null, *, *)     = null
+     *  .center("", 4, " ")     = "    "
+     *  .center("ab", -1, " ")  = "ab"
+     *  .center("ab", 4, " ")   = " ab "
+     *  .center("abcd", 2, " ") = "abcd"
+     *  .center("a", 4, " ")    = " a  "
+     *  .center("a", 4, "yz")   = "yayz"
+     *  .center("abc", 7, null) = "  abc  "
+     *  .center("abc", 7, "")   = "  abc  "
      * </pre>
      */
     public String center(String str, int size, String padStr) {
         return org.clever.common.utils.StringUtils.center(str, size, padStr);
     }
 
+    // Case conversion
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
      * <pre>
-     *
+     *  .upperCase(null)  = null
+     *  .upperCase("")    = ""
+     *  .upperCase("aBc") = "ABC"
      * </pre>
      */
     public String upperCase(String str) {
@@ -2211,7 +2415,9 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .upperCase(null, Locale.ENGLISH)  = null
+     *  .upperCase("", Locale.ENGLISH)    = ""
+     *  .upperCase("aBc", Locale.ENGLISH) = "ABC"
      * </pre>
      */
     public String upperCase(String str, Locale locale) {
@@ -2220,7 +2426,9 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .lowerCase(null)  = null
+     *  .lowerCase("")    = ""
+     *  .lowerCase("aBc") = "abc"
      * </pre>
      */
     public String lowerCase(String str) {
@@ -2229,7 +2437,9 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .lowerCase(null, Locale.ENGLISH)  = null
+     *  .lowerCase("", Locale.ENGLISH)    = ""
+     *  .lowerCase("aBc", Locale.ENGLISH) = "abc"
      * </pre>
      */
     public String lowerCase(String str, Locale locale) {
@@ -2238,7 +2448,11 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .capitalize(null)  = null
+     *  .capitalize("")    = ""
+     *  .capitalize("cat") = "Cat"
+     *  .capitalize("cAt") = "CAt"
+     *  .capitalize("'cat'") = "'cat'"
      * </pre>
      */
     public String capitalize(String str) {
@@ -2247,7 +2461,11 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .uncapitalize(null)  = null
+     *  .uncapitalize("")    = ""
+     *  .uncapitalize("cat") = "cat"
+     *  .uncapitalize("Cat") = "cat"
+     *  .uncapitalize("CAT") = "cAT"
      * </pre>
      */
     public String uncapitalize(String str) {
@@ -2256,16 +2474,27 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .swapCase(null)                 = null
+     *  .swapCase("")                   = ""
+     *  .swapCase("The dog has a BONE") = "tHE DOG HAS A bone"
      * </pre>
      */
     public String swapCase(String str) {
         return org.clever.common.utils.StringUtils.swapCase(str);
     }
 
+    // Count matches
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
      * <pre>
-     *
+     *  .countMatches(null, *)       = 0
+     *  .countMatches("", *)         = 0
+     *  .countMatches("abba", null)  = 0
+     *  .countMatches("abba", "")    = 0
+     *  .countMatches("abba", "a")   = 2
+     *  .countMatches("abba", "ab")  = 1
+     *  .countMatches("abba", "xxx") = 0
      * </pre>
      */
     public int countMatches(CharSequence str, CharSequence sub) {
@@ -2274,16 +2503,29 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .countMatches(null, *)       = 0
+     *  .countMatches("", *)         = 0
+     *  .countMatches("abba", 0)     = 0
+     *  .countMatches("abba", 'a')   = 2
+     *  .countMatches("abba", 'b')   = 2
+     *  .countMatches("abba", 'x')   = 0
      * </pre>
      */
     public int countMatches(CharSequence str, char ch) {
         return org.clever.common.utils.StringUtils.countMatches(str, ch);
     }
 
+    // Character Tests
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
      * <pre>
-     *
+     *  .isAlpha(null)   = false
+     *  .isAlpha("")     = false
+     *  .isAlpha("  ")   = false
+     *  .isAlpha("abc")  = true
+     *  .isAlpha("ab2c") = false
+     *  .isAlpha("ab-c") = false
      * </pre>
      */
     public boolean isAlpha(CharSequence cs) {
@@ -2292,7 +2534,13 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .isAlphaSpace(null)   = false
+     *  .isAlphaSpace("")     = true
+     *  .isAlphaSpace("  ")   = true
+     *  .isAlphaSpace("abc")  = true
+     *  .isAlphaSpace("ab c") = true
+     *  .isAlphaSpace("ab2c") = false
+     *  .isAlphaSpace("ab-c") = false
      * </pre>
      */
     public boolean isAlphaSpace(CharSequence cs) {
@@ -2301,7 +2549,13 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .isAlphanumeric(null)   = false
+     *  .isAlphanumeric("")     = false
+     *  .isAlphanumeric("  ")   = false
+     *  .isAlphanumeric("abc")  = true
+     *  .isAlphanumeric("ab c") = false
+     *  .isAlphanumeric("ab2c") = true
+     *  .isAlphanumeric("ab-c") = false
      * </pre>
      */
     public boolean isAlphanumeric(CharSequence cs) {
@@ -2310,7 +2564,13 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .isAlphanumericSpace(null)   = false
+     *  .isAlphanumericSpace("")     = true
+     *  .isAlphanumericSpace("  ")   = true
+     *  .isAlphanumericSpace("abc")  = true
+     *  .isAlphanumericSpace("ab c") = true
+     *  .isAlphanumericSpace("ab2c") = true
+     *  .isAlphanumericSpace("ab-c") = false
      * </pre>
      */
     public boolean isAlphanumericSpace(CharSequence cs) {
@@ -2319,7 +2579,17 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .isAsciiPrintable(null)     = false
+     *  .isAsciiPrintable("")       = true
+     *  .isAsciiPrintable(" ")      = true
+     *  .isAsciiPrintable("Ceki")   = true
+     *  .isAsciiPrintable("ab2c")   = true
+     *  .isAsciiPrintable("!ab-c~") = true
+     *  .isAsciiPrintable(" ") = true
+     *  .isAsciiPrintable("!") = true
+     *  .isAsciiPrintable("~") = true
+     *  .isAsciiPrintable("") = false
+     *  .isAsciiPrintable("Ceki Gülcü") = false
      * </pre>
      */
     public boolean isAsciiPrintable(CharSequence cs) {
@@ -2328,7 +2598,17 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .isNumeric(null)   = false
+     *  .isNumeric("")     = false
+     *  .isNumeric("  ")   = false
+     *  .isNumeric("123")  = true
+     *  .isNumeric("१२३")  = true
+     *  .isNumeric("12 3") = false
+     *  .isNumeric("ab2c") = false
+     *  .isNumeric("12-3") = false
+     *  .isNumeric("12.3") = false
+     *  .isNumeric("-123") = false
+     *  .isNumeric("+123") = false
      * </pre>
      */
     public boolean isNumeric(CharSequence cs) {
@@ -2337,7 +2617,16 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .isNumericSpace(null)   = false
+     *  .isNumericSpace("")     = true
+     *  .isNumericSpace("  ")   = true
+     *  .isNumericSpace("123")  = true
+     *  .isNumericSpace("12 3") = true
+     *  .isNumeric("१२३")  = true
+     *  .isNumeric("१२ ३")  = true
+     *  .isNumericSpace("ab2c") = false
+     *  .isNumericSpace("12-3") = false
+     *  .isNumericSpace("12.3") = false
      * </pre>
      */
     public boolean isNumericSpace(CharSequence cs) {
@@ -2346,7 +2635,13 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .getDigits(null)  = null
+     *  .getDigits("")    = ""
+     *  .getDigits("abc") = ""
+     *  .getDigits("1000$") = "1000"
+     *  .getDigits("1123~45") = "112345"
+     *  .getDigits("(541) 754-3010") = "5417543010"
+     *  .getDigits("\u0967\u0968\u0969") = "\u0967\u0968\u0969"
      * </pre>
      */
     public String getDigits(String str) {
@@ -2355,7 +2650,12 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .isWhitespace(null)   = false
+     *  .isWhitespace("")     = true
+     *  .isWhitespace("  ")   = true
+     *  .isWhitespace("abc")  = false
+     *  .isWhitespace("ab2c") = false
+     *  .isWhitespace("ab-c") = false
      * </pre>
      */
     public boolean isWhitespace(CharSequence cs) {
@@ -2364,7 +2664,14 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .isAllLowerCase(null)   = false
+     *  .isAllLowerCase("")     = false
+     *  .isAllLowerCase("  ")   = false
+     *  .isAllLowerCase("abc")  = true
+     *  .isAllLowerCase("abC")  = false
+     *  .isAllLowerCase("ab c") = false
+     *  .isAllLowerCase("ab1c") = false
+     *  .isAllLowerCase("ab/c") = false
      * </pre>
      */
     public boolean isAllLowerCase(CharSequence cs) {
@@ -2373,7 +2680,14 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .isAllUpperCase(null)   = false
+     *  .isAllUpperCase("")     = false
+     *  .isAllUpperCase("  ")   = false
+     *  .isAllUpperCase("ABC")  = true
+     *  .isAllUpperCase("aBC")  = false
+     *  .isAllUpperCase("A C")  = false
+     *  .isAllUpperCase("A1C")  = false
+     *  .isAllUpperCase("A/C")  = false
      * </pre>
      */
     public boolean isAllUpperCase(CharSequence cs) {
@@ -2382,16 +2696,29 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .isMixedCase(null)    = false
+     *  .isMixedCase("")      = false
+     *  .isMixedCase("ABC")   = false
+     *  .isMixedCase("abc")   = false
+     *  .isMixedCase("aBc")   = true
+     *  .isMixedCase("A c")   = true
+     *  .isMixedCase("A1c")   = true
+     *  .isMixedCase("a/C")   = true
+     *  .isMixedCase("aC\t")  = true
      * </pre>
      */
     public boolean isMixedCase(CharSequence cs) {
         return org.clever.common.utils.StringUtils.isMixedCase(cs);
     }
 
+    // Defaults
+    //-----------------------------------------------------------------------
+
     /**
      * <pre>
-     *
+     *  .defaultString(null)  = ""
+     *  .defaultString("")    = ""
+     *  .defaultString("bat") = "bat"
      * </pre>
      */
     public String defaultString(String str) {
@@ -2400,7 +2727,9 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .defaultString(null, "NULL")  = "NULL"
+     *  .defaultString("", "NULL")    = ""
+     *  .defaultString("bat", "NULL") = "bat"
      * </pre>
      */
     public String defaultString(String str, String defaultStr) {
@@ -2409,7 +2738,13 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .firstNonBlank(null, null, null)     = null
+     *  .firstNonBlank(null, "", " ")        = null
+     *  .firstNonBlank("abc")                = "abc"
+     *  .firstNonBlank(null, "xyz")          = "xyz"
+     *  .firstNonBlank(null, "", " ", "xyz") = "xyz"
+     *  .firstNonBlank(null, "xyz", "abc")   = "xyz"
+     *  .firstNonBlank()                     = null
      * </pre>
      */
     public <T extends CharSequence> T firstNonBlank(T... values) {
@@ -2418,7 +2753,14 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .firstNonEmpty(null, null, null)   = null
+     *  .firstNonEmpty(null, null, "")     = null
+     *  .firstNonEmpty(null, "", " ")      = " "
+     *  .firstNonEmpty("abc")              = "abc"
+     *  .firstNonEmpty(null, "xyz")        = "xyz"
+     *  .firstNonEmpty("", "xyz")          = "xyz"
+     *  .firstNonEmpty(null, "xyz", "abc") = "xyz"
+     *  .firstNonEmpty()                   = null
      * </pre>
      */
     public <T extends CharSequence> T firstNonEmpty(T... values) {
@@ -2427,7 +2769,11 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .defaultIfBlank(null, "NULL")  = "NULL"
+     *  .defaultIfBlank("", "NULL")    = "NULL"
+     *  .defaultIfBlank(" ", "NULL")   = "NULL"
+     *  .defaultIfBlank("bat", "NULL") = "bat"
+     *  .defaultIfBlank("", null)      = null
      * </pre>
      */
     public <T extends CharSequence> T defaultIfBlank(T str, T defaultStr) {
@@ -2436,25 +2782,45 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .defaultIfEmpty(null, "NULL")  = "NULL"
+     *  .defaultIfEmpty("", "NULL")    = "NULL"
+     *  .defaultIfEmpty(" ", "NULL")   = " "
+     *  .defaultIfEmpty("bat", "NULL") = "bat"
+     *  .defaultIfEmpty("", null)      = null
      * </pre>
      */
     public <T extends CharSequence> T defaultIfEmpty(T str, T defaultStr) {
         return org.clever.common.utils.StringUtils.defaultIfEmpty(str, defaultStr);
     }
 
+    // Rotating (circular shift)
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
      * <pre>
-     *
+     *  .rotate(null, *)        = null
+     *  .rotate("", *)          = ""
+     *  .rotate("abcdefg", 0)   = "abcdefg"
+     *  .rotate("abcdefg", 2)   = "fgabcde"
+     *  .rotate("abcdefg", -2)  = "cdefgab"
+     *  .rotate("abcdefg", 7)   = "abcdefg"
+     *  .rotate("abcdefg", -7)  = "abcdefg"
+     *  .rotate("abcdefg", 9)   = "fgabcde"
+     *  .rotate("abcdefg", -9)  = "cdefgab"
      * </pre>
      */
     public String rotate(String str, int shift) {
         return org.clever.common.utils.StringUtils.rotate(str, shift);
     }
 
+    // Reversing
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
      * <pre>
-     *
+     *  .reverse(null)  = null
+     *  .reverse("")    = ""
+     *  .reverse("bat") = "tab"
      * </pre>
      */
     public String reverse(String str) {
@@ -2463,16 +2829,28 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .reverseDelimited(null, *)      = null
+     *  .reverseDelimited("", *)        = ""
+     *  .reverseDelimited("a.b.c", 'x') = "a.b.c"
+     *  .reverseDelimited("a.b.c", ".") = "c.b.a"
      * </pre>
      */
     public String reverseDelimited(String str, char separatorChar) {
         return org.clever.common.utils.StringUtils.reverseDelimited(str, separatorChar);
     }
 
+    // Abbreviating
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
      * <pre>
-     *
+     *  .abbreviate(null, *)      = null
+     *  .abbreviate("", 4)        = ""
+     *  .abbreviate("abcdefg", 6) = "abc..."
+     *  .abbreviate("abcdefg", 7) = "abcdefg"
+     *  .abbreviate("abcdefg", 8) = "abcdefg"
+     *  .abbreviate("abcdefg", 4) = "a..."
+     *  .abbreviate("abcdefg", 3) = IllegalArgumentException
      * </pre>
      */
     public String abbreviate(String str, int maxWidth) {
@@ -2481,7 +2859,19 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .abbreviate(null, *, *)                = null
+     *  .abbreviate("", 0, 4)                  = ""
+     *  .abbreviate("abcdefghijklmno", -1, 10) = "abcdefg..."
+     *  .abbreviate("abcdefghijklmno", 0, 10)  = "abcdefg..."
+     *  .abbreviate("abcdefghijklmno", 1, 10)  = "abcdefg..."
+     *  .abbreviate("abcdefghijklmno", 4, 10)  = "abcdefg..."
+     *  .abbreviate("abcdefghijklmno", 5, 10)  = "...fghi..."
+     *  .abbreviate("abcdefghijklmno", 6, 10)  = "...ghij..."
+     *  .abbreviate("abcdefghijklmno", 8, 10)  = "...ijklmno"
+     *  .abbreviate("abcdefghijklmno", 10, 10) = "...ijklmno"
+     *  .abbreviate("abcdefghijklmno", 12, 10) = "...ijklmno"
+     *  .abbreviate("abcdefghij", 0, 3)        = IllegalArgumentException
+     *  .abbreviate("abcdefghij", 5, 6)        = IllegalArgumentException
      * </pre>
      */
     public String abbreviate(String str, int offset, int maxWidth) {
@@ -2490,7 +2880,16 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .abbreviate(null, "...", *)      = null
+     *  .abbreviate("abcdefg", null, *)  = "abcdefg"
+     *  .abbreviate("", "...", 4)        = ""
+     *  .abbreviate("abcdefg", ".", 5)   = "abcd."
+     *  .abbreviate("abcdefg", ".", 7)   = "abcdefg"
+     *  .abbreviate("abcdefg", ".", 8)   = "abcdefg"
+     *  .abbreviate("abcdefg", "..", 4)  = "ab.."
+     *  .abbreviate("abcdefg", "..", 3)  = "a.."
+     *  .abbreviate("abcdefg", "..", 2)  = IllegalArgumentException
+     *  .abbreviate("abcdefg", "...", 3) = IllegalArgumentException
      * </pre>
      */
     public String abbreviate(String str, String abbrevMarker, int maxWidth) {
@@ -2499,7 +2898,16 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .abbreviate(null, "...", *)      = null
+     *  .abbreviate("abcdefg", null, *)  = "abcdefg"
+     *  .abbreviate("", "...", 4)        = ""
+     *  .abbreviate("abcdefg", ".", 5)   = "abcd."
+     *  .abbreviate("abcdefg", ".", 7)   = "abcdefg"
+     *  .abbreviate("abcdefg", ".", 8)   = "abcdefg"
+     *  .abbreviate("abcdefg", "..", 4)  = "ab.."
+     *  .abbreviate("abcdefg", "..", 3)  = "a.."
+     *  .abbreviate("abcdefg", "..", 2)  = IllegalArgumentException
+     *  .abbreviate("abcdefg", "...", 3) = IllegalArgumentException
      * </pre>
      */
     public String abbreviate(String str, String abbrevMarker, int offset, int maxWidth) {
@@ -2508,16 +2916,31 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .abbreviateMiddle(null, null, 0)        = null
+     *  .abbreviateMiddle("abc", null, 0)       = "abc"
+     *  .abbreviateMiddle("abc", ".", 0)        = "abc"
+     *  .abbreviateMiddle("abc", ".", 3)        = "abc"
+     *  .abbreviateMiddle("abcdef", ".", 4)     = "ab.f"
      * </pre>
      */
     public String abbreviateMiddle(String str, String middle, int length) {
         return org.clever.common.utils.StringUtils.abbreviateMiddle(str, middle, length);
     }
 
+    // Difference
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
      * <pre>
-     *
+     *  .difference(null, null)          = null
+     *  .difference("", "")              = ""
+     *  .difference("", "abc")           = "abc"
+     *  .difference("abc", "")           = ""
+     *  .difference("abc", "abc")        = ""
+     *  .difference("abc", "ab")         = ""
+     *  .difference("ab", "abxyz")       = "xyz"
+     *  .difference("abcde", "abxyz")    = "xyz"
+     *  .difference("abcde", "xyz")      = "xyz"
      * </pre>
      */
     public String difference(String str1, String str2) {
@@ -2526,7 +2949,14 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .indexOfDifference(null, null)       = -1
+     *  .indexOfDifference("", "")           = -1
+     *  .indexOfDifference("", "abc")        = 0
+     *  .indexOfDifference("abc", "")        = 0
+     *  .indexOfDifference("abc", "abc")     = -1
+     *  .indexOfDifference("ab", "abxyz")    = 2
+     *  .indexOfDifference("abcde", "abxyz") = 2
+     *  .indexOfDifference("abcde", "xyz")   = 0
      * </pre>
      */
     public int indexOfDifference(CharSequence cs1, CharSequence cs2) {
@@ -2535,7 +2965,23 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .indexOfDifference(null)                                            = -1
+     *  .indexOfDifference(new String[] {})                                 = -1
+     *  .indexOfDifference(new String[] {"abc"})                            = -1
+     *  .indexOfDifference(new String[] {null, null})                       = -1
+     *  .indexOfDifference(new String[] {"", ""})                           = -1
+     *  .indexOfDifference(new String[] {"", null})                         = 0
+     *  .indexOfDifference(new String[] {"abc", null, null})                = 0
+     *  .indexOfDifference(new String[] {null, null, "abc"})                = 0
+     *  .indexOfDifference(new String[] {"", "abc"})                        = 0
+     *  .indexOfDifference(new String[] {"abc", ""})                        = 0
+     *  .indexOfDifference(new String[] {"abc", "abc"})                     = -1
+     *  .indexOfDifference(new String[] {"abc", "a"})                       = 1
+     *  .indexOfDifference(new String[] {"ab", "abxyz"})                    = 2
+     *  .indexOfDifference(new String[] {"abcde", "abxyz"})                 = 2
+     *  .indexOfDifference(new String[] {"abcde", "xyz"})                   = 0
+     *  .indexOfDifference(new String[] {"xyz", "abcde"})                   = 0
+     *  .indexOfDifference(new String[] {"i am a machine", "i am a robot"}) = 7
      * </pre>
      */
     public int indexOfDifference(CharSequence... css) {
@@ -2544,16 +2990,42 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .getCommonPrefix(null)                                              = ""
+     *  .getCommonPrefix(new String[] {})                                   = ""
+     *  .getCommonPrefix(new String[] {"abc"})                              = "abc"
+     *  .getCommonPrefix(new String[] {null, null})                         = ""
+     *  .getCommonPrefix(new String[] {"", ""})                             = ""
+     *  .getCommonPrefix(new String[] {"", null})                           = ""
+     *  .getCommonPrefix(new String[] {"abc", null, null})                  = ""
+     *  .getCommonPrefix(new String[] {null, null, "abc"})                  = ""
+     *  .getCommonPrefix(new String[] {"", "abc"})                          = ""
+     *  .getCommonPrefix(new String[] {"abc", ""})                          = ""
+     *  .getCommonPrefix(new String[] {"abc", "abc"})                       = "abc"
+     *  .getCommonPrefix(new String[] {"abc", "a"})                         = "a"
+     *  .getCommonPrefix(new String[] {"ab", "abxyz"})                      = "ab"
+     *  .getCommonPrefix(new String[] {"abcde", "abxyz"})                   = "ab"
+     *  .getCommonPrefix(new String[] {"abcde", "xyz"})                     = ""
+     *  .getCommonPrefix(new String[] {"xyz", "abcde"})                     = ""
+     *  .getCommonPrefix(new String[] {"i am a machine", "i am a robot"})   = "i am a "
      * </pre>
      */
     public String getCommonPrefix(String... strs) {
         return org.clever.common.utils.StringUtils.getCommonPrefix(strs);
     }
 
+    // Misc
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
+    // startsWith
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
      * <pre>
-     *
+     *  .startsWith(null, null)      = true
+     *  .startsWith(null, "abc")     = false
+     *  .startsWith("abcdef", null)  = false
+     *  .startsWith("abcdef", "abc") = true
+     *  .startsWith("ABCDEF", "abc") = false
      * </pre>
      */
     public boolean startsWith(CharSequence str, CharSequence prefix) {
@@ -2562,7 +3034,11 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .startsWithIgnoreCase(null, null)      = true
+     *  .startsWithIgnoreCase(null, "abc")     = false
+     *  .startsWithIgnoreCase("abcdef", null)  = false
+     *  .startsWithIgnoreCase("abcdef", "abc") = true
+     *  .startsWithIgnoreCase("ABCDEF", "abc") = true
      * </pre>
      */
     public boolean startsWithIgnoreCase(CharSequence str, CharSequence prefix) {
@@ -2571,16 +3047,32 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .startsWithAny(null, null)                                   = false
+     *  .startsWithAny(null, new String[] {"abc"})                   = false
+     *  .startsWithAny("abcxyz", null)                               = false
+     *  .startsWithAny("abcxyz", new String[] {""})                  = true
+     *  .startsWithAny("abcxyz", new String[] {"abc"})               = true
+     *  .startsWithAny("abcxyz", new String[] {null, "xyz", "abc"})  = true
+     *  .startsWithAny("abcxyz", null, "xyz", "ABCX")                = false
+     *  .startsWithAny("ABCXYZ", null, "xyz", "abc")                 = false
      * </pre>
      */
     public boolean startsWithAny(CharSequence sequence, CharSequence... searchStrings) {
         return org.clever.common.utils.StringUtils.startsWithAny(sequence, searchStrings);
     }
 
+    // endsWith
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
      * <pre>
-     *
+     *  .endsWith(null, null)      = true
+     *  .endsWith(null, "def")     = false
+     *  .endsWith("abcdef", null)  = false
+     *  .endsWith("abcdef", "def") = true
+     *  .endsWith("ABCDEF", "def") = false
+     *  .endsWith("ABCDEF", "cde") = false
+     *  .endsWith("ABCDEF", "")    = true
      * </pre>
      */
     public boolean endsWith(CharSequence str, CharSequence suffix) {
@@ -2589,7 +3081,12 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .endsWithIgnoreCase(null, null)      = true
+     *  .endsWithIgnoreCase(null, "def")     = false
+     *  .endsWithIgnoreCase("abcdef", null)  = false
+     *  .endsWithIgnoreCase("abcdef", "def") = true
+     *  .endsWithIgnoreCase("ABCDEF", "def") = true
+     *  .endsWithIgnoreCase("ABCDEF", "cde") = false
      * </pre>
      */
     public boolean endsWithIgnoreCase(CharSequence str, CharSequence suffix) {
@@ -2597,9 +3094,7 @@ public class StringUtils {
     }
 
     /**
-     * <pre>
      *
-     * </pre>
      */
     public String normalizeSpace(String str) {
         return org.clever.common.utils.StringUtils.normalizeSpace(str);
@@ -2607,7 +3102,14 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .endsWithAny(null, null)                                    = false
+     *  .endsWithAny(null, new String[] {"abc"})                    = false
+     *  .endsWithAny("abcxyz", null)                                = false
+     *  .endsWithAny("abcxyz", new String[] {""})                   = true
+     *  .endsWithAny("abcxyz", new String[] {"xyz"})                = true
+     *  .endsWithAny("abcxyz", new String[] {null, "xyz", "abc"})   = true
+     *  .endsWithAny("abcXYZ", "def", "XYZ")                        = true
+     *  .endsWithAny("abcXYZ", "def", "xyz")                        = false
      * </pre>
      */
     public boolean endsWithAny(CharSequence sequence, CharSequence... searchStrings) {
@@ -2616,7 +3118,12 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .appendIfMissing(null, null)        = null
+     *  .appendIfMissing("abc", null)       = "abc"
+     *  .appendIfMissing("", "xyz")         = "xyz"
+     *  .appendIfMissing("abc", "xyz")      = "abcxyz"
+     *  .appendIfMissing("abcxyz", "xyz")   = "abcxyz"
+     *  .appendIfMissing("abcXYZ", "xyz")   = "abcXYZxyz"
      * </pre>
      */
     public String appendIfMissing(String str, CharSequence suffix, CharSequence... suffixes) {
@@ -2625,7 +3132,12 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .appendIfMissingIgnoreCase(null, null)      = null
+     *  .appendIfMissingIgnoreCase("abc", null)     = "abc"
+     *  .appendIfMissingIgnoreCase("", "xyz")       = "xyz"
+     *  .appendIfMissingIgnoreCase("abc", "xyz")    = "abcxyz"
+     *  .appendIfMissingIgnoreCase("abcxyz", "xyz") = "abcxyz"
+     *  .appendIfMissingIgnoreCase("abcXYZ", "xyz") = "abcXYZ"
      * </pre>
      */
     public String appendIfMissingIgnoreCase(String str, CharSequence suffix, CharSequence... suffixes) {
@@ -2634,7 +3146,12 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .prependIfMissing(null, null)      = null
+     *  .prependIfMissing("abc", null)     = "abc"
+     *  .prependIfMissing("", "xyz")       = "xyz"
+     *  .prependIfMissing("abc", "xyz")    = "xyzabc"
+     *  .prependIfMissing("xyzabc", "xyz") = "xyzabc"
+     *  .prependIfMissing("XYZabc", "xyz") = "xyzXYZabc"
      * </pre>
      */
     public String prependIfMissing(String str, CharSequence prefix, CharSequence... prefixes) {
@@ -2643,7 +3160,12 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .prependIfMissingIgnoreCase(null, null)      = null
+     *  .prependIfMissingIgnoreCase("abc", null)     = "abc"
+     *  .prependIfMissingIgnoreCase("", "xyz")       = "xyz"
+     *  .prependIfMissingIgnoreCase("abc", "xyz")    = "xyzabc"
+     *  .prependIfMissingIgnoreCase("xyzabc", "xyz") = "xyzabc"
+     *  .prependIfMissingIgnoreCase("XYZabc", "xyz") = "XYZabc"
      * </pre>
      */
     public String prependIfMissingIgnoreCase(String str, CharSequence prefix, CharSequence... prefixes) {
@@ -2651,9 +3173,7 @@ public class StringUtils {
     }
 
     /**
-     * <pre>
-     *
-     * </pre>
+     * 使用指定的字符编码将byte[]转换为字符串
      */
     public String toEncodedString(byte[] bytes, Charset charset) {
         return org.clever.common.utils.StringUtils.toEncodedString(bytes, charset);
@@ -2661,7 +3181,12 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .wrap(null, *)        = null
+     *  .wrap("", *)          = ""
+     *  .wrap("ab", '\0')     = "ab"
+     *  .wrap("ab", 'x')      = "xabx"
+     *  .wrap("ab", '\'')     = "'ab'"
+     *  .wrap("\"ab\"", '\"') = "\"\"ab\"\""
      * </pre>
      */
     public String wrap(String str, char wrapWith) {
@@ -2670,7 +3195,16 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .wrap(null, *)         = null
+     *  .wrap("", *)           = ""
+     *  .wrap("ab", null)      = "ab"
+     *  .wrap("ab", "x")       = "xabx"
+     *  .wrap("ab", "\"")      = "\"ab\""
+     *  .wrap("\"ab\"", "\"")  = "\"\"ab\"\""
+     *  .wrap("ab", "'")       = "'ab'"
+     *  .wrap("'abcd'", "'")   = "''abcd''"
+     *  .wrap("\"abcd\"", "'") = "'\"abcd\"'"
+     *  .wrap("'abcd'", "\"")  = "\"'abcd'\""
      * </pre>
      */
     public String wrap(String str, String wrapWith) {
@@ -2679,7 +3213,16 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .wrap(null, *)        = null
+     *  .wrap("", *)          = ""
+     *  .wrap("ab", '\0')     = "ab"
+     *  .wrap("ab", 'x')      = "xabx"
+     *  .wrap("ab", '\'')     = "'ab'"
+     *  .wrap("\"ab\"", '\"') = "\"ab\""
+     *  .wrap("/", '/')  = "/"
+     *  .wrap("a/b/c", '/')  = "/a/b/c/"
+     *  .wrap("/a/b/c", '/')  = "/a/b/c/"
+     *  .wrap("a/b/c/", '/')  = "/a/b/c/"
      * </pre>
      */
     public String wrapIfMissing(String str, char wrapWith) {
@@ -2688,7 +3231,20 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .wrap(null, *)         = null
+     *  .wrap("", *)           = ""
+     *  .wrap("ab", null)      = "ab"
+     *  .wrap("ab", "x")       = "xabx"
+     *  .wrap("ab", "\"")      = "\"ab\""
+     *  .wrap("\"ab\"", "\"")  = "\"ab\""
+     *  .wrap("ab", "'")       = "'ab'"
+     *  .wrap("'abcd'", "'")   = "'abcd'"
+     *  .wrap("\"abcd\"", "'") = "'\"abcd\"'"
+     *  .wrap("'abcd'", "\"")  = "\"'abcd'\""
+     *  .wrap("/", "/")  = "/"
+     *  .wrap("a/b/c", "/")  = "/a/b/c/"
+     *  .wrap("/a/b/c", "/")  = "/a/b/c/"
+     *  .wrap("a/b/c/", "/")  = "/a/b/c/"
      * </pre>
      */
     public String wrapIfMissing(String str, String wrapWith) {
@@ -2697,7 +3253,15 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .unwrap(null, null)         = null
+     *  .unwrap(null, "")           = null
+     *  .unwrap(null, "1")          = null
+     *  .unwrap("\'abc\'", "\'")    = "abc"
+     *  .unwrap("\"abc\"", "\"")    = "abc"
+     *  .unwrap("AABabcBAA", "AA")  = "BabcB"
+     *  .unwrap("A", "#")           = "A"
+     *  .unwrap("#A", "#")          = "#A"
+     *  .unwrap("A#", "#")          = "A#"
      * </pre>
      */
     public String unwrap(String str, String wrapToken) {
