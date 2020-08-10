@@ -1,7 +1,7 @@
 [OK] 01.AssertUtils
 [OK] 02.CommonUtils
 [OK] 03.StringUtils
-[  ] 04.DateUtils
+[OK] 04.DateUtils
 [  ] 05.HttpUtils
 [  ] 06.
 [  ] 07.
