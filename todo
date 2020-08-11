@@ -3,9 +3,42 @@
 [OK] 03.StringUtils
 [OK] 04.DateUtils
 [  ] 05.HttpUtils
-[  ] 06.
-[  ] 07.
-[  ] 08.
+[  ] 06.IDGenerateUtils
+[  ] 07.JsonXmlUtils
+[  ] 08.TreeUtils
+[  ] 09.SpringContext
+[  ] 10.ExcelUtils
+[  ] 11.CryptoUtils
+[  ] 12.DigestUtils
+[  ] 13.EncodeDecodeUtils
+[  ] 14.ThreadUtils
+[  ] 15.CookieUtils
+[  ] 16.HttpRequestUtils
+[  ] 17.ValidatorUtils
+[  ] 18.ImageValidateUtils
+[  ] 19.ZxingUtils
+[  ] 20.SendMailUtils
+[  ] 21.PinyinUtils
+[  ] 22.DataSizeUtils
+[  ] 23.IPAddressUtils
+[  ] 24.IdCardUtils
+[  ] 25.RMBUtils
+[  ] 26.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
