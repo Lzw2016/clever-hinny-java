@@ -2,8 +2,8 @@
 [OK] 02.CommonUtils
 [OK] 03.StringUtils
 [OK] 04.DateUtils
-[  ] 05.HttpUtils
-[  ] 06.IDGenerateUtils
+[OK] 05.HttpUtils
+[OK] 06.IDGenerateUtils
 [  ] 07.JsonXmlUtils
 [  ] 08.TreeUtils
 [  ] 09.SpringContext
