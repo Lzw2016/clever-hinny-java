@@ -1,5 +1,6 @@
 package org.clever.hinny.core;
 
+import org.clever.common.utils.mapper.JsonXmlConverter;
 import org.clever.common.utils.mapper.XStreamMapper;
 
 /**
@@ -37,6 +38,34 @@ public class XmlUtils {
         return mapper.fromXml(xmlString);
     }
 
-//    public boolean update(String xmlString, Object object) {
+    /**
+     * 当XML里只含有Bean的部分属性时，更新一个已存在Bean，只覆盖该部分的属性
+     *
+     * @param xml    XML字符串
+     * @param object 需要更新的对象
+     * @return 操作成功返回true
+     */
+    public boolean update(String xml, Object object) {
+        return mapper.update(xml, object);
+    }
 
+    /**
+     * XML字符串转换成Json字符串<br/>
+     *
+     * @param xml XML字符串
+     * @return Json字符串
+     */
+    public String xmlToJson(String xml) {
+        return JsonXmlConverter.xmlToJson(xml);
+    }
+
+    /**
+     * Json字符串转换成XML字符串<br/>
+     *
+     * @param json Json字符串
+     * @return XML字符串
+     */
+    public String jsonToXml(String json) {
+        return JsonXmlConverter.jsonToXml(json);
+    }
 }
