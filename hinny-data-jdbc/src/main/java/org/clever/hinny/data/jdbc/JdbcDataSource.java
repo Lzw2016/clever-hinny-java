@@ -917,7 +917,7 @@ public class JdbcDataSource extends AbstractDataSource {
             jdbcInfo.setAutoCommit(hikariDataSource.isAutoCommit());
             jdbcInfo.setReadOnly(hikariDataSource.isReadOnly());
             jdbcInfo.setDbType(dbType);
-            jdbcInfo.setReadOnly(hikariDataSource.isClosed());
+            jdbcInfo.setClosed(hikariDataSource.isClosed());
             return jdbcInfo;
         } else {
             throw new UnsupportedOperationException("当前数据源类型：" + dataSource.getClass().getName() + "，不支持此操作");
