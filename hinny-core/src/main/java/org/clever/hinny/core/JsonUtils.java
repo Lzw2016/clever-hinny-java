@@ -12,10 +12,10 @@ import java.util.Map;
 public class JsonUtils {
     public static final JsonUtils Instance = new JsonUtils();
 
-    private final JacksonMapper jacksonMapper;
+    private final JacksonMapper mapper;
 
     private JsonUtils() {
-        jacksonMapper = JacksonMapper.getInstance();
+        mapper = JacksonMapper.getInstance();
     }
 
     /**
@@ -25,14 +25,14 @@ public class JsonUtils {
      * @return 序列化后的Json字符串
      */
     public String toJson(Object object) {
-        return jacksonMapper.toJson(object);
+        return mapper.toJson(object);
     }
 
     /**
      * 输出JSON格式数据.
      */
     public String toJsonP(String functionName, Object object) {
-        return jacksonMapper.toJsonP(functionName, object);
+        return mapper.toJsonP(functionName, object);
     }
 
     /**
@@ -40,7 +40,7 @@ public class JsonUtils {
      */
     @SuppressWarnings("unchecked")
     public Map<String, Object> toMap(String json) {
-        return jacksonMapper.fromJson(json, LinkedHashMap.class);
+        return mapper.fromJson(json, LinkedHashMap.class);
     }
 
 //    public boolean update(String jsonString, Object object) {
