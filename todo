@@ -5,17 +5,17 @@
 [OK] 05.HttpUtils
 [OK] 06.IDGenerateUtils
 [OK] 07.JsonXmlUtils(JsonUtils、XmlUtils)
-[  ] 08.TreeUtils
+[OK] 08.TreeUtils
 [  ] 09.SpringContext
 [  ] 10.ExcelUtils
-[  ] 11.CryptoUtils
-[  ] 12.DigestUtils
-[  ] 13.EncodeDecodeUtils
-[  ] 14.ThreadUtils
-[  ] 15.CookieUtils
-[  ] 16.HttpRequestUtils
+[OK] 11.CryptoUtils
+[OK] 12.DigestUtils
+[OK] 13.EncodeDecodeUtils
+[OK] 14.ThreadUtils
+[OK] 15.CookieUtils
+[OK] 16.HttpRequestUtils
 [  ] 17.ValidatorUtils
-[  ] 18.ImageValidateUtils
+[OK] 18.ImageValidateUtils
 [  ] 19.ZxingUtils
 [  ] 20.SendMailUtils
 [  ] 21.PinyinUtils
