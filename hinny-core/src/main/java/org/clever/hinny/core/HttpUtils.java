@@ -139,6 +139,27 @@ public class HttpUtils {
     /**
      * 使用HTTP POST请求获取数据，支持参数，返回字符串
      *
+     * @param url    请求url(非空)
+     * @param params Url Query Parameter(可选)
+     */
+    public String postStr(final String url, final Map<String, String> params) {
+        String json = getJsonBody(null);
+        return delegate.postStr(url, params, json);
+    }
+
+    /**
+     * 使用HTTP POST请求获取数据，支持参数，返回字符串
+     *
+     * @param url 请求url(非空)
+     */
+    public String postStr(final String url) {
+        String json = getJsonBody(null);
+        return delegate.postStr(url, json);
+    }
+
+    /**
+     * 使用HTTP POST请求获取数据，支持参数，返回字符串
+     *
      * @param url     请求url(非空)
      * @param body    Json Body(非空)
      * @param params  Url Query Parameter(可选)
@@ -174,6 +195,31 @@ public class HttpUtils {
     @SuppressWarnings("unchecked")
     public Map<String, Object> postMap(final String url, final Object body) {
         String json = getJsonBody(body);
+        String res = delegate.postStr(url, json);
+        return JacksonMapper.getInstance().fromJson(res, LinkedHashMap.class);
+    }
+
+    /**
+     * 使用HTTP POST请求获取数据，支持参数，返回字符串
+     *
+     * @param url    请求url(非空)
+     * @param params Url Query Parameter(可选)
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> postMap(final String url, final Map<String, String> params) {
+        String json = getJsonBody(null);
+        String res = delegate.postStr(url, params, json);
+        return JacksonMapper.getInstance().fromJson(res, LinkedHashMap.class);
+    }
+
+    /**
+     * 使用HTTP POST请求获取数据，支持参数，返回字符串
+     *
+     * @param url 请求url(非空)
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> postMap(final String url) {
+        String json = getJsonBody(null);
         String res = delegate.postStr(url, json);
         return JacksonMapper.getInstance().fromJson(res, LinkedHashMap.class);
     }
