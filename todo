@@ -16,13 +16,13 @@
 [OK] 16.HttpRequestUtils
 [  ] 17.ValidatorUtils
 [OK] 18.ImageValidateUtils
-[  ] 19.ZxingUtils
+[OK] 19.ZxingUtils
 [  ] 20.SendMailUtils
-[  ] 21.PinyinUtils
-[  ] 22.DataSizeUtils
-[  ] 23.IPAddressUtils
-[  ] 24.IdCardUtils
-[  ] 25.RMBUtils
+[OK] 21.PinyinUtils
+[OK] 22.DataSizeUtils
+[OK] 23.IPAddressUtils
+[OK] 24.IdCardUtils
+[OK] 25.RMBUtils
 [  ] 26.
 
 

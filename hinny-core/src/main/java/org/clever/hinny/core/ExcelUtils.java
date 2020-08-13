@@ -5,4 +5,10 @@ package org.clever.hinny.core;
  * 创建时间：2020/07/28 22:33 <br/>
  */
 public class ExcelUtils {
+    public static final ExcelUtils Instance = new ExcelUtils();
+
+    private ExcelUtils() {
+    }
+
+
 }
