@@ -6,7 +6,7 @@
 [OK] 06.IDGenerateUtils
 [OK] 07.JsonXmlUtils(JsonUtils、XmlUtils)
 [OK] 08.TreeUtils
-[  ] 09.SpringContext
+[OK] 09.SpringContext
 [  ] 10.ExcelUtils
 [OK] 11.CryptoUtils
 [OK] 12.DigestUtils
