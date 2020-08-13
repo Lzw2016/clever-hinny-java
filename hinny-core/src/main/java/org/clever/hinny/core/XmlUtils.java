@@ -30,12 +30,12 @@ public class XmlUtils {
     /**
      * XML字符串反序列化成对象
      *
-     * @param xmlString XML字符串
-     * @param <T>       返回的对象类型
+     * @param xml XML字符串
+     * @param <T> 返回的对象类型
      * @return 返回的对象
      */
-    public <T> T fromXml(String xmlString) {
-        return mapper.fromXml(xmlString);
+    public <T> T fromXml(String xml) {
+        return mapper.fromXml(xml);
     }
 
     /**
