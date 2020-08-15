@@ -1047,7 +1047,7 @@ public class HttpUtils {
         String json;
         if (body == null) {
             json = null;
-        } else if (body instanceof Character) {
+        } else if (body instanceof CharSequence) {
             json = String.valueOf(body);
         } else {
             json = JacksonMapper.getInstance().toJson(body);
