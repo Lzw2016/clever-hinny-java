@@ -1085,23 +1085,52 @@ public class HttpUtils {
          */
         private boolean successful;
 
+        /**
+         * 获取响应头信息
+         *
+         * @param header 响应头名称
+         */
         public List<String> getHeader(String header) {
             return headers.get(header);
         }
 
+        /**
+         * 获取响应头的第一个信息
+         *
+         * @param header 响应头名称
+         */
         public String getFirstHeader(String header) {
             return headers.getFirst(header);
         }
 
+        /**
+         * 获取所有响应头的第一个信息
+         */
+        public Map<String, String> getFirstHeaders() {
+            return headers.toSingleValueMap();
+        }
+
+        /**
+         * 获取响应头的第一个信息
+         *
+         * @param header       响应头名称
+         * @param defaultValue 默认值
+         */
         public String getFirstHeader(String header, String defaultValue) {
             String value = headers.getFirst(header);
             return value == null ? defaultValue : value;
         }
 
+        /**
+         * 获取所有的响应头名称
+         */
         public Set<String> getHeaderNames() {
             return headers.keySet();
         }
 
+        /**
+         * 获取请求BodyMap对象
+         */
         @SuppressWarnings("unchecked")
         public Map<String, Object> getBodyMap() {
             if (StringUtils.isBlank(body)) {
