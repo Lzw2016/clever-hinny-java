@@ -41,4 +41,13 @@ public class ThreadUtils {
     public void printTrack() {
         org.clever.common.utils.ThreadUtils.printTrack();
     }
+
+    /**
+     * 休眠一段时间
+     *
+     * @param millis 毫秒
+     */
+    public void sleep(Number millis) throws InterruptedException {
+        Thread.sleep(millis.longValue());
+    }
 }
