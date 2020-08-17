@@ -1,6 +1,9 @@
 package org.clever.hinny.core;
 
+import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.enums.CellExtraTypeEnum;
+import com.alibaba.excel.event.AnalysisEventListener;
+import com.alibaba.excel.metadata.CellData;
 import com.alibaba.excel.read.builder.ExcelReaderBuilder;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
@@ -66,6 +69,9 @@ public class ExcelUtils {
         }
         builder.autoTrim(config.autoTrim);
         builder.customObject(config.customObject);
+        // 自定义解析逻辑
+        builder.useDefaultListener(false);
+        builder.registerReadListener(new ExcelDateReadListener(config));
         return excelDataReader;
     }
 
@@ -193,5 +199,23 @@ public class ExcelUtils {
     @Data
     public static class ExcelDataWriterConfig implements Serializable {
 
+    }
+
+    private static class ExcelDateReadListener extends AnalysisEventListener<Map<Integer, CellData<?>>> {
+        private final ExcelDataReaderConfig config;
+
+        public ExcelDateReadListener(ExcelDataReaderConfig config) {
+            this.config = config;
+        }
+
+        @Override
+        public void invoke(Map<Integer, CellData<?>> data, AnalysisContext context) {
+
+        }
+
+        @Override
+        public void doAfterAllAnalysed(AnalysisContext context) {
+
+        }
     }
 }
