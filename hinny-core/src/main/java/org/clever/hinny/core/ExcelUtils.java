@@ -1,9 +1,12 @@
 package org.clever.hinny.core;
 
 import com.alibaba.excel.context.AnalysisContext;
+import com.alibaba.excel.converters.Converter;
 import com.alibaba.excel.enums.CellExtraTypeEnum;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.alibaba.excel.metadata.CellData;
+import com.alibaba.excel.metadata.GlobalConfiguration;
+import com.alibaba.excel.metadata.property.ExcelContentProperty;
 import com.alibaba.excel.read.builder.ExcelReaderBuilder;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
@@ -11,10 +14,12 @@ import org.clever.common.utils.excel.ExcelDataReader;
 import org.clever.common.utils.excel.ExcelDataWriter;
 import org.clever.common.utils.excel.ExcelReaderExceptionHand;
 import org.clever.common.utils.excel.ExcelRowReader;
+import org.clever.common.utils.excel.dto.ExcelData;
 import org.springframework.util.Assert;
 
 import java.io.InputStream;
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -71,7 +76,7 @@ public class ExcelUtils {
         builder.customObject(config.customObject);
         // 自定义解析逻辑
         builder.useDefaultListener(false);
-        builder.registerReadListener(new ExcelDateReadListener(config));
+        builder.registerReadListener(new ExcelDateReadListener(config, excelDataReader));
         return excelDataReader;
     }
 
@@ -201,11 +206,47 @@ public class ExcelUtils {
 
     }
 
+    @SuppressWarnings("rawtypes")
     private static class ExcelDateReadListener extends AnalysisEventListener<Map<Integer, CellData<?>>> {
         private final ExcelDataReaderConfig config;
+        private final ExcelDataReader<Map> excelDataReader;
+        private final Map<String, Class<?>> columns = new HashMap<>();
 
-        public ExcelDateReadListener(ExcelDataReaderConfig config) {
+        public ExcelDateReadListener(ExcelDataReaderConfig config, ExcelDataReader<Map> excelDataReader) {
+            Assert.notNull(config, "参数config不能为null");
+            Assert.notNull(excelDataReader, "参数excelDataReader不能为null");
             this.config = config;
+            this.excelDataReader = excelDataReader;
+        }
+
+        private ExcelData<Map> getExcelData(AnalysisContext context) {
+            final Integer sheetNo = context.readSheetHolder().getSheetNo();
+            final String sheetName = context.readSheetHolder().getSheetName();
+            String key = String.format("%s-%s", sheetNo, sheetName);
+            return excelDataReader.getExcelSheetMap().computeIfAbsent(key, s -> new ExcelData<>(Map.class, sheetName, sheetNo));
+        }
+
+        @Override
+        public void invokeHeadMap(Map<Integer, String> headMap, AnalysisContext context) {
+            ExcelData<Map> excelData = getExcelData(context);
+            if (excelData.getStartTime() == null) {
+                excelData.setStartTime(System.currentTimeMillis());
+            }
+            Map<String, Class<?>> columnsConfig = config.getColumns();
+            for (Map.Entry<Integer, String> entry : headMap.entrySet()) {
+                Integer index = entry.getKey();
+                String head = entry.getValue();
+                if (columnsConfig == null || columnsConfig.isEmpty()) {
+
+                } else {
+                    Class<?> clazz = columnsConfig.get(head);
+                }
+
+
+
+                // columns.put()
+            }
+
         }
 
         @Override
@@ -217,5 +258,42 @@ public class ExcelUtils {
         public void doAfterAllAnalysed(AnalysisContext context) {
 
         }
+
+        @Override
+        public void onException(Exception exception, AnalysisContext context) throws Exception {
+
+        }
+
+        @Override
+        public boolean hasNext(AnalysisContext context) {
+            return true;
+        }
     }
+
+//    public static class ConverterUtils {
+//        private ConverterUtils() {
+//        }
+//
+//        public static Object convertToJavaObject(
+//                CellData<?> cellData,
+//                Field field,
+//                ExcelContentProperty contentProperty,
+//                Map<String, Converter<?>> converterMap,
+//                GlobalConfiguration globalConfiguration,
+//                Integer rowIndex,
+//                Integer columnIndex) {
+//
+//        }
+//
+//        private static Object doConvertToJavaObject(
+//                CellData<?> cellData,
+//                Class<?> clazz,
+//                ExcelContentProperty contentProperty,
+//                Map<String, Converter<?>> converterMap,
+//                GlobalConfiguration globalConfiguration,
+//                Integer rowIndex,
+//                Integer columnIndex) {
+//
+//        }
+//    }
 }
