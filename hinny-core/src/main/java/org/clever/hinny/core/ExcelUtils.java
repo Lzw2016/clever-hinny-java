@@ -94,6 +94,8 @@ public class ExcelUtils {
     }
 
     public ExcelDataWriter createWriter(ExcelDataWriterConfig config) {
+        Assert.notNull(config, "参数config不能为null");
+//        ExcelDataWriter excelDataWriter = new ExcelDataWriter();
         return null;
     }
 
@@ -201,18 +203,6 @@ public class ExcelUtils {
          */
         private final Map<String, Class<?>> columns = new HashMap<>();
     }
-
-//    JString = "JString",
-//    JBigDecimal = "JBigDecimal",
-//    JBoolean = "JBoolean",
-//    JDate = "JDate",
-//    JInteger = "JInteger",
-//    JDouble = "JDouble",
-//    JLong = "JLong",
-//    JFloat = "JFloat",
-//    JShort = "JShort",
-//    JByte = "JByte",
-//    JByteArray = "JByte[]",
 
     @Data
     public static class ExcelDataWriterConfig implements Serializable {
