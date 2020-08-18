@@ -1,24 +1,40 @@
 package org.clever.hinny.core;
 
 import com.alibaba.excel.context.AnalysisContext;
+import com.alibaba.excel.converters.Converter;
+import com.alibaba.excel.converters.ConverterKeyBuild;
+import com.alibaba.excel.enums.CellDataTypeEnum;
 import com.alibaba.excel.enums.CellExtraTypeEnum;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.alibaba.excel.exception.ExcelDataConvertException;
+import com.alibaba.excel.metadata.Cell;
 import com.alibaba.excel.metadata.CellData;
+import com.alibaba.excel.metadata.GlobalConfiguration;
+import com.alibaba.excel.metadata.property.ExcelContentProperty;
 import com.alibaba.excel.read.builder.ExcelReaderBuilder;
+import com.alibaba.excel.read.metadata.holder.ReadHolder;
+import com.alibaba.excel.read.metadata.property.ExcelReadHeadProperty;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.clever.common.utils.codec.DigestUtils;
+import org.clever.common.utils.codec.EncodeDecodeUtils;
 import org.clever.common.utils.excel.ExcelDataReader;
 import org.clever.common.utils.excel.ExcelDataWriter;
 import org.clever.common.utils.excel.ExcelReaderExceptionHand;
 import org.clever.common.utils.excel.ExcelRowReader;
 import org.clever.common.utils.excel.dto.ExcelData;
+import org.clever.common.utils.excel.dto.ExcelRow;
+import org.clever.common.utils.tuples.TupleTow;
 import org.springframework.util.Assert;
 
 import java.io.InputStream;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 作者：lizw <br/>
@@ -39,6 +55,7 @@ public class ExcelUtils {
                 Map.class,
                 config.limitRows,
                 config.enableExcelData,
+                false,
                 config.excelRowReader,
                 config.excelReaderExceptionHand);
         excelDataReader.setEnableValidation(false);
@@ -93,11 +110,11 @@ public class ExcelUtils {
         /**
          * 读取Excel文件最大行数
          */
-        private int limitRows;
+        private int limitRows = org.clever.common.utils.excel.ExcelDataReader.LIMIT_ROWS;
         /**
          * 是否缓存读取的数据结果到内存中(默认启用)
          */
-        private boolean enableExcelData;
+        private boolean enableExcelData = true;
         /**
          * 是否启用数据校验(默认启用)
          */
@@ -203,10 +220,14 @@ public class ExcelUtils {
     }
 
     @SuppressWarnings("rawtypes")
+    @Slf4j
     private static class ExcelDateReadListener extends AnalysisEventListener<Map<Integer, CellData<?>>> {
         private final ExcelDataReaderConfig config;
         private final ExcelDataReader<Map> excelDataReader;
-        private final Map<String, Class<?>> columns = new HashMap<>();
+        /**
+         * Map<index, TupleTow<type, head>>
+         */
+        private final Map<Integer, TupleTow<Class<?>, String>> columns = new HashMap<>();
 
         public ExcelDateReadListener(ExcelDataReaderConfig config, ExcelDataReader<Map> excelDataReader) {
             Assert.notNull(config, "参数config不能为null");
@@ -222,6 +243,26 @@ public class ExcelUtils {
             return excelDataReader.getExcelSheetMap().computeIfAbsent(key, s -> new ExcelData<>(Map.class, sheetName, sheetNo));
         }
 
+        private Class<?> getCellDataType(CellData<?> cellData) {
+            if (cellData.getType() == null) {
+                return Void.class;
+            }
+            switch (cellData.getType()) {
+                case NUMBER:
+                    return BigDecimal.class;
+                case BOOLEAN:
+                    return Boolean.class;
+                case DIRECT_STRING:
+                case STRING:
+                case ERROR:
+                    return String.class;
+                case IMAGE:
+                    return Byte[].class;
+                default:
+                    return Void.class;
+            }
+        }
+
         @Override
         public void invokeHeadMap(Map<Integer, String> headMap, AnalysisContext context) {
             ExcelData<Map> excelData = getExcelData(context);
@@ -233,64 +274,179 @@ public class ExcelUtils {
                 Integer index = entry.getKey();
                 String head = entry.getValue();
                 Class<?> clazz = null;
-                if (columnsConfig == null || columnsConfig.isEmpty()) {
-
-                } else {
+                if (!columnsConfig.isEmpty()) {
                     clazz = columnsConfig.get(head);
                     if (clazz == null) {
                         continue;
                     }
                 }
-                columns.put(head, clazz);
+                columns.put(index, TupleTow.creat(clazz, head));
             }
-
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public void invoke(Map<Integer, CellData<?>> data, AnalysisContext context) {
-
+            ExcelData<Map> excelData = getExcelData(context);
+            if (excelData.getStartTime() == null) {
+                excelData.setStartTime(System.currentTimeMillis());
+            }
+            int index = context.readRowHolder().getRowIndex() + 1;
+            ExcelRow<Map> excelRow = new ExcelRow<>(new HashMap(data.size()), index);
+            // 数据签名-防重机制
+            Map<Integer, Cell> map = context.readRowHolder().getCellMap();
+            StringBuilder sb = new StringBuilder(map.size() * 32);
+            for (Map.Entry<Integer, Cell> entry : map.entrySet()) {
+                sb.append(entry.getKey()).append("=").append(entry.getValue().toString()).append("|");
+            }
+            excelRow.setDataSignature(EncodeDecodeUtils.encodeHex(DigestUtils.sha1(sb.toString().getBytes())));
+            // 读取数据需要类型转换
+            ReadHolder currentReadHolder = context.currentReadHolder();
+            ExcelReadHeadProperty excelReadHeadProperty = context.currentReadHolder().excelReadHeadProperty();
+            Map<Integer, ExcelContentProperty> contentPropertyMap = excelReadHeadProperty.getContentPropertyMap();
+            for (Map.Entry<Integer, CellData<?>> entry : data.entrySet()) {
+                Integer idx = entry.getKey();
+                CellData<?> cellData = entry.getValue();
+                TupleTow<Class<?>, String> tupleTow = columns.get(idx);
+                if (tupleTow.getValue1() == null) {
+                    tupleTow.setValue1(getCellDataType(cellData));
+                }
+                Object value;
+                if (Objects.equals(Void.class, tupleTow.getValue1())) {
+                    value = "";
+                } else {
+                    ExcelContentProperty excelContentProperty = contentPropertyMap.get(index);
+                    value = ConverterUtils.convertToJavaObject(
+                            cellData,
+                            tupleTow.getValue1(),
+                            excelContentProperty,
+                            currentReadHolder.converterMap(),
+                            currentReadHolder.globalConfiguration(),
+                            context.readRowHolder().getRowIndex(), index);
+                }
+                excelRow.getData().put(tupleTow.getValue2(), value);
+            }
+            boolean success = true;
+            final boolean enableExcelData = config.isEnableExcelData();
+            if (enableExcelData) {
+                success = excelData.addRow(excelRow);
+            }
+            if (!success) {
+                log.info("Excel数据导入数据重复，filename={} | data={}", config.getFilename(), data);
+            }
+            // 数据校验
+            final boolean enableValidation = config.isEnableValidation();
+            if (enableValidation && !excelRow.hasError()) {
+                // TODO 数据校验
+            }
+            // 自定义读取行处理逻辑
+            final ExcelRowReader<Map> excelRowReader = config.getExcelRowReader();
+            if (!excelRow.hasError() && excelRowReader != null) {
+                try {
+                    excelRowReader.readRow(data, excelRow, context);
+                } catch (Throwable e) {
+                    excelRow.addErrorInRow(e.getMessage());
+                }
+            }
         }
 
         @Override
         public void doAfterAllAnalysed(AnalysisContext context) {
-
+            ExcelData<Map> excelData = getExcelData(context);
+            if (excelData.getEndTime() == null) {
+                excelData.setEndTime(System.currentTimeMillis());
+            }
+            if (excelData.getEndTime() != null && excelData.getStartTime() != null) {
+                log.info("Excel Sheet读取完成，sheet={} | 耗时：{}ms", excelData.getSheetName(), excelData.getEndTime() - excelData.getStartTime());
+            }
+            ExcelRowReader<Map> excelRowReader = config.getExcelRowReader();
+            if (excelRowReader != null) {
+                excelRowReader.readEnd(context);
+            }
+            // if (!enableExcelData) {
+            //     excelData.setStartTime(null);
+            //     excelData.setEndTime(null);
+            // }
         }
 
         @Override
         public void onException(Exception exception, AnalysisContext context) throws Exception {
-
+            ExcelReaderExceptionHand excelReaderExceptionHand = config.getExcelReaderExceptionHand();
+            if (excelReaderExceptionHand != null) {
+                excelReaderExceptionHand.exceptionHand(exception, context);
+            } else {
+                // 默认的异常处理
+                throw exception;
+            }
         }
 
         @Override
         public boolean hasNext(AnalysisContext context) {
+            // 未配置列 - 提前退出
+            if (context.readSheetHolder().getHeadRowNumber() > 0 && columns.isEmpty()) {
+                log.warn("未匹配到列配置");
+                return false;
+
+            }
+            final ExcelData<Map> excelData = getExcelData(context);
+            // 是否重复读取
+            if (excelData.getEndTime() != null && excelData.getStartTime() != null) {
+                log.info("Excel Sheet已经读取完成，当前跳过，sheet={}", excelData.getSheetName());
+                return false;
+            }
+            // 数据是否超出限制 LIMIT_ROWS
+            final int limitRows = config.getLimitRows();
+            final int rowNum = context.readRowHolder().getRowIndex() + 1;
+            final int dataRowNum = rowNum - context.currentReadHolder().excelReadHeadProperty().getHeadRowNumber();
+            if (limitRows > 0 && dataRowNum > limitRows) {
+                log.info("Excel数据行超出限制：dataRowNum={} | limitRows={}", dataRowNum, limitRows);
+                excelData.setInterruptByRowNum(rowNum);
+                // 设置已经读取完成
+                doAfterAllAnalysed(context);
+                return false;
+            }
             return true;
         }
     }
 
-//    public static class ConverterUtils {
-//        private ConverterUtils() {
-//        }
-//
-//        public static Object convertToJavaObject(
-//                CellData<?> cellData,
-//                Field field,
-//                ExcelContentProperty contentProperty,
-//                Map<String, Converter<?>> converterMap,
-//                GlobalConfiguration globalConfiguration,
-//                Integer rowIndex,
-//                Integer columnIndex) {
-//
-//        }
-//
-//        private static Object doConvertToJavaObject(
-//                CellData<?> cellData,
-//                Class<?> clazz,
-//                ExcelContentProperty contentProperty,
-//                Map<String, Converter<?>> converterMap,
-//                GlobalConfiguration globalConfiguration,
-//                Integer rowIndex,
-//                Integer columnIndex) {
-//
-//        }
-//    }
+    public static class ConverterUtils {
+        private ConverterUtils() {
+        }
+
+        @SuppressWarnings("rawtypes")
+        public static Object convertToJavaObject(
+                CellData<?> cellData,
+                Class<?> clazz,
+                ExcelContentProperty contentProperty,
+                Map<String, Converter> converterMap,
+                GlobalConfiguration globalConfiguration,
+                Integer rowIndex,
+                Integer columnIndex) {
+            if (clazz == null) {
+                clazz = String.class;
+            }
+            if (Objects.equals(cellData.getType(), CellDataTypeEnum.EMPTY)) {
+                if (Objects.equals(String.class, clazz)) {
+                    return StringUtils.EMPTY;
+                } else {
+                    return null;
+                }
+            }
+            Converter<?> converter = null;
+            if (contentProperty != null) {
+                converter = contentProperty.getConverter();
+            }
+            if (converter == null) {
+                converter = converterMap.get(ConverterKeyBuild.buildKey(clazz, cellData.getType()));
+            }
+            if (converter == null) {
+                throw new ExcelDataConvertException(rowIndex, columnIndex, cellData, contentProperty, "Converter not found, convert " + cellData.getType() + " to " + clazz.getName());
+            }
+            try {
+                return converter.convertToJavaData(cellData, contentProperty, globalConfiguration);
+            } catch (Exception e) {
+                throw new ExcelDataConvertException(rowIndex, columnIndex, cellData, contentProperty, "Convert data " + cellData + " to " + clazz + " error ", e);
+            }
+        }
+    }
 }
