@@ -1,12 +1,9 @@
 package org.clever.hinny.core;
 
 import com.alibaba.excel.context.AnalysisContext;
-import com.alibaba.excel.converters.Converter;
 import com.alibaba.excel.enums.CellExtraTypeEnum;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.alibaba.excel.metadata.CellData;
-import com.alibaba.excel.metadata.GlobalConfiguration;
-import com.alibaba.excel.metadata.property.ExcelContentProperty;
 import com.alibaba.excel.read.builder.ExcelReaderBuilder;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
@@ -19,7 +16,6 @@ import org.springframework.util.Assert;
 
 import java.io.InputStream;
 import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -236,15 +232,16 @@ public class ExcelUtils {
             for (Map.Entry<Integer, String> entry : headMap.entrySet()) {
                 Integer index = entry.getKey();
                 String head = entry.getValue();
+                Class<?> clazz = null;
                 if (columnsConfig == null || columnsConfig.isEmpty()) {
 
                 } else {
-                    Class<?> clazz = columnsConfig.get(head);
+                    clazz = columnsConfig.get(head);
+                    if (clazz == null) {
+                        continue;
+                    }
                 }
-
-
-
-                // columns.put()
+                columns.put(head, clazz);
             }
 
         }
