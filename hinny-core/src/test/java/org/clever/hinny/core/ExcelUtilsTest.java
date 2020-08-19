@@ -9,10 +9,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 作者：lizw <br/>
@@ -77,6 +74,7 @@ public class ExcelUtilsTest {
             data.add("111");
             data.add("222");
             data.add("333");
+            data.add("444");
             list.add(data);
         }
         ExcelUtils.ExcelDataWriterConfig config = new ExcelUtils.ExcelDataWriterConfig();
@@ -87,6 +85,32 @@ public class ExcelUtilsTest {
         config.getColumns().add(new ExcelUtils.HeadConfig("第二", "积分商品总数量"));
         config.getColumns().add(new ExcelUtils.HeadConfig("第二", "上架积分商品数"));
         config.getColumns().add(new ExcelUtils.HeadConfig("第二", "下架积分商品数"));
+        ExcelDataWriter writer = ExcelUtils.Instance.createWriter(config);
+        writer.write().sheet("test").doWrite(list);
+    }
+
+    @Test
+    public void t05() {
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("序号", "字符串" + i);
+            data.put("药店ID", new Date());
+            data.put("药店名称", 0.56);
+            data.put("积分商品总数量", "111");
+            data.put("上架积分商品数", "222");
+            data.put("下架积分商品数", "333");
+            data.put("测试", "444");
+            list.add(data);
+        }
+        ExcelUtils.ExcelDataWriterConfig config = new ExcelUtils.ExcelDataWriterConfig();
+        config.setFileName(file2);
+        config.getColumns().add(new ExcelUtils.HeadConfig("序号"));
+        config.getColumns().add(new ExcelUtils.HeadConfig("药店ID"));
+        config.getColumns().add(new ExcelUtils.HeadConfig("药店名称"));
+        config.getColumns().add(new ExcelUtils.HeadConfig("积分商品总数量"));
+        config.getColumns().add(new ExcelUtils.HeadConfig("上架积分商品数"));
+        config.getColumns().add(new ExcelUtils.HeadConfig("下架积分商品数"));
         ExcelDataWriter writer = ExcelUtils.Instance.createWriter(config);
         writer.write().sheet("test").doWrite(list);
     }

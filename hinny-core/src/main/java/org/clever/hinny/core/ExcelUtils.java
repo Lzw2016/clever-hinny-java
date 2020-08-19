@@ -6,12 +6,12 @@ import com.alibaba.excel.converters.ConverterKeyBuild;
 import com.alibaba.excel.enums.CellDataTypeEnum;
 import com.alibaba.excel.enums.CellExtraTypeEnum;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.alibaba.excel.event.NotRepeatExecutor;
 import com.alibaba.excel.exception.ExcelDataConvertException;
 import com.alibaba.excel.metadata.Cell;
 import com.alibaba.excel.metadata.CellData;
 import com.alibaba.excel.metadata.GlobalConfiguration;
 import com.alibaba.excel.metadata.Head;
+import com.alibaba.excel.metadata.property.ColumnWidthProperty;
 import com.alibaba.excel.metadata.property.ExcelContentProperty;
 import com.alibaba.excel.read.builder.ExcelReaderBuilder;
 import com.alibaba.excel.read.metadata.holder.ReadHolder;
@@ -21,6 +21,9 @@ import com.alibaba.excel.write.builder.ExcelWriterBuilder;
 import com.alibaba.excel.write.handler.AbstractCellWriteHandler;
 import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
 import com.alibaba.excel.write.metadata.holder.WriteTableHolder;
+import com.alibaba.excel.write.metadata.style.WriteCellStyle;
+import com.alibaba.excel.write.style.AbstractVerticalCellStyleStrategy;
+import com.alibaba.excel.write.style.column.AbstractHeadColumnWidthStyleStrategy;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
@@ -176,7 +179,60 @@ public class ExcelUtils {
         }
         builder.autoTrim(config.autoTrim);
         // TODO 根据列配置加入各种 WriteHandler 如：AbstractHeadColumnWidthStyleStrategy、AbstractVerticalCellStyleStrategy。参考 AbstractWriteHolder
-        builder.registerWriteHandler(new ColumnStyleStrategy(config));
+        builder.registerWriteHandler(new FillHeadStrategy(config));
+        builder.registerWriteHandler(new ColumnWidthStyleStrategy());
+
+        // TODO 初始化 registerWriteHandler
+//        Map<Integer, Head> headMap = getExcelWriteHeadProperty().getHeadMap();
+//        boolean hasColumnWidth = false;
+//        boolean hasStyle = false;
+//        for (Head head : headMap.values()) {
+//            if (head.getColumnWidthProperty() != null) {
+//                hasColumnWidth = true;
+//            }
+//            if (head.getHeadStyleProperty() != null || head.getHeadFontProperty() != null || head.getContentStyleProperty() != null || head.getContentFontProperty() != null) {
+//                hasStyle = true;
+//            }
+//            dealLoopMerge(handlerList, head);
+//            // -------------------------------------------------------------------------->>>
+//            // LoopMergeProperty loopMergeProperty = head.getLoopMergeProperty();
+//            // if (loopMergeProperty == null) {
+//            //     return;
+//            // }
+//            // handlerList.add(new LoopMergeStrategy(loopMergeProperty, head.getColumnIndex()));
+//        }
+//
+//        if (hasColumnWidth) {
+//            builder.registerWriteHandler(new ColumnWidthStyleStrategy());
+//        }
+//        if (hasStyle) {
+//            builder.registerWriteHandler(new StyleStrategy());
+//        }
+//
+//        dealRowHigh(handlerList);
+//        // -------------------------------------------------------------------------->>>
+//        // RowHeightProperty headRowHeightProperty = getExcelWriteHeadProperty().getHeadRowHeightProperty();
+//        // RowHeightProperty contentRowHeightProperty = getExcelWriteHeadProperty().getContentRowHeightProperty();
+//        // if (headRowHeightProperty == null && contentRowHeightProperty == null) {
+//        //     return;
+//        // }
+//        // Short headRowHeight = null;
+//        // if (headRowHeightProperty != null) {
+//        //     headRowHeight = headRowHeightProperty.getHeight();
+//        // }
+//        // Short contentRowHeight = null;
+//        // if (contentRowHeightProperty != null) {
+//        //     contentRowHeight = contentRowHeightProperty.getHeight();
+//        // }
+//        // handlerList.add(new SimpleRowHeightStyleStrategy(headRowHeight, contentRowHeight));
+//
+//        dealOnceAbsoluteMerge(handlerList);
+//        // -------------------------------------------------------------------------->>>
+//        // OnceAbsoluteMergeProperty onceAbsoluteMergeProperty = getExcelWriteHeadProperty().getOnceAbsoluteMergeProperty();
+//        // if (onceAbsoluteMergeProperty == null) {
+//        //     return;
+//        // }
+//        // handlerList.add(new OnceAbsoluteMergeStrategy(onceAbsoluteMergeProperty));
         return excelDataWriter;
     }
 
@@ -391,6 +447,11 @@ public class ExcelUtils {
          * Excel表头
          */
         private final List<HeadConfig> columns = new ArrayList<>();
+
+        /**
+         * 全局样式配置
+         */
+        private final WriterStyleConfig styleConfig = new WriterStyleConfig();
 
         public List<List<String>> getHeads() {
             return columns.stream().map(headConfig -> headConfig.names).collect(Collectors.toList());
@@ -655,7 +716,6 @@ public class ExcelUtils {
     @EqualsAndHashCode(callSuper = true)
     @Data
     public static class ContentStyle extends ExcelCellStyle {
-
     }
 
     @EqualsAndHashCode(callSuper = true)
@@ -965,47 +1025,100 @@ public class ExcelUtils {
     }
 
     @Slf4j
-    private static class ColumnStyleStrategy extends AbstractCellWriteHandler implements NotRepeatExecutor {
+    private static class FillHeadStrategy extends AbstractCellWriteHandler {
         private final ExcelDataWriterConfig config;
+        private final Map<Integer, Boolean> filledMap = new HashMap<>();
 
-        public ColumnStyleStrategy(ExcelDataWriterConfig config) {
+        public FillHeadStrategy(ExcelDataWriterConfig config) {
             Assert.notNull(config, "参数config不能为null");
             this.config = config;
         }
 
         @Override
-        public String uniqueValue() {
-            return "hinny-core-ColumnStyleStrategy";
-        }
-
-//        @Override
-//        public void beforeCellCreate(
-//                WriteSheetHolder writeSheetHolder,
-//                WriteTableHolder writeTableHolder,
-//                Row row,
-//                Head head,
-//                Integer columnIndex,
-//                Integer relativeRowIndex,
-//                Boolean isHead) {
-//            if (isHead) {
-//                head.setColumnWidthProperty(new ColumnWidthProperty(60));
-//            }
-//        }
-
-        int count = 0;
-
-
-        @Override
-        public void afterCellDispose(
+        public void beforeCellCreate(
                 WriteSheetHolder writeSheetHolder,
                 WriteTableHolder writeTableHolder,
-                List<CellData> cellDataList,
-                org.apache.poi.ss.usermodel.Cell cell,
+                Row row,
                 Head head,
+                Integer columnIndex,
                 Integer relativeRowIndex,
                 Boolean isHead) {
-            log.info("--> {}", (++count));
-            writeSheetHolder.getSheet().setColumnWidth(cell.getColumnIndex(), 60 * 256);
+            boolean filled = filledMap.computeIfAbsent(columnIndex, idx -> false);
+            if (filled) {
+                return;
+            }
+            filledMap.put(columnIndex, true);
+            List<HeadConfig> columns = config.columns;
+            if (columns.isEmpty() || columns.size() <= columnIndex) {
+                return;
+            }
+            HeadConfig headConfig = columns.get(columnIndex);
+            if (headConfig == null) {
+                return;
+            }
+            if (headConfig.columnWidth.columnWidth != null) {
+                head.setColumnWidthProperty(new ColumnWidthProperty(headConfig.columnWidth.columnWidth));
+            }
+
+
+            // writeContext.currentWriteHolder().excelWriteHeadProperty().getIgnoreMap()
         }
     }
+
+    private static class ColumnWidthStyleStrategy extends AbstractHeadColumnWidthStyleStrategy {
+        @Override
+        protected Integer columnWidth(Head head, Integer columnIndex) {
+            if (head == null) {
+                return null;
+            }
+            if (head.getColumnWidthProperty() != null) {
+                return head.getColumnWidthProperty().getWidth();
+            }
+            return null;
+        }
+    }
+
+    private static class StyleStrategy extends AbstractVerticalCellStyleStrategy {
+        @Override
+        protected WriteCellStyle headCellStyle(Head head) {
+            return WriteCellStyle.build(head.getHeadStyleProperty(), head.getHeadFontProperty());
+        }
+
+        @Override
+        protected WriteCellStyle contentCellStyle(Head head) {
+            return WriteCellStyle.build(head.getContentStyleProperty(), head.getContentFontProperty());
+        }
+    }
+
+
+//    @Slf4j
+//    private static class ColumnStyleStrategy extends AbstractCellWriteHandler implements NotRepeatExecutor {
+//        private final ExcelDataWriterConfig config;
+//
+//        public ColumnStyleStrategy(ExcelDataWriterConfig config) {
+//            Assert.notNull(config, "参数config不能为null");
+//            this.config = config;
+//        }
+//
+//        @Override
+//        public String uniqueValue() {
+//            return "hinny-core-ColumnStyleStrategy";
+//        }
+//
+//        int count = 0;
+//
+//
+//        @Override
+//        public void afterCellDispose(
+//                WriteSheetHolder writeSheetHolder,
+//                WriteTableHolder writeTableHolder,
+//                List<CellData> cellDataList,
+//                org.apache.poi.ss.usermodel.Cell cell,
+//                Head head,
+//                Integer relativeRowIndex,
+//                Boolean isHead) {
+//            log.info("--> {}", (++count));
+//            writeSheetHolder.getSheet().setColumnWidth(cell.getColumnIndex(), 60 * 256);
+//        }
+//    }
 }
