@@ -6,15 +6,23 @@ import com.alibaba.excel.converters.ConverterKeyBuild;
 import com.alibaba.excel.enums.CellDataTypeEnum;
 import com.alibaba.excel.enums.CellExtraTypeEnum;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.alibaba.excel.event.NotRepeatExecutor;
 import com.alibaba.excel.exception.ExcelDataConvertException;
 import com.alibaba.excel.metadata.Cell;
 import com.alibaba.excel.metadata.CellData;
 import com.alibaba.excel.metadata.GlobalConfiguration;
+import com.alibaba.excel.metadata.Head;
 import com.alibaba.excel.metadata.property.ExcelContentProperty;
 import com.alibaba.excel.read.builder.ExcelReaderBuilder;
 import com.alibaba.excel.read.metadata.holder.ReadHolder;
 import com.alibaba.excel.read.metadata.property.ExcelReadHeadProperty;
+import com.alibaba.excel.support.ExcelTypeEnum;
+import com.alibaba.excel.write.builder.ExcelWriterBuilder;
+import com.alibaba.excel.write.handler.AbstractCellWriteHandler;
+import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
+import com.alibaba.excel.write.metadata.holder.WriteTableHolder;
 import lombok.Data;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.clever.common.utils.codec.DigestUtils;
@@ -28,13 +36,14 @@ import org.clever.common.utils.excel.dto.ExcelRow;
 import org.clever.common.utils.tuples.TupleTow;
 import org.springframework.util.Assert;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 作者：lizw <br/>
@@ -47,17 +56,30 @@ public class ExcelUtils {
     }
 
     @SuppressWarnings("rawtypes")
+    @SneakyThrows
     public ExcelDataReader<Map> createReader(ExcelDataReaderConfig config) {
         Assert.notNull(config, "参数config不能为null");
-        ExcelDataReader<Map> excelDataReader = new ExcelDataReader<>(
-                config.filename,
-                config.inputStream,
-                Map.class,
-                config.limitRows,
-                config.enableExcelData,
-                false,
-                config.excelRowReader,
-                config.excelReaderExceptionHand);
+        ExcelDataReader<Map> excelDataReader;
+        if (config.getRequest() != null) {
+            excelDataReader = new ExcelDataReader<>(
+                    config.getRequest(),
+                    Map.class,
+                    config.limitRows,
+                    config.enableExcelData,
+                    false,
+                    config.excelRowReader,
+                    config.excelReaderExceptionHand);
+        } else {
+            excelDataReader = new ExcelDataReader<>(
+                    config.filename,
+                    config.inputStream,
+                    Map.class,
+                    config.limitRows,
+                    config.enableExcelData,
+                    false,
+                    config.excelRowReader,
+                    config.excelReaderExceptionHand);
+        }
         excelDataReader.setEnableValidation(false);
         ExcelReaderBuilder builder = excelDataReader.read();
         builder.autoCloseStream(config.autoCloseStream);
@@ -95,12 +117,72 @@ public class ExcelUtils {
 
     public ExcelDataWriter createWriter(ExcelDataWriterConfig config) {
         Assert.notNull(config, "参数config不能为null");
-//        ExcelDataWriter excelDataWriter = new ExcelDataWriter();
-        return null;
+        ExcelDataWriter excelDataWriter;
+        if (config.request != null && config.response != null) {
+            excelDataWriter = new ExcelDataWriter(config.request, config.response, config.fileName, null);
+        } else {
+            excelDataWriter = new ExcelDataWriter(config.outputStream, null);
+            if (StringUtils.isNotBlank(config.fileName)) {
+                excelDataWriter.write().file(config.fileName);
+            }
+        }
+        ExcelWriterBuilder builder = excelDataWriter.write();
+        List<List<String>> heads = config.getHeads();
+        if (heads.isEmpty() || heads.get(0).isEmpty()) {
+            builder.needHead(false);
+        } else {
+            builder.head(heads);
+        }
+        builder.autoCloseStream(config.autoCloseStream);
+        builder.inMemory(config.inMemory);
+        if (StringUtils.isNotBlank(config.template)) {
+            builder.withTemplate(config.template);
+        }
+        if (config.templateInputStream != null) {
+            builder.withTemplate(config.templateInputStream);
+        }
+        builder.automaticMergeHead(config.automaticMergeHead);
+        if (!config.excludeColumnFiledNames.isEmpty()) {
+            builder.excludeColumnFiledNames(config.excludeColumnFiledNames);
+        }
+        if (!config.excludeColumnIndexes.isEmpty()) {
+            builder.excludeColumnIndexes(config.excludeColumnIndexes);
+        }
+        if (!config.includeColumnFiledNames.isEmpty()) {
+            builder.includeColumnFiledNames(config.includeColumnFiledNames);
+        }
+        if (!config.includeColumnIndexes.isEmpty()) {
+            builder.includeColumnIndexes(config.includeColumnIndexes);
+        }
+        builder.needHead(config.needHead);
+        builder.relativeHeadRowIndex(config.relativeHeadRowIndex);
+        builder.useDefaultStyle(config.useDefaultStyle);
+        builder.excelType(config.excelType);
+        if (config.password != null) {
+            builder.password(config.password);
+        }
+        if (config.sheetNo != null) {
+            builder.sheet(config.sheetNo);
+        }
+        if (StringUtils.isNotBlank(config.sheetName)) {
+            builder.sheet(config.sheetName);
+        }
+        builder.use1904windowing(config.use1904windowing);
+        if (config.locale != null) {
+            builder.locale(config.locale);
+        }
+        builder.autoTrim(config.autoTrim);
+        // TODO 根据列配置加入各种 WriteHandler 如：AbstractHeadColumnWidthStyleStrategy、AbstractVerticalCellStyleStrategy。参考 AbstractWriteHolder
+        builder.registerWriteHandler(new ColumnStyleStrategy(config));
+        return excelDataWriter;
     }
 
     @Data
     public static class ExcelDataReaderConfig implements Serializable {
+        /**
+         * Excel文件上传的请求对象
+         */
+        private HttpServletRequest request;
         /**
          * 上传的Excel文件名称
          */
@@ -206,6 +288,124 @@ public class ExcelUtils {
 
     @Data
     public static class ExcelDataWriterConfig implements Serializable {
+        /**
+         * Excel导出请求对象
+         */
+        private HttpServletRequest request;
+        /**
+         * Excel导出响应对象
+         */
+        private HttpServletResponse response;
+        /**
+         * Excel导出文件名
+         */
+        private String fileName;
+        /**
+         * Excel文件对应输出流
+         */
+        private OutputStream outputStream;
+        /**
+         * 是否自动关闭输入流
+         */
+        private boolean autoCloseStream = false;
+        /**
+         * 在内存中编写excel。默认为false，则创建缓存文件并最终写入excel。仅在内存模式下支持Comment和RichTextString
+         */
+        private boolean inMemory = false;
+        /**
+         * Excel模板文件路径
+         */
+        private String template;
+        /**
+         * Excel模板文件输入流
+         */
+        private InputStream templateInputStream;
+        /**
+         * 写入Excel时出现异常是否仍然继续导出
+         */
+        private boolean writeExcelOnException = false;
+        /**
+         * 是否自动合并表头
+         */
+        private boolean automaticMergeHead = true;
+        /**
+         * 忽略自定义列
+         */
+        private final List<String> excludeColumnFiledNames = new ArrayList<>();
+        /**
+         * 忽略自定义列
+         */
+        private final List<Integer> excludeColumnIndexes = new ArrayList<>();
+        /**
+         * 只输出自定义列
+         */
+        private final List<String> includeColumnFiledNames = new ArrayList<>();
+        /**
+         * 只输出自定义列
+         */
+        private final List<Integer> includeColumnIndexes = new ArrayList<>();
+        /**
+         * 是否输出表头
+         */
+        private boolean needHead = true;
+        /**
+         * 输出第一行的位置
+         */
+        private int relativeHeadRowIndex = 0;
+        /**
+         * 是否使用默认样式
+         */
+        private boolean useDefaultStyle = true;
+        /**
+         * Excel类型
+         */
+        private ExcelTypeEnum excelType = ExcelTypeEnum.XLSX;
+        /**
+         * Excel文件密码
+         */
+        private String password;
+        /**
+         * Excel页签编号(从0开始)
+         */
+        private Integer sheetNo;
+        /**
+         * Excel页签名称(xlsx格式才支持)
+         */
+        private String sheetName;
+        /**
+         * 如果日期使用1904窗口，则为True；如果使用1900日期窗口，则为false
+         */
+        private boolean use1904windowing = false;
+        /**
+         * Locale对象表示特定的地理、政治或文化区域。设置日期和数字格式时使用此参数
+         */
+        private Locale locale = Locale.SIMPLIFIED_CHINESE;
+        /**
+         * 自动删除空格字符
+         */
+        private boolean autoTrim = true;
+        /**
+         * Excel表头
+         */
+        private final List<HeadConfig> columns = new ArrayList<>();
+
+        public List<List<String>> getHeads() {
+            return columns.stream().map(headConfig -> headConfig.names).collect(Collectors.toList());
+        }
+    }
+
+    @Data
+    public static class HeadConfig implements Serializable {
+        private final List<String> names = new ArrayList<>();
+
+        public HeadConfig() {
+        }
+
+        public HeadConfig(String... names) {
+            if (names != null) {
+                this.names.addAll(Arrays.asList(names));
+            }
+        }
 
     }
 
@@ -325,10 +525,10 @@ public class ExcelUtils {
                 log.info("Excel数据导入数据重复，filename={} | data={}", config.getFilename(), data);
             }
             // 数据校验
-            final boolean enableValidation = config.isEnableValidation();
-            if (enableValidation && !excelRow.hasError()) {
-                // TODO 数据校验
-            }
+            //final boolean enableValidation = config.isEnableValidation();
+            //if (enableValidation && !excelRow.hasError()) {
+            //    // TODO 数据校验
+            //}
             // 自定义读取行处理逻辑
             final ExcelRowReader<Map> excelRowReader = config.getExcelRowReader();
             if (!excelRow.hasError() && excelRowReader != null) {
@@ -437,6 +637,51 @@ public class ExcelUtils {
             } catch (Exception e) {
                 throw new ExcelDataConvertException(rowIndex, columnIndex, cellData, contentProperty, "Convert data " + cellData + " to " + clazz + " error ", e);
             }
+        }
+    }
+
+    @Slf4j
+    private static class ColumnStyleStrategy extends AbstractCellWriteHandler implements NotRepeatExecutor {
+        private final ExcelDataWriterConfig config;
+
+        public ColumnStyleStrategy(ExcelDataWriterConfig config) {
+            Assert.notNull(config, "参数config不能为null");
+            this.config = config;
+        }
+
+        @Override
+        public String uniqueValue() {
+            return "hinny-core-ColumnStyleStrategy";
+        }
+
+//        @Override
+//        public void beforeCellCreate(
+//                WriteSheetHolder writeSheetHolder,
+//                WriteTableHolder writeTableHolder,
+//                Row row,
+//                Head head,
+//                Integer columnIndex,
+//                Integer relativeRowIndex,
+//                Boolean isHead) {
+//            if (isHead) {
+//                head.setColumnWidthProperty(new ColumnWidthProperty(60));
+//            }
+//        }
+
+        int count = 0;
+
+
+        @Override
+        public void afterCellDispose(
+                WriteSheetHolder writeSheetHolder,
+                WriteTableHolder writeTableHolder,
+                List<CellData> cellDataList,
+                org.apache.poi.ss.usermodel.Cell cell,
+                Head head,
+                Integer relativeRowIndex,
+                Boolean isHead) {
+            log.info("--> {}", (++count));
+            writeSheetHolder.getSheet().setColumnWidth(cell.getColumnIndex(), 60 * 256);
         }
     }
 }

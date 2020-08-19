@@ -3,11 +3,15 @@ package org.clever.hinny.core;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.clever.common.utils.excel.ExcelDataReader;
+import org.clever.common.utils.excel.ExcelDataWriter;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -18,6 +22,7 @@ import java.util.Map;
 public class ExcelUtilsTest {
 
     private final String file = "C:\\Users\\lizw\\Downloads\\药店积分商品统计20200813141849.xlsx";
+    private final String file2 = "C:\\Users\\lizw\\Downloads\\药店积分商品统计20200813141850.xlsx";
 
     @Test
     public void t01() {
@@ -59,5 +64,30 @@ public class ExcelUtilsTest {
         ExcelDataReader<Map> reader = ExcelUtils.Instance.createReader(config);
         reader.read().doReadAll();
         log.info("data -> {}", reader.getExcelData(0));
+    }
+
+    @Test
+    public void t04() {
+        List<List<Object>> list = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            List<Object> data = new ArrayList<>();
+            data.add("字符串" + i);
+            data.add(new Date());
+            data.add(0.56);
+            data.add("111");
+            data.add("222");
+            data.add("333");
+            list.add(data);
+        }
+        ExcelUtils.ExcelDataWriterConfig config = new ExcelUtils.ExcelDataWriterConfig();
+        config.setFileName(file2);
+        config.getColumns().add(new ExcelUtils.HeadConfig("第一", "序号"));
+        config.getColumns().add(new ExcelUtils.HeadConfig("第一", "药店ID"));
+        config.getColumns().add(new ExcelUtils.HeadConfig("第一", "药店名称"));
+        config.getColumns().add(new ExcelUtils.HeadConfig("第二", "积分商品总数量"));
+        config.getColumns().add(new ExcelUtils.HeadConfig("第二", "上架积分商品数"));
+        config.getColumns().add(new ExcelUtils.HeadConfig("第二", "下架积分商品数"));
+        ExcelDataWriter writer = ExcelUtils.Instance.createWriter(config);
+        writer.write().sheet("test").doWrite(list);
     }
 }
