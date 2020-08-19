@@ -22,9 +22,11 @@ import com.alibaba.excel.write.handler.AbstractCellWriteHandler;
 import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
 import com.alibaba.excel.write.metadata.holder.WriteTableHolder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.*;
 import org.clever.common.utils.codec.DigestUtils;
 import org.clever.common.utils.codec.EncodeDecodeUtils;
 import org.clever.common.utils.excel.ExcelDataReader;
@@ -42,6 +44,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -395,10 +398,319 @@ public class ExcelUtils {
     }
 
     @Data
+    public static class ExcelProperty implements Serializable {
+        /**
+         * 列的数据类型
+         */
+        private Class<?> dataType;
+
+        /**
+         * 是否忽略当前列
+         */
+        private Boolean ignore;
+
+        /**
+         * 定义列的排序顺序
+         */
+        private Integer order;
+    }
+
+    @Data
+    public static class DateTimeFormat implements Serializable {
+        /**
+         * 时间格式化的格式定义
+         */
+        private String dateFormat;
+
+        /**
+         * 如果日期使用1904窗口，则为True；如果使用1900日期窗口，则为false
+         */
+        private Boolean use1904windowing;
+    }
+
+    @Data
+    public static class NumberFormat implements Serializable {
+        /**
+         * 数字格式化
+         */
+        private String numberFormat;
+
+        /**
+         * 四舍五入模式
+         */
+        private RoundingMode roundingMode;
+    }
+
+    @Data
+    public static class ColumnWidth implements Serializable {
+        /**
+         * 列宽
+         */
+        private Integer columnWidth;
+    }
+
+    @Data
+    public static class ExcelFontStyle implements Serializable {
+        /**
+         * 字体的名称（如: Arial）
+         */
+        private String fontName;
+
+        /**
+         * 以熟悉的测量单位表示的高度- points
+         */
+        private Short fontHeightInPoints;
+
+        /**
+         * 是否使用斜体
+         */
+        private Boolean italic;
+
+        /**
+         * 是否在文本中使用删除线水平线
+         */
+        private Boolean strikeout;
+
+        /**
+         * 字体的颜色
+         */
+        private Short color;
+
+        /**
+         * 设置normal、super或subscript
+         */
+        private Short typeOffset;
+
+        /**
+         * 要使用的文本下划线
+         */
+        private Byte underline;
+
+        /**
+         * 设置要使用的字符集
+         */
+        private Integer charset;
+
+        /**
+         * 粗体
+         */
+        private Boolean bold;
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    public static class ContentFontStyle extends ExcelFontStyle {
+    }
+
+    @Data
+    public static class ContentLoopMerge implements Serializable {
+        /**
+         * 行
+         */
+        private Integer eachRow;
+
+        /**
+         * 列
+         */
+        private Integer columnExtend;
+    }
+
+    @Data
+    public static class ContentRowHeight implements Serializable {
+        /**
+         * 行高
+         */
+        private Short rowHeight;
+    }
+
+    @Data
+    public static class ExcelCellStyle implements Serializable {
+        /**
+         * 设置数据格式（必须是有效格式）。内置格式在内置信息中定义 {@link BuiltinFormats}.
+         */
+        private Short dataFormat;
+
+        /**
+         * 将单元格使用此样式设置为隐藏
+         */
+        private Boolean hidden;
+
+        /**
+         * 将单元格使用此样式设置为锁定
+         */
+        private Boolean locked;
+
+        /**
+         * 打开或关闭样式的“Quote Prefix”或“123 Prefix”，
+         * 用于告诉Excel，看起来像数字或公式的内容不应被视为打开。
+         * 打开此选项有点（但不是完全打开，请参见IgnoredErrorType）类似于在Excel中为单元格值添加前缀
+         * {@link IgnoredErrorType})
+         */
+        private Boolean quotePrefix;
+
+        /**
+         * 设置单元格的水平对齐方式
+         */
+        private HorizontalAlignment horizontalAlignment;
+
+        /**
+         * 设置是否应该换行。将此标志设置为true可以通过在多行上显示所有内容来使其在一个单元格中可见
+         */
+        private Boolean wrapped;
+
+        /**
+         * 设置单元格的垂直对齐方式
+         */
+        private VerticalAlignment verticalAlignment;
+
+        /**
+         * 设置单元格中文本的旋转度<br />
+         * 注意：HSSF使用-90至90度的值，而XSSF使用0至180度的值。
+         * 此方法的实现将在这两个值范围之间进行映射，
+         * 但是，相应的getter返回此CellStyle所应用的当前Excel文件格式类型所要求的范围内的值。
+         */
+        private Short rotation;
+
+        /**
+         * 设置空格数以缩进单元格中的文本
+         */
+        private Short indent;
+
+        /**
+         * 设置要用于单元格左边框的边框类型
+         */
+        private BorderStyle borderLeft;
+
+        /**
+         * 设置用于单元格右边框的边框类型
+         */
+        private BorderStyle borderRight;
+
+        /**
+         * 设置要用于单元格顶部边框的边框类型
+         */
+        private BorderStyle borderTop;
+
+        /**
+         * 设置用于单元格底部边框的边框类型
+         */
+        private BorderStyle borderBottom;
+
+        /**
+         * 设置用于左边框的颜色
+         *
+         * @see IndexedColors
+         */
+        private Short leftBorderColor;
+
+        /**
+         * 设置用于右边框的颜色
+         *
+         * @see IndexedColors
+         */
+        private short rightBorderColor;
+
+        /**
+         * 设置要用于顶部边框的颜色
+         *
+         * @see IndexedColors
+         */
+        private Short topBorderColor;
+
+        /**
+         * 设置用于底边框的颜色
+         *
+         * @see IndexedColors
+         */
+        private Short bottomBorderColor;
+
+        /**
+         * 设置为1会使单元格充满前景色...不知道其他值
+         *
+         * @see FillPatternType#SOLID_FOREGROUND
+         */
+        private FillPatternType fillPatternType;
+
+        /**
+         * 设置背景填充颜色
+         *
+         * @see IndexedColors
+         */
+        private Short fillBackgroundColor;
+
+        /**
+         * 设置前景色填充颜色<br />
+         * 注意：确保将前景色设置为背景颜色之前
+         *
+         * @see IndexedColors
+         */
+        private Short fillForegroundColor;
+
+        /**
+         * 控制如果文本太长，是否应自动调整单元格的大小以缩小以适合
+         */
+        private Boolean shrinkToFit;
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    public static class ContentStyle extends ExcelCellStyle {
+
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    public static class HeadFontStyle extends ExcelFontStyle {
+    }
+
+    @Data
+    public static class HeadRowHeight implements Serializable {
+        /**
+         * Head行高
+         */
+        private Short headRowHeight;
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    public static class HeadStyle extends ExcelCellStyle {
+    }
+
+    @Data
+    public static class OnceAbsoluteMerge implements Serializable {
+        /**
+         * 第一行
+         */
+        private Integer firstRowIndex;
+
+        /**
+         * 最后一行
+         */
+        private Integer lastRowIndex;
+
+        /**
+         * 第一列
+         */
+        private Integer firstColumnIndex;
+
+        /**
+         * 最后一列
+         */
+        private Integer lastColumnIndex;
+    }
+
+    @Data
     public static class HeadConfig implements Serializable {
         private final List<String> names = new ArrayList<>();
 
-        // TODO add Config
+        private final ExcelProperty excelProperty = new ExcelProperty();
+        private final DateTimeFormat dateTimeFormat = new DateTimeFormat();
+        private final NumberFormat numberFormat = new NumberFormat();
+        private final ColumnWidth columnWidth = new ColumnWidth();
+        private final ContentFontStyle contentFontStyle = new ContentFontStyle();
+        private final ContentStyle contentStyle = new ContentStyle();
+        private final HeadFontStyle headFontStyle = new HeadFontStyle();
+        private final HeadStyle headStyle = new HeadStyle();
 
         public HeadConfig() {
         }
@@ -408,7 +720,17 @@ public class ExcelUtils {
                 this.names.addAll(Arrays.asList(names));
             }
         }
+    }
 
+    @Data
+    public static class WriterStyleConfig implements Serializable {
+        private final ContentFontStyle contentFontStyle = new ContentFontStyle();
+        private final ContentRowHeight contentRowHeight = new ContentRowHeight();
+        private final ContentStyle contentStyle = new ContentStyle();
+        private final HeadFontStyle headFontStyle = new HeadFontStyle();
+        private final HeadRowHeight headRowHeight = new HeadRowHeight();
+        private final HeadStyle headStyle = new HeadStyle();
+        private final OnceAbsoluteMerge onceAbsoluteMerge = new OnceAbsoluteMerge();
     }
 
     @SuppressWarnings("rawtypes")
