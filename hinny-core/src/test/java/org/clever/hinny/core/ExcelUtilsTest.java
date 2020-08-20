@@ -25,6 +25,15 @@ public class ExcelUtilsTest {
     public void t01() {
         log.info("-> {}", Byte[].class.getName());
         log.info("-> {}", Byte.class.getName());
+
+        LinkedHashMap<String, String> map = new LinkedHashMap<>();
+        map.put("aaa", "111");
+        map.put("bbb", "222");
+        map.put("ccc", "333");
+        map.put("ddd", "444");
+        map.put("eee", "555");
+        map.put("fff", "666");
+        log.info(" -> {}", map.values());
     }
 
     @SuppressWarnings("rawtypes")
@@ -79,12 +88,25 @@ public class ExcelUtilsTest {
         }
         ExcelUtils.ExcelDataWriterConfig config = new ExcelUtils.ExcelDataWriterConfig();
         config.setFileName(file2);
-        config.getColumns().put("aaa", new ExcelUtils.ExcelWriterHeadConfig("第一", "序号"));
-        config.getColumns().put("bbb", new ExcelUtils.ExcelWriterHeadConfig("第一", "药店ID"));
-        config.getColumns().put("ccc", new ExcelUtils.ExcelWriterHeadConfig("第一", "药店名称"));
-        config.getColumns().put("ddd", new ExcelUtils.ExcelWriterHeadConfig("第二", "积分商品总数量"));
-        config.getColumns().put("eee", new ExcelUtils.ExcelWriterHeadConfig("第二", "上架积分商品数"));
-        config.getColumns().put("fff", new ExcelUtils.ExcelWriterHeadConfig("第二", "下架积分商品数"));
+        ExcelUtils.ExcelWriterHeadConfig headConfig = new ExcelUtils.ExcelWriterHeadConfig("第一", "序号");
+        headConfig.getColumnWidth().setColumnWidth(10);
+        headConfig.getHeadFontStyle().setBold(false);
+        config.getColumns().put("aaa", headConfig);
+        headConfig = new ExcelUtils.ExcelWriterHeadConfig("第一", "药店ID");
+        headConfig.getColumnWidth().setColumnWidth(20);
+        config.getColumns().put("bbb", headConfig);
+        headConfig = new ExcelUtils.ExcelWriterHeadConfig("第一", "药店名称");
+        headConfig.getColumnWidth().setColumnWidth(12);
+        config.getColumns().put("ccc", headConfig);
+        headConfig = new ExcelUtils.ExcelWriterHeadConfig("第二", "积分商品总数量");
+        headConfig.getColumnWidth().setColumnWidth(18);
+        config.getColumns().put("ddd", headConfig);
+        headConfig = new ExcelUtils.ExcelWriterHeadConfig("第二", "上架积分商品数");
+        headConfig.getColumnWidth().setColumnWidth(18);
+        config.getColumns().put("eee", headConfig);
+        headConfig = new ExcelUtils.ExcelWriterHeadConfig("第二", "下架积分商品数");
+        headConfig.getColumnWidth().setColumnWidth(18);
+        config.getColumns().put("fff", headConfig);
         ExcelDataWriter writer = ExcelUtils.Instance.createWriter(config);
         writer.write().sheet("test").doWrite(list);
     }
