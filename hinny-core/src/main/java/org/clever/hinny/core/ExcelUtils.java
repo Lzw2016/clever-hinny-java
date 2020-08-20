@@ -900,7 +900,7 @@ public class ExcelUtils {
                         headConfig = headConfigTmp;
                         break;
                     }
-                    // 根据column(列名)匹配
+                    // 根据column(表头列名)匹配
                     if (propertyNameParsed.contains(propertyNameTmp)) {
                         continue;
                     }
@@ -917,7 +917,7 @@ public class ExcelUtils {
                 }
                 columns.put(index, TupleTow.creat(propertyName, headConfig));
             }
-            Assert.notNull(columns, "无法解析Excel表头，请查看配置是否正确");
+            Assert.notEmpty(columns, "无法解析Excel表头，请查看配置是否正确");
         }
 
         @Override
@@ -937,6 +937,7 @@ public class ExcelUtils {
         @SuppressWarnings("unchecked")
         @Override
         public void invoke(Map<Integer, CellData<?>> data, AnalysisContext context) {
+            // 第一次需要解析表头
             if (columns == null) {
                 parseHeadMap();
             }
@@ -1035,11 +1036,8 @@ public class ExcelUtils {
 
         @Override
         public boolean hasNext(AnalysisContext context) {
-            if (columns == null) {
-                parseHeadMap();
-            }
             // 未配置列 - 提前退出
-            if (context.readSheetHolder().getHeadRowNumber() > 0 && columns.isEmpty()) {
+            if (context.readSheetHolder().getHeadRowNumber() > 0 && columns != null && columns.isEmpty()) {
                 log.warn("未匹配到列配置");
                 return false;
 

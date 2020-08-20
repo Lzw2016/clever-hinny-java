@@ -59,7 +59,7 @@ public class ExcelUtilsTest {
         config.getColumns().put("fff", new ExcelUtils.ExcelReaderHeadConfig(Float.class, "第二", "下架积分商品数"));
 
         ExcelDataReader<Map> reader = ExcelUtils.Instance.createReader(config);
-        reader.read().doReadAll();
+        reader.read().headRowNumber(1).doReadAll();
         log.info("data -> {}", reader.getExcelData(0));
     }
 
