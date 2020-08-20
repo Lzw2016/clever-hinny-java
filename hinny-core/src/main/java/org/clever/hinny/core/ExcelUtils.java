@@ -786,7 +786,9 @@ public class ExcelUtils {
          */
         private Class<?> dataType;
         private final ExcelProperty excelProperty = new ExcelProperty();
-
+        private final DateTimeFormat dateTimeFormat = new DateTimeFormat();
+        private final NumberFormat numberFormat = new NumberFormat();
+        
         public ExcelReaderHeadConfig() {
         }
 
