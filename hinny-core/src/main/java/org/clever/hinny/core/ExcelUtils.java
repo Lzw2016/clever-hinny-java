@@ -789,8 +789,8 @@ public class ExcelUtils {
         private final DateTimeFormat dateTimeFormat = new DateTimeFormat();
         private final NumberFormat numberFormat = new NumberFormat();
 
-        public ExcelReaderHeadConfig() {
-        }
+        // public ExcelReaderHeadConfig() {
+        // }
 
         public ExcelReaderHeadConfig(Class<?> dataType, String... names) {
             this.dataType = dataType;
@@ -811,8 +811,8 @@ public class ExcelUtils {
         private final HeadFontStyle headFontStyle = new HeadFontStyle();
         private final HeadStyle headStyle = new HeadStyle();
 
-        public ExcelWriterHeadConfig() {
-        }
+        // public ExcelWriterHeadConfig() {
+        // }
 
         public ExcelWriterHeadConfig(String... names) {
             if (names != null) {
@@ -840,10 +840,11 @@ public class ExcelUtils {
     private static class ExcelDateReadListener extends AnalysisEventListener<Map<Integer, CellData<?>>> {
         private final ExcelDataReaderConfig config;
         private final ExcelDataReader<Map> excelDataReader;
+        private final Map<Integer, List<String>> headsMap = new HashMap<>();
         /**
-         * {@code Map<index, TupleTow<type, Entity.propertyName>>}
+         * {@code Map<index, TupleTow<ExcelReaderHeadConfig, Entity.propertyName>>}
          */
-        private final Map<Integer, TupleTow<Class<?>, String>> columns = new HashMap<>();
+        private Map<Integer, TupleTow<String, ExcelReaderHeadConfig>> columns;
 
         public ExcelDateReadListener(ExcelDataReaderConfig config, ExcelDataReader<Map> excelDataReader) {
             Assert.notNull(config, "参数config不能为null");
@@ -856,7 +857,7 @@ public class ExcelUtils {
             final Integer sheetNo = context.readSheetHolder().getSheetNo();
             final String sheetName = context.readSheetHolder().getSheetName();
             String key = String.format("%s-%s", sheetNo, sheetName);
-            return excelDataReader.getExcelSheetMap().computeIfAbsent(key, s -> new ExcelData<>(Map.class, sheetName, sheetNo));
+            return excelDataReader.getExcelSheetMap().computeIfAbsent(key, sheetKey -> new ExcelData<>(Map.class, sheetName, sheetNo));
         }
 
         private Class<?> getCellDataType(CellData<?> cellData) {
@@ -879,32 +880,66 @@ public class ExcelUtils {
             }
         }
 
+        // 解析表头配置
+        public void parseHeadMap() {
+            columns = new HashMap<>();
+            LinkedHashMap<String, ExcelReaderHeadConfig> columnsConfig = config.columns;
+            Set<String> propertyNameParsed = new HashSet<>(columnsConfig.size());
+            for (Map.Entry<Integer, List<String>> entry : headsMap.entrySet()) {
+                int index = entry.getKey();
+                List<String> heads = entry.getValue();
+                String headsStr = StringUtils.join(heads, "|");
+                String propertyName = null;
+                ExcelReaderHeadConfig headConfig = null;
+                for (Map.Entry<String, ExcelReaderHeadConfig> configEntry : columnsConfig.entrySet()) {
+                    String propertyNameTmp = configEntry.getKey();
+                    ExcelReaderHeadConfig headConfigTmp = configEntry.getValue();
+                    // 根据index匹配
+                    if (Objects.equals(index, headConfigTmp.excelProperty.index)) {
+                        propertyName = propertyNameTmp;
+                        headConfig = headConfigTmp;
+                        break;
+                    }
+                    // 根据column(列名)匹配
+                    if (propertyNameParsed.contains(propertyNameTmp)) {
+                        continue;
+                    }
+                    String columnStr = StringUtils.join(headConfigTmp.excelProperty.column, "|");
+                    if (headsStr.endsWith(columnStr) || columnStr.endsWith(headsStr)) {
+                        propertyNameParsed.add(propertyNameTmp);
+                        propertyName = propertyNameTmp;
+                        headConfig = headConfigTmp;
+                        break;
+                    }
+                }
+                if (propertyName == null) {
+                    continue;
+                }
+                columns.put(index, TupleTow.creat(propertyName, headConfig));
+            }
+            Assert.notNull(columns, "无法解析Excel表头，请查看配置是否正确");
+        }
+
         @Override
         public void invokeHeadMap(Map<Integer, String> headMap, AnalysisContext context) {
             ExcelData<Map> excelData = getExcelData(context);
             if (excelData.getStartTime() == null) {
                 excelData.setStartTime(System.currentTimeMillis());
             }
-            LinkedHashMap<String, ExcelReaderHeadConfig> columnsConfig = config.columns;
-            // TODO 根据 index | column 确定列字段对应关系
             for (Map.Entry<Integer, String> entry : headMap.entrySet()) {
                 Integer index = entry.getKey();
                 String head = entry.getValue();
-                Class<?> clazz = null;
-                if (!columnsConfig.isEmpty()) {
-                    ExcelReaderHeadConfig headConfig = columnsConfig.get(head);
-                    if (headConfig == null) {
-                        continue;
-                    }
-                    clazz = headConfig.dataType;
-                }
-                columns.put(index, TupleTow.creat(clazz, head));
+                List<String> list = headsMap.computeIfAbsent(index, idx -> new ArrayList<>());
+                list.add(head);
             }
         }
 
         @SuppressWarnings("unchecked")
         @Override
         public void invoke(Map<Integer, CellData<?>> data, AnalysisContext context) {
+            if (columns == null) {
+                parseHeadMap();
+            }
             ExcelData<Map> excelData = getExcelData(context);
             if (excelData.getStartTime() == null) {
                 excelData.setStartTime(System.currentTimeMillis());
@@ -925,26 +960,25 @@ public class ExcelUtils {
             for (Map.Entry<Integer, CellData<?>> entry : data.entrySet()) {
                 Integer idx = entry.getKey();
                 CellData<?> cellData = entry.getValue();
-                TupleTow<Class<?>, String> tupleTow = columns.get(idx);
-                if (tupleTow.getValue1() == null) {
-                    tupleTow.setValue1(getCellDataType(cellData));
+                TupleTow<String, ExcelReaderHeadConfig> tupleTow = columns.get(idx);
+                if (tupleTow.getValue2().dataType == null) {
+                    tupleTow.getValue2().dataType = getCellDataType(cellData);
                 }
                 Object value;
-                if (Objects.equals(Void.class, tupleTow.getValue1())) {
+                if (Objects.equals(Void.class, tupleTow.getValue2().dataType)) {
                     value = "";
                 } else {
                     // TODO 格式化操作 dateFormat numberFormat
-
                     ExcelContentProperty excelContentProperty = contentPropertyMap.get(index);
                     value = ConverterUtils.convertToJavaObject(
                             cellData,
-                            tupleTow.getValue1(),
+                            tupleTow.getValue2().dataType,
                             excelContentProperty,
                             currentReadHolder.converterMap(),
                             currentReadHolder.globalConfiguration(),
                             context.readRowHolder().getRowIndex(), index);
                 }
-                excelRow.getData().put(tupleTow.getValue2(), value);
+                excelRow.getData().put(tupleTow.getValue1(), value);
             }
             boolean success = true;
             final boolean enableExcelData = config.isEnableExcelData();
@@ -983,10 +1017,9 @@ public class ExcelUtils {
             if (excelRowReader != null) {
                 excelRowReader.readEnd(context);
             }
-            // if (!enableExcelData) {
-            //     excelData.setStartTime(null);
-            //     excelData.setEndTime(null);
-            // }
+            // 清空表头解析数据
+            columns = null;
+            headsMap.clear();
         }
 
         @Override
@@ -1002,6 +1035,9 @@ public class ExcelUtils {
 
         @Override
         public boolean hasNext(AnalysisContext context) {
+            if (columns == null) {
+                parseHeadMap();
+            }
             // 未配置列 - 提前退出
             if (context.readSheetHolder().getHeadRowNumber() > 0 && columns.isEmpty()) {
                 log.warn("未匹配到列配置");
