@@ -788,7 +788,7 @@ public class ExcelUtils {
         private final ExcelProperty excelProperty = new ExcelProperty();
         private final DateTimeFormat dateTimeFormat = new DateTimeFormat();
         private final NumberFormat numberFormat = new NumberFormat();
-        
+
         public ExcelReaderHeadConfig() {
         }
 
@@ -933,6 +933,8 @@ public class ExcelUtils {
                 if (Objects.equals(Void.class, tupleTow.getValue1())) {
                     value = "";
                 } else {
+                    // TODO 格式化操作 dateFormat numberFormat
+
                     ExcelContentProperty excelContentProperty = contentPropertyMap.get(index);
                     value = ConverterUtils.convertToJavaObject(
                             cellData,
