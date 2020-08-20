@@ -11,7 +11,6 @@ import com.alibaba.excel.metadata.Cell;
 import com.alibaba.excel.metadata.CellData;
 import com.alibaba.excel.metadata.GlobalConfiguration;
 import com.alibaba.excel.metadata.Head;
-import com.alibaba.excel.metadata.property.ColumnWidthProperty;
 import com.alibaba.excel.metadata.property.ExcelContentProperty;
 import com.alibaba.excel.read.builder.ExcelReaderBuilder;
 import com.alibaba.excel.read.metadata.holder.ReadHolder;
@@ -236,6 +235,9 @@ public class ExcelUtils {
         return excelDataWriter;
     }
 
+    // 配置类
+    //----------------------------------------------------------------------------------------------------------------------------------------------
+
     @Data
     public static class ExcelDataReaderConfig implements Serializable {
         /**
@@ -340,9 +342,9 @@ public class ExcelUtils {
         private Object customObject;
 
         /**
-         * Excel列配置(表头)
+         * Excel列配置(表头) Map<Entity.propertyName, ExcelReaderHeadConfig>
          */
-        private final Map<String, Class<?>> columns = new HashMap<>();
+        private final LinkedHashMap<String, ExcelReaderHeadConfig> columns = new LinkedHashMap<>();
     }
 
     @Data
@@ -444,27 +446,27 @@ public class ExcelUtils {
          */
         private boolean autoTrim = true;
         /**
-         * Excel表头
+         * Excel表头 Map<Entity.propertyName, ExcelWriterHeadConfig>
          */
-        private final List<HeadConfig> columns = new ArrayList<>();
-
+        private final LinkedHashMap<String, ExcelWriterHeadConfig> columns = new LinkedHashMap<>();
         /**
          * 全局样式配置
          */
         private final WriterStyleConfig styleConfig = new WriterStyleConfig();
 
         public List<List<String>> getHeads() {
-            return columns.stream().map(headConfig -> headConfig.names).collect(Collectors.toList());
+            return columns.values().stream()
+                    .map(headConfig -> headConfig.excelProperty.column)
+                    .collect(Collectors.toList());
         }
     }
 
     @Data
     public static class ExcelProperty implements Serializable {
         /**
-         * 列的数据类型
+         * 列名称
          */
-        private Class<?> dataType;
-
+        private final List<String> column = new ArrayList<>();
         /**
          * 是否忽略当前列
          */
@@ -760,9 +762,26 @@ public class ExcelUtils {
     }
 
     @Data
-    public static class HeadConfig implements Serializable {
-        private final List<String> names = new ArrayList<>();
+    public static class ExcelReaderHeadConfig implements Serializable {
+        /**
+         * 列的数据类型
+         */
+        private Class<?> dataType;
+        private final ExcelProperty excelProperty = new ExcelProperty();
 
+        public ExcelReaderHeadConfig() {
+        }
+
+        public ExcelReaderHeadConfig(Class<?> dataType, String... names) {
+            this.dataType = dataType;
+            if (names != null) {
+                this.excelProperty.column.addAll(Arrays.asList(names));
+            }
+        }
+    }
+
+    @Data
+    public static class ExcelWriterHeadConfig implements Serializable {
         private final ExcelProperty excelProperty = new ExcelProperty();
         private final DateTimeFormat dateTimeFormat = new DateTimeFormat();
         private final NumberFormat numberFormat = new NumberFormat();
@@ -772,12 +791,12 @@ public class ExcelUtils {
         private final HeadFontStyle headFontStyle = new HeadFontStyle();
         private final HeadStyle headStyle = new HeadStyle();
 
-        public HeadConfig() {
+        public ExcelWriterHeadConfig() {
         }
 
-        public HeadConfig(String... names) {
+        public ExcelWriterHeadConfig(String... names) {
             if (names != null) {
-                this.names.addAll(Arrays.asList(names));
+                this.excelProperty.column.addAll(Arrays.asList(names));
             }
         }
     }
@@ -792,6 +811,9 @@ public class ExcelUtils {
         private final HeadStyle headStyle = new HeadStyle();
         private final OnceAbsoluteMerge onceAbsoluteMerge = new OnceAbsoluteMerge();
     }
+
+    // 自定义读取、写入操作
+    //----------------------------------------------------------------------------------------------------------------------------------------------
 
     @SuppressWarnings("rawtypes")
     @Slf4j
@@ -843,16 +865,17 @@ public class ExcelUtils {
             if (excelData.getStartTime() == null) {
                 excelData.setStartTime(System.currentTimeMillis());
             }
-            Map<String, Class<?>> columnsConfig = config.getColumns();
+            LinkedHashMap<String, ExcelReaderHeadConfig> columnsConfig = config.getColumns();
             for (Map.Entry<Integer, String> entry : headMap.entrySet()) {
                 Integer index = entry.getKey();
                 String head = entry.getValue();
                 Class<?> clazz = null;
                 if (!columnsConfig.isEmpty()) {
-                    clazz = columnsConfig.get(head);
-                    if (clazz == null) {
+                    ExcelReaderHeadConfig headConfig = columnsConfig.get(head);
+                    if (headConfig == null) {
                         continue;
                     }
+                    clazz = headConfig.dataType;
                 }
                 columns.put(index, TupleTow.creat(clazz, head));
             }
@@ -1048,17 +1071,17 @@ public class ExcelUtils {
                 return;
             }
             filledMap.put(columnIndex, true);
-            List<HeadConfig> columns = config.columns;
+            Collection<ExcelWriterHeadConfig> columns = config.columns.values();
             if (columns.isEmpty() || columns.size() <= columnIndex) {
                 return;
             }
-            HeadConfig headConfig = columns.get(columnIndex);
-            if (headConfig == null) {
-                return;
-            }
-            if (headConfig.columnWidth.columnWidth != null) {
-                head.setColumnWidthProperty(new ColumnWidthProperty(headConfig.columnWidth.columnWidth));
-            }
+//            ExcelWriterHeadConfig excelWriterHeadConfig = columns.get(columnIndex);
+//            if (excelWriterHeadConfig == null) {
+//                return;
+//            }
+//            if (excelWriterHeadConfig.columnWidth.columnWidth != null) {
+//                head.setColumnWidthProperty(new ColumnWidthProperty(excelWriterHeadConfig.columnWidth.columnWidth));
+//            }
 
 
             // writeContext.currentWriteHolder().excelWriteHeadProperty().getIgnoreMap()
@@ -1089,7 +1112,6 @@ public class ExcelUtils {
             return WriteCellStyle.build(head.getContentStyleProperty(), head.getContentFontProperty());
         }
     }
-
 
 //    @Slf4j
 //    private static class ColumnStyleStrategy extends AbstractCellWriteHandler implements NotRepeatExecutor {

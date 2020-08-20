@@ -33,12 +33,12 @@ public class ExcelUtilsTest {
         ExcelUtils.ExcelDataReaderConfig config = new ExcelUtils.ExcelDataReaderConfig();
         config.setFilename(file);
         config.setInputStream(FileUtils.openInputStream(new File(file)));
-        config.getColumns().put("序号", Integer.class);
-        config.getColumns().put("药店ID", Long.class);
-        config.getColumns().put("药店名称", String.class);
-        config.getColumns().put("积分商品总数量", BigDecimal.class);
-        config.getColumns().put("上架积分商品数", BigDecimal.class);
-        config.getColumns().put("下架积分商品数", BigDecimal.class);
+        config.getColumns().put("aaa", new ExcelUtils.ExcelReaderHeadConfig(Integer.class, "序号"));
+        config.getColumns().put("bbb", new ExcelUtils.ExcelReaderHeadConfig(Long.class, "药店ID"));
+        config.getColumns().put("ccc", new ExcelUtils.ExcelReaderHeadConfig(String.class, "药店名称"));
+        config.getColumns().put("ddd", new ExcelUtils.ExcelReaderHeadConfig(BigDecimal.class, "积分商品总数量"));
+        config.getColumns().put("eee", new ExcelUtils.ExcelReaderHeadConfig(BigDecimal.class, "上架积分商品数"));
+        config.getColumns().put("fff", new ExcelUtils.ExcelReaderHeadConfig(BigDecimal.class, "下架积分商品数"));
 
         ExcelDataReader<Map> reader = ExcelUtils.Instance.createReader(config);
         reader.read().sheet(0).doRead();
@@ -51,12 +51,12 @@ public class ExcelUtilsTest {
         ExcelUtils.ExcelDataReaderConfig config = new ExcelUtils.ExcelDataReaderConfig();
         config.setFilename(file);
         config.setInputStream(FileUtils.openInputStream(new File(file)));
-        config.getColumns().put("序号", Integer.class);
-        config.getColumns().put("药店ID", Long.class);
-        config.getColumns().put("药店名称", String.class);
-        config.getColumns().put("积分商品总数量", BigDecimal.class);
-        config.getColumns().put("上架积分商品数", Long.class);
-        config.getColumns().put("下架积分商品数", Double.class);
+        config.getColumns().put("aaa", new ExcelUtils.ExcelReaderHeadConfig(Integer.class, "序号"));
+        config.getColumns().put("bbb", new ExcelUtils.ExcelReaderHeadConfig(Long.class, "药店ID"));
+        config.getColumns().put("ccc", new ExcelUtils.ExcelReaderHeadConfig(String.class, "药店名称"));
+        config.getColumns().put("ddd", new ExcelUtils.ExcelReaderHeadConfig(BigDecimal.class, "积分商品总数量"));
+        config.getColumns().put("eee", new ExcelUtils.ExcelReaderHeadConfig(BigDecimal.class, "上架积分商品数"));
+        config.getColumns().put("fff", new ExcelUtils.ExcelReaderHeadConfig(BigDecimal.class, "下架积分商品数"));
 
         ExcelDataReader<Map> reader = ExcelUtils.Instance.createReader(config);
         reader.read().doReadAll();
@@ -79,12 +79,12 @@ public class ExcelUtilsTest {
         }
         ExcelUtils.ExcelDataWriterConfig config = new ExcelUtils.ExcelDataWriterConfig();
         config.setFileName(file2);
-        config.getColumns().add(new ExcelUtils.HeadConfig("第一", "序号"));
-        config.getColumns().add(new ExcelUtils.HeadConfig("第一", "药店ID"));
-        config.getColumns().add(new ExcelUtils.HeadConfig("第一", "药店名称"));
-        config.getColumns().add(new ExcelUtils.HeadConfig("第二", "积分商品总数量"));
-        config.getColumns().add(new ExcelUtils.HeadConfig("第二", "上架积分商品数"));
-        config.getColumns().add(new ExcelUtils.HeadConfig("第二", "下架积分商品数"));
+        config.getColumns().put("aaa", new ExcelUtils.ExcelWriterHeadConfig("第一", "序号"));
+        config.getColumns().put("bbb", new ExcelUtils.ExcelWriterHeadConfig("第一", "药店ID"));
+        config.getColumns().put("ccc", new ExcelUtils.ExcelWriterHeadConfig("第一", "药店名称"));
+        config.getColumns().put("ddd", new ExcelUtils.ExcelWriterHeadConfig("第二", "积分商品总数量"));
+        config.getColumns().put("eee", new ExcelUtils.ExcelWriterHeadConfig("第二", "上架积分商品数"));
+        config.getColumns().put("fff", new ExcelUtils.ExcelWriterHeadConfig("第二", "下架积分商品数"));
         ExcelDataWriter writer = ExcelUtils.Instance.createWriter(config);
         writer.write().sheet("test").doWrite(list);
     }
@@ -105,12 +105,12 @@ public class ExcelUtilsTest {
         }
         ExcelUtils.ExcelDataWriterConfig config = new ExcelUtils.ExcelDataWriterConfig();
         config.setFileName(file2);
-        config.getColumns().add(new ExcelUtils.HeadConfig("序号"));
-        config.getColumns().add(new ExcelUtils.HeadConfig("药店ID"));
-        config.getColumns().add(new ExcelUtils.HeadConfig("药店名称"));
-        config.getColumns().add(new ExcelUtils.HeadConfig("积分商品总数量"));
-        config.getColumns().add(new ExcelUtils.HeadConfig("上架积分商品数"));
-        config.getColumns().add(new ExcelUtils.HeadConfig("下架积分商品数"));
+        config.getColumns().put("aaa", new ExcelUtils.ExcelWriterHeadConfig("序号"));
+        config.getColumns().put("bbb", new ExcelUtils.ExcelWriterHeadConfig("药店ID"));
+        config.getColumns().put("ccc", new ExcelUtils.ExcelWriterHeadConfig("药店名称"));
+        config.getColumns().put("ddd", new ExcelUtils.ExcelWriterHeadConfig("积分商品总数量"));
+        config.getColumns().put("eee", new ExcelUtils.ExcelWriterHeadConfig("上架积分商品数"));
+        config.getColumns().put("fff", new ExcelUtils.ExcelWriterHeadConfig("下架积分商品数"));
         ExcelDataWriter writer = ExcelUtils.Instance.createWriter(config);
         writer.write().sheet("test").doWrite(list);
     }
