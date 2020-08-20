@@ -51,12 +51,12 @@ public class ExcelUtilsTest {
         ExcelUtils.ExcelDataReaderConfig config = new ExcelUtils.ExcelDataReaderConfig();
         config.setFilename(file);
         config.setInputStream(FileUtils.openInputStream(new File(file)));
-        config.getColumns().put("aaa", new ExcelUtils.ExcelReaderHeadConfig(Integer.class, "序号"));
-        config.getColumns().put("bbb", new ExcelUtils.ExcelReaderHeadConfig(Long.class, "药店ID"));
-        config.getColumns().put("ccc", new ExcelUtils.ExcelReaderHeadConfig(String.class, "药店名称"));
-        config.getColumns().put("ddd", new ExcelUtils.ExcelReaderHeadConfig(BigDecimal.class, "积分商品总数量"));
-        config.getColumns().put("eee", new ExcelUtils.ExcelReaderHeadConfig(BigDecimal.class, "上架积分商品数"));
-        config.getColumns().put("fff", new ExcelUtils.ExcelReaderHeadConfig(BigDecimal.class, "下架积分商品数"));
+        config.getColumns().put("aaa", new ExcelUtils.ExcelReaderHeadConfig(Integer.class, "第一", "序号"));
+        config.getColumns().put("bbb", new ExcelUtils.ExcelReaderHeadConfig(Long.class, "第一", "药店ID"));
+        config.getColumns().put("ccc", new ExcelUtils.ExcelReaderHeadConfig(String.class, "第一", "药店名称"));
+        config.getColumns().put("ddd", new ExcelUtils.ExcelReaderHeadConfig(BigDecimal.class, "第二", "积分商品总数量"));
+        config.getColumns().put("eee", new ExcelUtils.ExcelReaderHeadConfig(Double.class, "第二", "上架积分商品数"));
+        config.getColumns().put("fff", new ExcelUtils.ExcelReaderHeadConfig(Float.class, "第二", "下架积分商品数"));
 
         ExcelDataReader<Map> reader = ExcelUtils.Instance.createReader(config);
         reader.read().doReadAll();

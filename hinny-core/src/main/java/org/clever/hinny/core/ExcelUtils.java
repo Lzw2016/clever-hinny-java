@@ -106,7 +106,11 @@ public class ExcelUtils {
         if (config.sheetNo != null) {
             builder.sheet(config.sheetNo);
         }
-        builder.headRowNumber(config.headRowNumber);
+        if (config.headRowNumber != null) {
+            builder.headRowNumber(config.headRowNumber);
+        } else {
+            builder.headRowNumber(config.getHeadRowCount());
+        }
         builder.useScientificFormat(config.useScientificFormat);
         builder.use1904windowing(config.use1904windowing);
         if (config.locale != null) {
@@ -314,7 +318,7 @@ public class ExcelUtils {
         /**
          * 表头行数
          */
-        private int headRowNumber = 1;
+        private Integer headRowNumber;
 
         /**
          * 使用科学格式
@@ -342,9 +346,23 @@ public class ExcelUtils {
         private Object customObject;
 
         /**
-         * Excel列配置(表头) Map<Entity.propertyName, ExcelReaderHeadConfig>
+         * Excel列配置(表头) {@code Map<Entity.propertyName, ExcelReaderHeadConfig>}
          */
         private final LinkedHashMap<String, ExcelReaderHeadConfig> columns = new LinkedHashMap<>();
+
+        /**
+         * 返回表头行数
+         */
+        public int getHeadRowCount() {
+            int headRowCount = 0;
+            for (Map.Entry<String, ExcelReaderHeadConfig> entry : columns.entrySet()) {
+                ExcelReaderHeadConfig headConfig = entry.getValue();
+                if (headConfig != null && headConfig.excelProperty.column.size() > headRowCount) {
+                    headRowCount = headConfig.excelProperty.column.size();
+                }
+            }
+            return headRowCount;
+        }
     }
 
     @Data
@@ -473,9 +491,9 @@ public class ExcelUtils {
         private Boolean ignore;
 
         /**
-         * 定义列的排序顺序
+         * 列的索引在列的索引上读写，如果等于-1，则按Java类排序。优先级：index>默认排序
          */
-        private Integer order;
+        private Integer index = -1;
     }
 
     @Data
@@ -821,7 +839,7 @@ public class ExcelUtils {
         private final ExcelDataReaderConfig config;
         private final ExcelDataReader<Map> excelDataReader;
         /**
-         * Map<index, TupleTow<type, head>>
+         * {@code Map<index, TupleTow<type, Entity.propertyName>>}
          */
         private final Map<Integer, TupleTow<Class<?>, String>> columns = new HashMap<>();
 
@@ -865,7 +883,8 @@ public class ExcelUtils {
             if (excelData.getStartTime() == null) {
                 excelData.setStartTime(System.currentTimeMillis());
             }
-            LinkedHashMap<String, ExcelReaderHeadConfig> columnsConfig = config.getColumns();
+            LinkedHashMap<String, ExcelReaderHeadConfig> columnsConfig = config.columns;
+            // TODO 根据 index | column 确定列字段对应关系
             for (Map.Entry<Integer, String> entry : headMap.entrySet()) {
                 Integer index = entry.getKey();
                 String head = entry.getValue();
