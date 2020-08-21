@@ -2,6 +2,7 @@ package org.clever.hinny.core;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.poi.ss.usermodel.Font;
 import org.clever.common.utils.excel.ExcelDataReader;
 import org.clever.common.utils.excel.ExcelDataWriter;
 import org.junit.Test;
@@ -90,7 +91,10 @@ public class ExcelUtilsTest {
         config.setFileName(file2);
         ExcelUtils.ExcelWriterHeadConfig headConfig = new ExcelUtils.ExcelWriterHeadConfig("第一", "序号");
         headConfig.getColumnWidth().setColumnWidth(10);
-        headConfig.getHeadFontStyle().setBold(false);
+        headConfig.getHeadFontStyle().setUnderline(Font.U_SINGLE_ACCOUNTING);
+        headConfig.getHeadStyle().setLocked(true);
+        headConfig.getContentStyle().setLocked(true);
+        headConfig.getExcelProperty().setIndex(1);
         config.getColumns().put("aaa", headConfig);
         headConfig = new ExcelUtils.ExcelWriterHeadConfig("第一", "药店ID");
         headConfig.getColumnWidth().setColumnWidth(20);
@@ -99,13 +103,13 @@ public class ExcelUtilsTest {
         headConfig.getColumnWidth().setColumnWidth(12);
         config.getColumns().put("ccc", headConfig);
         headConfig = new ExcelUtils.ExcelWriterHeadConfig("第二", "积分商品总数量");
-        headConfig.getColumnWidth().setColumnWidth(18);
+        headConfig.getColumnWidth().setColumnWidth(20);
         config.getColumns().put("ddd", headConfig);
         headConfig = new ExcelUtils.ExcelWriterHeadConfig("第二", "上架积分商品数");
-        headConfig.getColumnWidth().setColumnWidth(18);
+        headConfig.getColumnWidth().setColumnWidth(20);
         config.getColumns().put("eee", headConfig);
         headConfig = new ExcelUtils.ExcelWriterHeadConfig("第二", "下架积分商品数");
-        headConfig.getColumnWidth().setColumnWidth(18);
+        headConfig.getColumnWidth().setColumnWidth(20);
         config.getColumns().put("fff", headConfig);
         ExcelDataWriter writer = ExcelUtils.Instance.createWriter(config);
         writer.write().sheet("test").doWrite(list);
@@ -133,6 +137,48 @@ public class ExcelUtilsTest {
         config.getColumns().put("ddd", new ExcelUtils.ExcelWriterHeadConfig("积分商品总数量"));
         config.getColumns().put("eee", new ExcelUtils.ExcelWriterHeadConfig("上架积分商品数"));
         config.getColumns().put("fff", new ExcelUtils.ExcelWriterHeadConfig("下架积分商品数"));
+        ExcelDataWriter writer = ExcelUtils.Instance.createWriter(config);
+        writer.write().sheet("test").doWrite(list);
+    }
+
+    @Test
+    public void t06() {
+        List<List<Object>> list = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            List<Object> data = new ArrayList<>();
+            data.add("字符串" + i);
+            data.add(new Date());
+            data.add(0.56);
+            data.add("111");
+            data.add("222");
+            data.add("333");
+            data.add("444");
+            list.add(data);
+        }
+        ExcelUtils.ExcelDataWriterConfig config = new ExcelUtils.ExcelDataWriterConfig();
+        config.setFileName(file2);
+        ExcelUtils.ExcelWriterHeadConfig headConfig = new ExcelUtils.ExcelWriterHeadConfig("序号");
+        headConfig.getColumnWidth().setColumnWidth(10);
+        headConfig.getHeadFontStyle().setUnderline(Font.U_SINGLE_ACCOUNTING);
+//        headConfig.getHeadStyle().setLocked(true);
+//        headConfig.getContentStyle().setLocked(true);
+        headConfig.getExcelProperty().setIndex(1);
+        config.getColumns().put("aaa", headConfig);
+        headConfig = new ExcelUtils.ExcelWriterHeadConfig("药店ID");
+        headConfig.getColumnWidth().setColumnWidth(20);
+        config.getColumns().put("bbb", headConfig);
+        headConfig = new ExcelUtils.ExcelWriterHeadConfig("药店名称");
+        headConfig.getColumnWidth().setColumnWidth(12);
+        config.getColumns().put("ccc", headConfig);
+        headConfig = new ExcelUtils.ExcelWriterHeadConfig("积分商品总数量");
+        headConfig.getColumnWidth().setColumnWidth(20);
+        config.getColumns().put("ddd", headConfig);
+        headConfig = new ExcelUtils.ExcelWriterHeadConfig("上架积分商品数");
+        headConfig.getColumnWidth().setColumnWidth(20);
+        config.getColumns().put("eee", headConfig);
+        headConfig = new ExcelUtils.ExcelWriterHeadConfig("下架积分商品数");
+        headConfig.getColumnWidth().setColumnWidth(20);
+        config.getColumns().put("fff", headConfig);
         ExcelDataWriter writer = ExcelUtils.Instance.createWriter(config);
         writer.write().sheet("test").doWrite(list);
     }

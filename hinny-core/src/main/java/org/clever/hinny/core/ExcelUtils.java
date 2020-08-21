@@ -52,7 +52,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 作者：lizw <br/>
@@ -476,10 +475,56 @@ public class ExcelUtils {
         private final WriterStyleConfig styleConfig = new WriterStyleConfig();
 
         public List<List<String>> getHeads() {
-            // TODO 需要排序
-            return columns.values().stream()
-                    .map(headConfig -> headConfig.excelProperty.column)
-                    .collect(Collectors.toList());
+            List<ExcelWriterHeadConfig> list = new ArrayList<>(columns.values());
+            list.sort((o1, o2) -> {
+                int idx1 = o1.excelProperty.index == null ? -1 : o1.excelProperty.index;
+                int idx2 = o2.excelProperty.index == null ? -1 : o2.excelProperty.index;
+                return Integer.compare(idx1, idx2);
+            });
+            Integer indexMax = null;
+            if (!list.isEmpty()) {
+                indexMax = list.get(list.size() - 1).excelProperty.index;
+            }
+            if (indexMax == null) {
+                indexMax = 0;
+            }
+            if (indexMax < list.size()) {
+                indexMax = list.size();
+            }
+            indexMax += 1;
+            // 构造表头
+            List<List<String>> heads = new ArrayList<>(indexMax);
+            for (int i = 0; i < indexMax; i++) {
+                heads.add(null);
+            }
+            List<ExcelWriterHeadConfig> tmp = new ArrayList<>(list.size());
+            // 先设置index有值的Head
+            for (ExcelWriterHeadConfig headConfig : list) {
+                if (headConfig.excelProperty.index != null && headConfig.excelProperty.index >= 0) {
+                    heads.set(headConfig.excelProperty.index, headConfig.excelProperty.column);
+                } else {
+                    tmp.add(headConfig);
+                }
+            }
+            // 再设置其它Head
+            for (ExcelWriterHeadConfig headConfig : tmp) {
+                for (int i = 0; i < heads.size(); i++) {
+                    if (heads.get(i) == null) {
+                        heads.set(i, headConfig.excelProperty.column);
+                        break;
+                    }
+                }
+            }
+            // 最后填充heads
+            for (int i = 0; i < heads.size(); i++) {
+                if (heads.get(i) == null) {
+                    heads.set(i, new ArrayList<String>() {{
+                        add("");
+                    }});
+                    break;
+                }
+            }
+            return heads;
         }
     }
 
