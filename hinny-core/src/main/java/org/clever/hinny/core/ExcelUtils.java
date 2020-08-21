@@ -1176,7 +1176,7 @@ public class ExcelUtils {
             final ExcelRowReader<Map> excelRowReader = config.getExcelRowReader();
             if (!excelRow.hasError() && excelRowReader != null) {
                 try {
-                    excelRowReader.readRow(data, excelRow, context);
+                    excelRowReader.readRow(excelRow.getData(), excelRow, context);
                 } catch (Throwable e) {
                     excelRow.addErrorInRow(e.getMessage());
                 }
