@@ -29,6 +29,7 @@ import com.alibaba.excel.write.style.column.AbstractHeadColumnWidthStyleStrategy
 import com.alibaba.excel.write.style.row.SimpleRowHeightStyleStrategy;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -949,6 +950,7 @@ public class ExcelUtils {
         }
     }
 
+    @NoArgsConstructor
     @Data
     public static class ExcelReaderHeadConfig implements Serializable {
         /**
@@ -959,9 +961,6 @@ public class ExcelUtils {
         private final DateTimeFormat dateTimeFormat = new DateTimeFormat();
         private final NumberFormat numberFormat = new NumberFormat();
 
-        // public ExcelReaderHeadConfig() {
-        // }
-
         public ExcelReaderHeadConfig(Class<?> dataType, String... names) {
             this.dataType = dataType;
             if (names != null) {
@@ -970,6 +969,7 @@ public class ExcelUtils {
         }
     }
 
+    @NoArgsConstructor
     @Data
     public static class ExcelWriterHeadConfig implements Serializable {
         private final ExcelProperty excelProperty = new ExcelProperty();
@@ -981,9 +981,6 @@ public class ExcelUtils {
         private final ContentStyle contentStyle = new ContentStyle();
         private final HeadFontStyle headFontStyle = new HeadFontStyle();
         private final HeadStyle headStyle = new HeadStyle();
-
-        // public ExcelWriterHeadConfig() {
-        // }
 
         public ExcelWriterHeadConfig(String... names) {
             if (names != null) {
