@@ -2,7 +2,9 @@ package org.clever.hinny.core;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
 import org.clever.common.utils.excel.ExcelDataReader;
 import org.clever.common.utils.excel.ExcelDataWriter;
 import org.junit.Test;
@@ -89,6 +91,10 @@ public class ExcelUtilsTest {
         }
         ExcelUtils.ExcelDataWriterConfig config = new ExcelUtils.ExcelDataWriterConfig();
         config.setFileName(file2);
+        config.getStyleConfig().getContentRowHeight().setRowHeight((short) 24);
+        config.getStyleConfig().getContentStyle().setFillBackgroundColor(IndexedColors.YELLOW.index);
+        config.getStyleConfig().getContentStyle().setFillPatternType(FillPatternType.SPARSE_DOTS);
+        config.getStyleConfig().getContentFontStyle().setColor(IndexedColors.BLUE.index);
         ExcelUtils.ExcelWriterHeadConfig headConfig = new ExcelUtils.ExcelWriterHeadConfig("第一", "序号");
         headConfig.getColumnWidth().setColumnWidth(10);
         headConfig.getHeadFontStyle().setUnderline(Font.U_SINGLE_ACCOUNTING);

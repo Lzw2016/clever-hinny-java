@@ -11,22 +11,22 @@ import com.alibaba.excel.metadata.Cell;
 import com.alibaba.excel.metadata.CellData;
 import com.alibaba.excel.metadata.GlobalConfiguration;
 import com.alibaba.excel.metadata.Head;
-import com.alibaba.excel.metadata.property.ColumnWidthProperty;
-import com.alibaba.excel.metadata.property.ExcelContentProperty;
-import com.alibaba.excel.metadata.property.FontProperty;
-import com.alibaba.excel.metadata.property.StyleProperty;
+import com.alibaba.excel.metadata.property.*;
 import com.alibaba.excel.read.builder.ExcelReaderBuilder;
 import com.alibaba.excel.read.metadata.holder.ReadHolder;
 import com.alibaba.excel.read.metadata.property.ExcelReadHeadProperty;
 import com.alibaba.excel.support.ExcelTypeEnum;
 import com.alibaba.excel.write.builder.ExcelWriterBuilder;
 import com.alibaba.excel.write.handler.AbstractCellWriteHandler;
+import com.alibaba.excel.write.merge.OnceAbsoluteMergeStrategy;
 import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
 import com.alibaba.excel.write.metadata.holder.WriteTableHolder;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
+import com.alibaba.excel.write.property.ExcelWriteHeadProperty;
 import com.alibaba.excel.write.style.AbstractVerticalCellStyleStrategy;
 import com.alibaba.excel.write.style.column.AbstractHeadColumnWidthStyleStrategy;
+import com.alibaba.excel.write.style.row.SimpleRowHeightStyleStrategy;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
@@ -207,38 +207,32 @@ public class ExcelUtils {
             // }
             // handlerList.add(new LoopMergeStrategy(loopMergeProperty, head.getColumnIndex()));
         }
+        // 应用列宽配置
         if (hasColumnWidth) {
             builder.registerWriteHandler(new ColumnWidthStyleStrategy());
         }
+        // 应用样式配置
         if (hasStyle) {
             builder.registerWriteHandler(new StyleStrategy());
         }
-
-        // dealRowHigh(handlerList);
-        // -------------------------------------------------------------------------->>>
-        // RowHeightProperty headRowHeightProperty = getExcelWriteHeadProperty().getHeadRowHeightProperty();
-        // RowHeightProperty contentRowHeightProperty = getExcelWriteHeadProperty().getContentRowHeightProperty();
-        // if (headRowHeightProperty == null && contentRowHeightProperty == null) {
-        //     return;
-        // }
-        // Short headRowHeight = null;
-        // if (headRowHeightProperty != null) {
-        //     headRowHeight = headRowHeightProperty.getHeight();
-        // }
-        // Short contentRowHeight = null;
-        // if (contentRowHeightProperty != null) {
-        //     contentRowHeight = contentRowHeightProperty.getHeight();
-        // }
-        // handlerList.add(new SimpleRowHeightStyleStrategy(headRowHeight, contentRowHeight));
-
-        // dealOnceAbsoluteMerge(handlerList);
-        // -------------------------------------------------------------------------->>>
-        // OnceAbsoluteMergeProperty onceAbsoluteMergeProperty = getExcelWriteHeadProperty().getOnceAbsoluteMergeProperty();
-        // if (onceAbsoluteMergeProperty == null) {
-        //     return;
-        // }
-        // handlerList.add(new OnceAbsoluteMergeStrategy(onceAbsoluteMergeProperty));
+        // 应用行高配置
+        RowHeightProperty headRowHeightProperty = config.styleConfig.headRowHeight.getRowHeightProperty();
+        RowHeightProperty contentRowHeightProperty = config.styleConfig.contentRowHeight.getRowHeightProperty();
+        Short headRowHeight = headRowHeightProperty.getHeight();
+        Short contentRowHeight = contentRowHeightProperty.getHeight();
+        if (headRowHeight != null || contentRowHeight != null) {
+            builder.registerWriteHandler(new SimpleRowHeightStyleStrategy(headRowHeight, contentRowHeight));
+        }
+        // 应用OnceAbsoluteMerge配置
+        if (config.styleConfig.onceAbsoluteMerge.isSetValue()) {
+            OnceAbsoluteMergeProperty onceAbsoluteMergeProperty = config.styleConfig.onceAbsoluteMerge.getOnceAbsoluteMergeProperty();
+            builder.registerWriteHandler(new OnceAbsoluteMergeStrategy(onceAbsoluteMergeProperty));
+        }
         return excelDataWriter;
+    }
+
+    private ExcelWriteHeadProperty getExcelWriteHeadProperty(ExcelDataWriterConfig config) {
+        return null;
     }
 
     // 配置类
@@ -636,7 +630,6 @@ public class ExcelUtils {
         }
 
         public FontProperty getFontProperty() {
-            // TODO 需要设置默认值
             FontProperty fontProperty = new FontProperty();
             fontProperty.setFontName(fontName);
             fontProperty.setFontHeightInPoints(fontHeightInPoints);
@@ -675,6 +668,10 @@ public class ExcelUtils {
          * 行高
          */
         private Short rowHeight;
+
+        public RowHeightProperty getRowHeightProperty() {
+            return new RowHeightProperty(rowHeight);
+        }
     }
 
     @Data
@@ -819,7 +816,6 @@ public class ExcelUtils {
         }
 
         public StyleProperty getStyleProperty() {
-            // TODO 需要设置默认值
             StyleProperty styleProperty = new StyleProperty();
             styleProperty.setDataFormat(dataFormat);
             // styleProperty.setWriteFont();
@@ -887,6 +883,17 @@ public class ExcelUtils {
          * Head行高
          */
         private Short headRowHeight;
+
+        /**
+         * 是否设置过值
+         */
+        public boolean isSetValue() {
+            return headRowHeight != null;
+        }
+
+        public RowHeightProperty getRowHeightProperty() {
+            return new RowHeightProperty(headRowHeight);
+        }
     }
 
     @EqualsAndHashCode(callSuper = true)
@@ -927,6 +934,21 @@ public class ExcelUtils {
          * 最后一列
          */
         private Integer lastColumnIndex;
+
+        /**
+         * 是否设置过值
+         */
+        public boolean isSetValue() {
+            return firstRowIndex != null || lastRowIndex != null || firstColumnIndex != null || lastColumnIndex != null;
+        }
+
+        public OnceAbsoluteMergeProperty getOnceAbsoluteMergeProperty() {
+            int firstRowIndex = this.firstRowIndex == null ? -1 : this.firstRowIndex;
+            int lastRowIndex = this.lastRowIndex == null ? -1 : this.lastRowIndex;
+            int firstColumnIndex = this.firstColumnIndex == null ? -1 : this.firstColumnIndex;
+            int lastColumnIndex = this.lastColumnIndex == null ? -1 : this.lastColumnIndex;
+            return new OnceAbsoluteMergeProperty(firstRowIndex, lastRowIndex, firstColumnIndex, lastColumnIndex);
+        }
     }
 
     @Data
