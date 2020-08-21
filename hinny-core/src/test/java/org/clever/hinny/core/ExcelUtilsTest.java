@@ -101,6 +101,8 @@ public class ExcelUtilsTest {
         headConfig.getHeadStyle().setLocked(true);
         headConfig.getContentStyle().setLocked(true);
         headConfig.getExcelProperty().setIndex(1);
+        headConfig.getContentLoopMerge().setEachRow(2);
+        headConfig.getContentLoopMerge().setColumnExtend(2);
         config.getColumns().put("aaa", headConfig);
         headConfig = new ExcelUtils.ExcelWriterHeadConfig("第一", "药店ID");
         headConfig.getColumnWidth().setColumnWidth(20);

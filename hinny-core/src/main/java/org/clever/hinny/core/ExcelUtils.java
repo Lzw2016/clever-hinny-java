@@ -18,12 +18,12 @@ import com.alibaba.excel.read.metadata.property.ExcelReadHeadProperty;
 import com.alibaba.excel.support.ExcelTypeEnum;
 import com.alibaba.excel.write.builder.ExcelWriterBuilder;
 import com.alibaba.excel.write.handler.AbstractCellWriteHandler;
+import com.alibaba.excel.write.handler.AbstractRowWriteHandler;
 import com.alibaba.excel.write.merge.OnceAbsoluteMergeStrategy;
 import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
 import com.alibaba.excel.write.metadata.holder.WriteTableHolder;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
-import com.alibaba.excel.write.property.ExcelWriteHeadProperty;
 import com.alibaba.excel.write.style.AbstractVerticalCellStyleStrategy;
 import com.alibaba.excel.write.style.column.AbstractHeadColumnWidthStyleStrategy;
 import com.alibaba.excel.write.style.row.SimpleRowHeightStyleStrategy;
@@ -33,6 +33,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.clever.common.utils.codec.DigestUtils;
 import org.clever.common.utils.codec.EncodeDecodeUtils;
 import org.clever.common.utils.excel.ExcelDataReader;
@@ -199,13 +200,10 @@ public class ExcelUtils {
                     || headConfig.contentFontStyle.isSetValue()) {
                 hasStyle = true;
             }
-            // dealLoopMerge(handlerList, head);
-            // -------------------------------------------------------------------------->>>
-            // LoopMergeProperty loopMergeProperty = head.getLoopMergeProperty();
-            // if (loopMergeProperty == null) {
-            //     return;
-            // }
-            // handlerList.add(new LoopMergeStrategy(loopMergeProperty, head.getColumnIndex()));
+            // 应用合并单元格配置
+            if (headConfig.contentLoopMerge.isSetValue()) {
+                builder.registerWriteHandler(new LoopMergeStrategy(headConfig.contentLoopMerge.eachRow, headConfig.contentLoopMerge.columnExtend, headConfig));
+            }
         }
         // 应用列宽配置
         if (hasColumnWidth) {
@@ -229,10 +227,6 @@ public class ExcelUtils {
             builder.registerWriteHandler(new OnceAbsoluteMergeStrategy(onceAbsoluteMergeProperty));
         }
         return excelDataWriter;
-    }
-
-    private ExcelWriteHeadProperty getExcelWriteHeadProperty(ExcelDataWriterConfig config) {
-        return null;
     }
 
     // 配置类
@@ -660,6 +654,17 @@ public class ExcelUtils {
          * 列
          */
         private Integer columnExtend;
+
+        /**
+         * 是否设置过值
+         */
+        public boolean isSetValue() {
+            return eachRow != null || columnExtend != null;
+        }
+
+        public LoopMergeProperty getLoopMergeProperty() {
+            return new LoopMergeProperty(eachRow, columnExtend);
+        }
     }
 
     @Data
@@ -884,13 +889,6 @@ public class ExcelUtils {
          */
         private Short headRowHeight;
 
-        /**
-         * 是否设置过值
-         */
-        public boolean isSetValue() {
-            return headRowHeight != null;
-        }
-
         public RowHeightProperty getRowHeightProperty() {
             return new RowHeightProperty(headRowHeight);
         }
@@ -979,6 +977,7 @@ public class ExcelUtils {
         private final NumberFormat numberFormat = new NumberFormat();
         private final ColumnWidth columnWidth = new ColumnWidth();
         private final ContentFontStyle contentFontStyle = new ContentFontStyle();
+        private final ContentLoopMerge contentLoopMerge = new ContentLoopMerge();
         private final ContentStyle contentStyle = new ContentStyle();
         private final HeadFontStyle headFontStyle = new HeadFontStyle();
         private final HeadStyle headStyle = new HeadStyle();
@@ -1081,6 +1080,7 @@ public class ExcelUtils {
                         propertyNameParsed.add(propertyNameTmp);
                         propertyName = propertyNameTmp;
                         headConfig = headConfigTmp;
+                        headConfig.excelProperty.index = index;
                         break;
                     }
                 }
@@ -1335,6 +1335,7 @@ public class ExcelUtils {
                 if (headsStr.endsWith(columnStr) || columnStr.endsWith(headsStr)) {
                     propertyNameParsed.add(propertyNameTmp);
                     headConfig = headConfigTmp;
+                    headConfig.excelProperty.index = columnIndex;
                     break;
                 }
             }
@@ -1389,6 +1390,52 @@ public class ExcelUtils {
         @Override
         protected WriteCellStyle contentCellStyle(Head head) {
             return build(head.getContentStyleProperty(), head.getContentFontProperty());
+        }
+    }
+
+    private static class LoopMergeStrategy extends AbstractRowWriteHandler {
+        /**
+         * 每一行
+         */
+        private final int eachRow;
+        /**
+         * 延伸栏
+         */
+        private final int columnExtend;
+        /**
+         * 当前列数
+         */
+        private Integer columnIndex;
+
+        private final ExcelWriterHeadConfig headConfig;
+
+        public LoopMergeStrategy(int eachRow, int columnExtend, ExcelWriterHeadConfig headConfig) {
+            this.eachRow = eachRow;
+            this.columnExtend = columnExtend;
+            this.headConfig = headConfig;
+            this.columnIndex = headConfig.excelProperty.index;
+        }
+
+        @Override
+        public void afterRowDispose(WriteSheetHolder writeSheetHolder, WriteTableHolder writeTableHolder, Row row, Integer relativeRowIndex, Boolean isHead) {
+            if (isHead) {
+                return;
+            }
+            if (this.columnIndex == null) {
+                columnIndex = headConfig.excelProperty.index;
+                if (columnIndex == null) {
+                    return;
+                }
+            }
+            if (relativeRowIndex % eachRow == 0) {
+                CellRangeAddress cellRangeAddress = new CellRangeAddress(
+                        row.getRowNum(),
+                        row.getRowNum() + eachRow - 1,
+                        columnIndex,
+                        columnIndex + columnExtend - 1
+                );
+                writeSheetHolder.getSheet().addMergedRegionUnsafe(cellRangeAddress);
+            }
         }
     }
 
