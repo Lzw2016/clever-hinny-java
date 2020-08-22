@@ -196,10 +196,10 @@ public class ExcelUtils {
             if (headConfig.columnWidth.columnWidth != null) {
                 hasColumnWidth = true;
             }
-            if (headConfig.headStyle.isSetValue()
+            if (!hasStyle && (headConfig.headStyle.isSetValue()
                     || headConfig.headFontStyle.isSetValue()
                     || headConfig.contentStyle.isSetValue()
-                    || headConfig.contentFontStyle.isSetValue()) {
+                    || headConfig.contentFontStyle.isSetValue())) {
                 hasStyle = true;
             }
             // 应用合并单元格配置
@@ -212,7 +212,11 @@ public class ExcelUtils {
             builder.registerWriteHandler(new ColumnWidthStyleStrategy());
         }
         // 应用样式配置
-        if (hasStyle) {
+        if (hasStyle
+                || config.styleConfig.headStyle.isSetValue()
+                || config.styleConfig.headFontStyle.isSetValue()
+                || config.styleConfig.contentStyle.isSetValue()
+                || config.styleConfig.contentFontStyle.isSetValue()) {
             builder.registerWriteHandler(new StyleStrategy());
         }
         // 应用行高配置
