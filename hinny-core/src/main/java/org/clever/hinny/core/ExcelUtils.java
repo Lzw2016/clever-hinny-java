@@ -1131,6 +1131,9 @@ public class ExcelUtils {
                 Integer idx = entry.getKey();
                 CellData<?> cellData = entry.getValue();
                 TupleTow<String, ExcelReaderHeadConfig> tupleTow = columns.get(idx);
+                if (tupleTow == null) {
+                    continue;
+                }
                 String propertyName = tupleTow.getValue1();
                 ExcelReaderHeadConfig headConfig = tupleTow.getValue2();
                 // 忽略当前字段(propertyName)
