@@ -1431,7 +1431,7 @@ public class ExcelUtils {
             if (isHead) {
                 return;
             }
-            if (this.columnIndex == null) {
+            if (this.columnIndex == null || this.columnIndex < 0) {
                 columnIndex = headConfig.excelProperty.index;
                 if (columnIndex == null) {
                     return;
