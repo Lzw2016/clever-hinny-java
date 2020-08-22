@@ -651,6 +651,20 @@ public class ExcelUtils {
             fontProperty.setBold(bold);
             return fontProperty;
         }
+
+        public FontProperty getFontProperty(ExcelFontStyle second) {
+            FontProperty fontProperty = new FontProperty();
+            fontProperty.setFontName(fontName == null ? second.fontName : fontName);
+            fontProperty.setFontHeightInPoints(fontHeightInPoints == null ? second.fontHeightInPoints : fontHeightInPoints);
+            fontProperty.setItalic(italic == null ? second.italic : italic);
+            fontProperty.setStrikeout(strikeout == null ? second.strikeout : strikeout);
+            fontProperty.setColor(color == null ? second.color : color);
+            fontProperty.setTypeOffset(typeOffset == null ? second.typeOffset : typeOffset);
+            fontProperty.setUnderline(underline == null ? second.underline : underline);
+            fontProperty.setCharset(charset == null ? second.charset : charset);
+            fontProperty.setBold(bold == null ? second.bold : bold);
+            return fontProperty;
+        }
     }
 
     @EqualsAndHashCode(callSuper = true)
@@ -861,6 +875,33 @@ public class ExcelUtils {
             styleProperty.setShrinkToFit(shrinkToFit);
             return styleProperty;
         }
+
+        public StyleProperty getStyleProperty(ExcelCellStyle second) {
+            StyleProperty styleProperty = new StyleProperty();
+            styleProperty.setDataFormat(dataFormat == null ? second.dataFormat : dataFormat);
+            // styleProperty.setWriteFont();
+            styleProperty.setHidden(hidden == null ? second.hidden : hidden);
+            styleProperty.setLocked(locked == null ? second.locked : locked);
+            styleProperty.setQuotePrefix(quotePrefix == null ? second.quotePrefix : quotePrefix);
+            styleProperty.setHorizontalAlignment(horizontalAlignment == null ? second.horizontalAlignment : horizontalAlignment);
+            styleProperty.setWrapped(wrapped == null ? second.wrapped : wrapped);
+            styleProperty.setVerticalAlignment(verticalAlignment == null ? second.verticalAlignment : verticalAlignment);
+            styleProperty.setRotation(rotation == null ? second.rotation : rotation);
+            styleProperty.setIndent(indent == null ? second.indent : indent);
+            styleProperty.setBorderLeft(borderLeft == null ? second.borderLeft : borderLeft);
+            styleProperty.setBorderRight(borderRight == null ? second.borderRight : borderRight);
+            styleProperty.setBorderTop(borderTop == null ? second.borderTop : borderTop);
+            styleProperty.setBorderBottom(borderBottom == null ? second.borderBottom : borderBottom);
+            styleProperty.setLeftBorderColor(leftBorderColor == null ? second.leftBorderColor : leftBorderColor);
+            styleProperty.setRightBorderColor(rightBorderColor == null ? second.rightBorderColor : rightBorderColor);
+            styleProperty.setTopBorderColor(topBorderColor == null ? second.topBorderColor : topBorderColor);
+            styleProperty.setBottomBorderColor(bottomBorderColor == null ? second.bottomBorderColor : bottomBorderColor);
+            styleProperty.setFillPatternType(fillPatternType == null ? second.fillPatternType : fillPatternType);
+            styleProperty.setFillBackgroundColor(fillBackgroundColor == null ? second.fillBackgroundColor : fillBackgroundColor);
+            styleProperty.setFillForegroundColor(fillForegroundColor == null ? second.fillForegroundColor : fillForegroundColor);
+            styleProperty.setShrinkToFit(shrinkToFit == null ? second.shrinkToFit : shrinkToFit);
+            return styleProperty;
+        }
     }
 
     @EqualsAndHashCode(callSuper = true)
@@ -878,6 +919,10 @@ public class ExcelUtils {
         public StyleProperty getStyleProperty() {
             return super.getStyleProperty();
         }
+
+        public StyleProperty getStyleProperty(ContentStyle second) {
+            return super.getStyleProperty(second);
+        }
     }
 
     @EqualsAndHashCode(callSuper = true)
@@ -894,6 +939,10 @@ public class ExcelUtils {
         @Override
         public FontProperty getFontProperty() {
             return super.getFontProperty();
+        }
+
+        public FontProperty getFontProperty(HeadFontStyle second) {
+            return super.getFontProperty(second);
         }
     }
 
@@ -923,6 +972,10 @@ public class ExcelUtils {
         @Override
         public StyleProperty getStyleProperty() {
             return super.getStyleProperty();
+        }
+
+        public StyleProperty getStyleProperty(HeadStyle second) {
+            return super.getStyleProperty(second);
         }
     }
 
@@ -1359,26 +1412,11 @@ public class ExcelUtils {
             if (headConfig.columnWidth.columnWidth != null) {
                 head.setColumnWidthProperty(new ColumnWidthProperty(headConfig.columnWidth.columnWidth));
             }
-            if (headConfig.headStyle.isSetValue()) {
-                head.setHeadStyleProperty(headConfig.headStyle.getStyleProperty());
-            } else {
-                head.setHeadStyleProperty(config.styleConfig.headStyle.getStyleProperty());
-            }
-            if (headConfig.headFontStyle.isSetValue()) {
-                head.setHeadFontProperty(headConfig.headFontStyle.getFontProperty());
-            } else {
-                head.setHeadFontProperty(config.styleConfig.headFontStyle.getFontProperty());
-            }
-            if (headConfig.contentStyle.isSetValue()) {
-                head.setContentStyleProperty(headConfig.contentStyle.getStyleProperty());
-            } else {
-                head.setContentStyleProperty(config.styleConfig.contentStyle.getStyleProperty());
-            }
-            if (headConfig.contentFontStyle.isSetValue()) {
-                head.setContentFontProperty(headConfig.contentFontStyle.getFontProperty());
-            } else {
-                head.setContentFontProperty(config.styleConfig.contentFontStyle.getFontProperty());
-            }
+            // 合并配置
+            head.setHeadStyleProperty(headConfig.headStyle.getStyleProperty(config.styleConfig.headStyle));
+            head.setHeadFontProperty(headConfig.headFontStyle.getFontProperty(config.styleConfig.headFontStyle));
+            head.setContentStyleProperty(headConfig.contentStyle.getStyleProperty(config.styleConfig.contentStyle));
+            head.setContentFontProperty(headConfig.contentFontStyle.getFontProperty(config.styleConfig.contentFontStyle));
         }
     }
 
