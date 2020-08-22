@@ -54,6 +54,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 作者：lizw <br/>
@@ -463,16 +464,17 @@ public class ExcelUtils {
          */
         private final WriterStyleConfig styleConfig = new WriterStyleConfig();
 
-        public List<List<String>> getHeads() {
-            List<ExcelWriterHeadConfig> list = new ArrayList<>(columns.values());
+        public List<TupleTow<String, ExcelWriterHeadConfig>> getHeadConfigs() {
+            List<TupleTow<String, ExcelWriterHeadConfig>> list = new ArrayList<>(columns.size());
+            columns.forEach((propertyName, headConfig) -> list.add(TupleTow.creat(propertyName, headConfig)));
             list.sort((o1, o2) -> {
-                int idx1 = o1.excelProperty.index == null ? -1 : o1.excelProperty.index;
-                int idx2 = o2.excelProperty.index == null ? -1 : o2.excelProperty.index;
+                int idx1 = o1.getValue2().excelProperty.index == null ? -1 : o1.getValue2().excelProperty.index;
+                int idx2 = o2.getValue2().excelProperty.index == null ? -1 : o2.getValue2().excelProperty.index;
                 return Integer.compare(idx1, idx2);
             });
             Integer indexMax = null;
             if (!list.isEmpty()) {
-                indexMax = list.get(list.size() - 1).excelProperty.index;
+                indexMax = list.get(list.size() - 1).getValue2().excelProperty.index;
             }
             if (indexMax == null) {
                 indexMax = 0;
@@ -482,38 +484,46 @@ public class ExcelUtils {
             }
             indexMax += 1;
             // 构造表头
-            List<List<String>> heads = new ArrayList<>(indexMax);
+            List<TupleTow<String, ExcelWriterHeadConfig>> headConfigs = new ArrayList<>(indexMax);
             for (int i = 0; i < indexMax; i++) {
-                heads.add(null);
+                headConfigs.add(null);
             }
-            List<ExcelWriterHeadConfig> tmp = new ArrayList<>(list.size());
+            List<TupleTow<String, ExcelWriterHeadConfig>> tmp = new ArrayList<>(list.size());
             // 先设置index有值的Head
-            for (ExcelWriterHeadConfig headConfig : list) {
+            for (TupleTow<String, ExcelWriterHeadConfig> tupleTow : list) {
+                String propertyName = tupleTow.getValue1();
+                ExcelWriterHeadConfig headConfig = tupleTow.getValue2();
                 if (headConfig.excelProperty.index != null && headConfig.excelProperty.index >= 0) {
-                    heads.set(headConfig.excelProperty.index, headConfig.excelProperty.column);
+                    headConfigs.set(headConfig.excelProperty.index, TupleTow.creat(propertyName, headConfig));
                 } else {
-                    tmp.add(headConfig);
+                    tmp.add(TupleTow.creat(propertyName, headConfig));
                 }
             }
             // 再设置其它Head
-            for (ExcelWriterHeadConfig headConfig : tmp) {
-                for (int i = 0; i < heads.size(); i++) {
-                    if (heads.get(i) == null) {
-                        heads.set(i, headConfig.excelProperty.column);
+            for (TupleTow<String, ExcelWriterHeadConfig> tupleTow : tmp) {
+                String propertyName = tupleTow.getValue1();
+                ExcelWriterHeadConfig headConfig = tupleTow.getValue2();
+                for (int i = 0; i < headConfigs.size(); i++) {
+                    if (headConfigs.get(i) == null) {
+                        headConfigs.set(i, TupleTow.creat(propertyName, headConfig));
                         break;
                     }
                 }
             }
             // 最后填充heads
-            for (int i = 0; i < heads.size(); i++) {
-                if (heads.get(i) == null) {
-                    heads.set(i, new ArrayList<String>() {{
-                        add("");
-                    }});
+            for (int i = 0; i < headConfigs.size(); i++) {
+                if (headConfigs.get(i) == null) {
+                    TupleTow<String, ExcelWriterHeadConfig> tupleTow = TupleTow.creat(null, new ExcelWriterHeadConfig(""));
+                    headConfigs.set(i, tupleTow);
                     break;
                 }
             }
-            return heads;
+            return headConfigs;
+        }
+
+        public List<List<String>> getHeads() {
+            List<TupleTow<String, ExcelWriterHeadConfig>> headConfigs = getHeadConfigs();
+            return headConfigs.stream().filter(Objects::nonNull).map(tupleTow -> tupleTow.getValue2().excelProperty.column).collect(Collectors.toList());
         }
     }
 
@@ -663,9 +673,9 @@ public class ExcelUtils {
             return eachRow != null || columnExtend != null;
         }
 
-        public LoopMergeProperty getLoopMergeProperty() {
-            return new LoopMergeProperty(eachRow, columnExtend);
-        }
+        // public LoopMergeProperty getLoopMergeProperty() {
+        //     return new LoopMergeProperty(eachRow, columnExtend);
+        // }
     }
 
     @Data
