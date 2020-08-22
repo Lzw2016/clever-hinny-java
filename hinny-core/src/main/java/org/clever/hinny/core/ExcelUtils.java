@@ -482,7 +482,7 @@ public class ExcelUtils {
             if (indexMax < list.size()) {
                 indexMax = list.size();
             }
-            indexMax += 1;
+            // indexMax += 1;
             // 构造表头
             List<TupleTow<String, ExcelWriterHeadConfig>> headConfigs = new ArrayList<>(indexMax);
             for (int i = 0; i < indexMax; i++) {
