@@ -559,6 +559,17 @@ public class ExcelUtils {
          * 如果日期使用1904窗口，则为True；如果使用1900日期窗口，则为false
          */
         private Boolean use1904windowing;
+
+        /**
+         * 是否设置过值
+         */
+        public boolean isSetValue() {
+            return dateFormat != null || use1904windowing != null;
+        }
+
+        public DateTimeFormatProperty getDateTimeFormatProperty() {
+            return new DateTimeFormatProperty(dateFormat, use1904windowing);
+        }
     }
 
     @Data
@@ -572,6 +583,17 @@ public class ExcelUtils {
          * 四舍五入模式
          */
         private RoundingMode roundingMode;
+
+        /**
+         * 是否设置过值
+         */
+        public boolean isSetValue() {
+            return numberFormat != null || roundingMode != null;
+        }
+
+        public NumberFormatProperty getNumberFormatProperty() {
+            return new NumberFormatProperty(numberFormat, roundingMode);
+        }
     }
 
     @Data
@@ -1116,7 +1138,7 @@ public class ExcelUtils {
         }
 
         // 解析表头配置
-        public void parseHeadMap() {
+        public void parseHeadMap(AnalysisContext context) {
             columns = new HashMap<>();
             LinkedHashMap<String, ExcelReaderHeadConfig> columnsConfig = config.columns;
             Set<String> propertyNameParsed = new HashSet<>(columnsConfig.size());
@@ -1152,6 +1174,19 @@ public class ExcelUtils {
                     continue;
                 }
                 columns.put(index, TupleTow.creat(propertyName, headConfig));
+                // 格式化配置
+                boolean useDateTimeFormat = headConfig.dateTimeFormat.isSetValue();
+                boolean useNumberFormat = headConfig.numberFormat.isSetValue();
+                ExcelReadHeadProperty excelReadHeadProperty = context.currentReadHolder().excelReadHeadProperty();
+                if ((useDateTimeFormat || useNumberFormat) && excelReadHeadProperty != null && excelReadHeadProperty.getContentPropertyMap() != null) {
+                    ExcelContentProperty property = excelReadHeadProperty.getContentPropertyMap().computeIfAbsent(index, idx -> new ExcelContentProperty());
+                    if (useDateTimeFormat) {
+                        property.setDateTimeFormatProperty(headConfig.dateTimeFormat.getDateTimeFormatProperty());
+                    }
+                    if (useNumberFormat) {
+                        property.setNumberFormatProperty(headConfig.numberFormat.getNumberFormatProperty());
+                    }
+                }
             }
             Assert.notEmpty(columns, "无法解析Excel表头，请查看配置是否正确");
         }
@@ -1175,7 +1210,7 @@ public class ExcelUtils {
         public void invoke(Map<Integer, CellData<?>> data, AnalysisContext context) {
             // 第一次需要解析表头
             if (columns == null) {
-                parseHeadMap();
+                parseHeadMap(context);
             }
             ExcelData<Map> excelData = getExcelData(context);
             if (excelData.getStartTime() == null) {
@@ -1417,6 +1452,18 @@ public class ExcelUtils {
             head.setHeadFontProperty(headConfig.headFontStyle.getFontProperty(config.styleConfig.headFontStyle));
             head.setContentStyleProperty(headConfig.contentStyle.getStyleProperty(config.styleConfig.contentStyle));
             head.setContentFontProperty(headConfig.contentFontStyle.getFontProperty(config.styleConfig.contentFontStyle));
+            // 格式化配置
+            boolean useDateTimeFormat = headConfig.dateTimeFormat.isSetValue();
+            boolean useNumberFormat = headConfig.numberFormat.isSetValue();
+            if ((useDateTimeFormat || useNumberFormat) && writeSheetHolder.getExcelWriteHeadProperty() != null && writeSheetHolder.getExcelWriteHeadProperty().getContentPropertyMap() != null) {
+                ExcelContentProperty property = writeSheetHolder.getExcelWriteHeadProperty().getContentPropertyMap().computeIfAbsent(columnIndex, idx -> new ExcelContentProperty());
+                if (useDateTimeFormat) {
+                    property.setDateTimeFormatProperty(headConfig.dateTimeFormat.getDateTimeFormatProperty());
+                }
+                if (useNumberFormat) {
+                    property.setNumberFormatProperty(headConfig.numberFormat.getNumberFormatProperty());
+                }
+            }
         }
     }
 
