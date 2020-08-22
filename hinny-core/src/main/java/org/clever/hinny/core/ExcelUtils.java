@@ -1252,14 +1252,15 @@ public class ExcelUtils {
                     value = null;
                 } else {
                     // TODO 格式化操作 dateFormat numberFormat
-                    ExcelContentProperty excelContentProperty = contentPropertyMap.get(index);
+                    ExcelContentProperty excelContentProperty = contentPropertyMap.get(idx);
                     value = ConverterUtils.convertToJavaObject(
                             cellData,
                             headConfig.dataType,
                             excelContentProperty,
                             currentReadHolder.converterMap(),
                             currentReadHolder.globalConfiguration(),
-                            context.readRowHolder().getRowIndex(), index);
+                            context.readRowHolder().getRowIndex(),
+                            idx);
                 }
                 // 写入字段值
                 excelRow.getData().put(propertyName, value);
