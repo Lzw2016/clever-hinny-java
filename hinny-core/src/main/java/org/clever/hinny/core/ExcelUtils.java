@@ -1091,7 +1091,7 @@ public class ExcelUtils {
 
         private final ContentFontStyle contentFontStyle = new ContentFontStyle();
         private final ContentStyle contentStyle = new ContentStyle();
-        
+
         private final OnceAbsoluteMerge onceAbsoluteMerge = new OnceAbsoluteMerge();
     }
 
