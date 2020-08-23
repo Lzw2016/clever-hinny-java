@@ -1065,11 +1065,14 @@ public class ExcelUtils {
         private final DateTimeFormat dateTimeFormat = new DateTimeFormat();
         private final NumberFormat numberFormat = new NumberFormat();
         private final ColumnWidth columnWidth = new ColumnWidth();
-        private final ContentFontStyle contentFontStyle = new ContentFontStyle();
-        private final ContentLoopMerge contentLoopMerge = new ContentLoopMerge();
-        private final ContentStyle contentStyle = new ContentStyle();
+
         private final HeadFontStyle headFontStyle = new HeadFontStyle();
         private final HeadStyle headStyle = new HeadStyle();
+
+        private final ContentFontStyle contentFontStyle = new ContentFontStyle();
+        private final ContentStyle contentStyle = new ContentStyle();
+
+        private final ContentLoopMerge contentLoopMerge = new ContentLoopMerge();
 
         public ExcelWriterHeadConfig(String... names) {
             if (names != null) {
@@ -1080,12 +1083,15 @@ public class ExcelUtils {
 
     @Data
     public static class WriterStyleConfig implements Serializable {
-        private final ContentRowHeight contentRowHeight = new ContentRowHeight();
-        private final ContentFontStyle contentFontStyle = new ContentFontStyle();
-        private final ContentStyle contentStyle = new ContentStyle();
         private final HeadRowHeight headRowHeight = new HeadRowHeight();
+        private final ContentRowHeight contentRowHeight = new ContentRowHeight();
+
         private final HeadFontStyle headFontStyle = new HeadFontStyle();
         private final HeadStyle headStyle = new HeadStyle();
+
+        private final ContentFontStyle contentFontStyle = new ContentFontStyle();
+        private final ContentStyle contentStyle = new ContentStyle();
+        
         private final OnceAbsoluteMerge onceAbsoluteMerge = new OnceAbsoluteMerge();
     }
 
