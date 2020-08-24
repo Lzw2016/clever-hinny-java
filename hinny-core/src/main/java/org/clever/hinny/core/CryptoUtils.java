@@ -44,7 +44,7 @@ public class CryptoUtils {
      * @return 返回无编码的字节数组结果
      */
     public byte[] aes(byte[] input, byte[] key, int mode) {
-        return org.clever.common.utils.codec.CryptoUtils.generateHmacSha1Key();
+        return org.clever.common.utils.codec.CryptoUtils.aes(input, key, mode);
     }
 
     /**
