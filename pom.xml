@@ -57,6 +57,7 @@
         <module>hinny-data-elasticsearch</module>
         <module>hinny-data-rabbitmq</module>
         <module>hinny-data-kafka</module>
+        <module>hinny-mvc</module>
     </modules>
 
     <properties>

@@ -11,28 +11,30 @@ import com.alibaba.excel.metadata.Cell;
 import com.alibaba.excel.metadata.CellData;
 import com.alibaba.excel.metadata.GlobalConfiguration;
 import com.alibaba.excel.metadata.Head;
-import com.alibaba.excel.metadata.property.ColumnWidthProperty;
-import com.alibaba.excel.metadata.property.ExcelContentProperty;
-import com.alibaba.excel.metadata.property.FontProperty;
-import com.alibaba.excel.metadata.property.StyleProperty;
+import com.alibaba.excel.metadata.property.*;
 import com.alibaba.excel.read.builder.ExcelReaderBuilder;
 import com.alibaba.excel.read.metadata.holder.ReadHolder;
 import com.alibaba.excel.read.metadata.property.ExcelReadHeadProperty;
 import com.alibaba.excel.support.ExcelTypeEnum;
 import com.alibaba.excel.write.builder.ExcelWriterBuilder;
 import com.alibaba.excel.write.handler.AbstractCellWriteHandler;
+import com.alibaba.excel.write.handler.AbstractRowWriteHandler;
+import com.alibaba.excel.write.merge.OnceAbsoluteMergeStrategy;
 import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
 import com.alibaba.excel.write.metadata.holder.WriteTableHolder;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
 import com.alibaba.excel.write.style.AbstractVerticalCellStyleStrategy;
 import com.alibaba.excel.write.style.column.AbstractHeadColumnWidthStyleStrategy;
+import com.alibaba.excel.write.style.row.SimpleRowHeightStyleStrategy;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.clever.common.utils.codec.DigestUtils;
 import org.clever.common.utils.codec.EncodeDecodeUtils;
 import org.clever.common.utils.excel.ExcelDataReader;
@@ -52,6 +54,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 作者：lizw <br/>
@@ -193,51 +196,42 @@ public class ExcelUtils {
             if (headConfig.columnWidth.columnWidth != null) {
                 hasColumnWidth = true;
             }
-            if (headConfig.headStyle.isSetValue()
+            if (!hasStyle && (headConfig.headStyle.isSetValue()
                     || headConfig.headFontStyle.isSetValue()
                     || headConfig.contentStyle.isSetValue()
-                    || headConfig.contentFontStyle.isSetValue()) {
+                    || headConfig.contentFontStyle.isSetValue())) {
                 hasStyle = true;
             }
-            // dealLoopMerge(handlerList, head);
-            // -------------------------------------------------------------------------->>>
-            // LoopMergeProperty loopMergeProperty = head.getLoopMergeProperty();
-            // if (loopMergeProperty == null) {
-            //     return;
-            // }
-            // handlerList.add(new LoopMergeStrategy(loopMergeProperty, head.getColumnIndex()));
+            // 应用合并单元格配置
+            if (headConfig.contentLoopMerge.isSetValue()) {
+                builder.registerWriteHandler(new LoopMergeStrategy(headConfig.contentLoopMerge.eachRow, headConfig.contentLoopMerge.columnExtend, headConfig));
+            }
         }
+        // 应用列宽配置
         if (hasColumnWidth) {
             builder.registerWriteHandler(new ColumnWidthStyleStrategy());
         }
-        if (hasStyle) {
+        // 应用样式配置
+        if (hasStyle
+                || config.styleConfig.headStyle.isSetValue()
+                || config.styleConfig.headFontStyle.isSetValue()
+                || config.styleConfig.contentStyle.isSetValue()
+                || config.styleConfig.contentFontStyle.isSetValue()) {
             builder.registerWriteHandler(new StyleStrategy());
         }
-
-        // dealRowHigh(handlerList);
-        // -------------------------------------------------------------------------->>>
-        // RowHeightProperty headRowHeightProperty = getExcelWriteHeadProperty().getHeadRowHeightProperty();
-        // RowHeightProperty contentRowHeightProperty = getExcelWriteHeadProperty().getContentRowHeightProperty();
-        // if (headRowHeightProperty == null && contentRowHeightProperty == null) {
-        //     return;
-        // }
-        // Short headRowHeight = null;
-        // if (headRowHeightProperty != null) {
-        //     headRowHeight = headRowHeightProperty.getHeight();
-        // }
-        // Short contentRowHeight = null;
-        // if (contentRowHeightProperty != null) {
-        //     contentRowHeight = contentRowHeightProperty.getHeight();
-        // }
-        // handlerList.add(new SimpleRowHeightStyleStrategy(headRowHeight, contentRowHeight));
-
-        // dealOnceAbsoluteMerge(handlerList);
-        // -------------------------------------------------------------------------->>>
-        // OnceAbsoluteMergeProperty onceAbsoluteMergeProperty = getExcelWriteHeadProperty().getOnceAbsoluteMergeProperty();
-        // if (onceAbsoluteMergeProperty == null) {
-        //     return;
-        // }
-        // handlerList.add(new OnceAbsoluteMergeStrategy(onceAbsoluteMergeProperty));
+        // 应用行高配置
+        RowHeightProperty headRowHeightProperty = config.styleConfig.headRowHeight.getRowHeightProperty();
+        RowHeightProperty contentRowHeightProperty = config.styleConfig.contentRowHeight.getRowHeightProperty();
+        Short headRowHeight = headRowHeightProperty.getHeight();
+        Short contentRowHeight = contentRowHeightProperty.getHeight();
+        if (headRowHeight != null || contentRowHeight != null) {
+            builder.registerWriteHandler(new SimpleRowHeightStyleStrategy(headRowHeight, contentRowHeight));
+        }
+        // 应用OnceAbsoluteMerge配置
+        if (config.styleConfig.onceAbsoluteMerge.isSetValue()) {
+            OnceAbsoluteMergeProperty onceAbsoluteMergeProperty = config.styleConfig.onceAbsoluteMerge.getOnceAbsoluteMergeProperty();
+            builder.registerWriteHandler(new OnceAbsoluteMergeStrategy(onceAbsoluteMergeProperty));
+        }
         return excelDataWriter;
     }
 
@@ -474,16 +468,17 @@ public class ExcelUtils {
          */
         private final WriterStyleConfig styleConfig = new WriterStyleConfig();
 
-        public List<List<String>> getHeads() {
-            List<ExcelWriterHeadConfig> list = new ArrayList<>(columns.values());
+        public List<TupleTow<String, ExcelWriterHeadConfig>> getHeadConfigs() {
+            List<TupleTow<String, ExcelWriterHeadConfig>> list = new ArrayList<>(columns.size());
+            columns.forEach((propertyName, headConfig) -> list.add(TupleTow.creat(propertyName, headConfig)));
             list.sort((o1, o2) -> {
-                int idx1 = o1.excelProperty.index == null ? -1 : o1.excelProperty.index;
-                int idx2 = o2.excelProperty.index == null ? -1 : o2.excelProperty.index;
+                int idx1 = o1.getValue2().excelProperty.index == null ? -1 : o1.getValue2().excelProperty.index;
+                int idx2 = o2.getValue2().excelProperty.index == null ? -1 : o2.getValue2().excelProperty.index;
                 return Integer.compare(idx1, idx2);
             });
             Integer indexMax = null;
             if (!list.isEmpty()) {
-                indexMax = list.get(list.size() - 1).excelProperty.index;
+                indexMax = list.get(list.size() - 1).getValue2().excelProperty.index;
             }
             if (indexMax == null) {
                 indexMax = 0;
@@ -491,40 +486,48 @@ public class ExcelUtils {
             if (indexMax < list.size()) {
                 indexMax = list.size();
             }
-            indexMax += 1;
+            // indexMax += 1;
             // 构造表头
-            List<List<String>> heads = new ArrayList<>(indexMax);
+            List<TupleTow<String, ExcelWriterHeadConfig>> headConfigs = new ArrayList<>(indexMax);
             for (int i = 0; i < indexMax; i++) {
-                heads.add(null);
+                headConfigs.add(null);
             }
-            List<ExcelWriterHeadConfig> tmp = new ArrayList<>(list.size());
+            List<TupleTow<String, ExcelWriterHeadConfig>> tmp = new ArrayList<>(list.size());
             // 先设置index有值的Head
-            for (ExcelWriterHeadConfig headConfig : list) {
+            for (TupleTow<String, ExcelWriterHeadConfig> tupleTow : list) {
+                String propertyName = tupleTow.getValue1();
+                ExcelWriterHeadConfig headConfig = tupleTow.getValue2();
                 if (headConfig.excelProperty.index != null && headConfig.excelProperty.index >= 0) {
-                    heads.set(headConfig.excelProperty.index, headConfig.excelProperty.column);
+                    headConfigs.set(headConfig.excelProperty.index, TupleTow.creat(propertyName, headConfig));
                 } else {
-                    tmp.add(headConfig);
+                    tmp.add(TupleTow.creat(propertyName, headConfig));
                 }
             }
             // 再设置其它Head
-            for (ExcelWriterHeadConfig headConfig : tmp) {
-                for (int i = 0; i < heads.size(); i++) {
-                    if (heads.get(i) == null) {
-                        heads.set(i, headConfig.excelProperty.column);
+            for (TupleTow<String, ExcelWriterHeadConfig> tupleTow : tmp) {
+                String propertyName = tupleTow.getValue1();
+                ExcelWriterHeadConfig headConfig = tupleTow.getValue2();
+                for (int i = 0; i < headConfigs.size(); i++) {
+                    if (headConfigs.get(i) == null) {
+                        headConfigs.set(i, TupleTow.creat(propertyName, headConfig));
                         break;
                     }
                 }
             }
             // 最后填充heads
-            for (int i = 0; i < heads.size(); i++) {
-                if (heads.get(i) == null) {
-                    heads.set(i, new ArrayList<String>() {{
-                        add("");
-                    }});
+            for (int i = 0; i < headConfigs.size(); i++) {
+                if (headConfigs.get(i) == null) {
+                    TupleTow<String, ExcelWriterHeadConfig> tupleTow = TupleTow.creat(null, new ExcelWriterHeadConfig(""));
+                    headConfigs.set(i, tupleTow);
                     break;
                 }
             }
-            return heads;
+            return headConfigs;
+        }
+
+        public List<List<String>> getHeads() {
+            List<TupleTow<String, ExcelWriterHeadConfig>> headConfigs = getHeadConfigs();
+            return headConfigs.stream().filter(Objects::nonNull).map(tupleTow -> tupleTow.getValue2().excelProperty.column).collect(Collectors.toList());
         }
     }
 
@@ -556,6 +559,17 @@ public class ExcelUtils {
          * 如果日期使用1904窗口，则为True；如果使用1900日期窗口，则为false
          */
         private Boolean use1904windowing;
+
+        /**
+         * 是否设置过值
+         */
+        public boolean isSetValue() {
+            return dateFormat != null || use1904windowing != null;
+        }
+
+        public DateTimeFormatProperty getDateTimeFormatProperty() {
+            return new DateTimeFormatProperty(dateFormat, use1904windowing);
+        }
     }
 
     @Data
@@ -569,6 +583,17 @@ public class ExcelUtils {
          * 四舍五入模式
          */
         private RoundingMode roundingMode;
+
+        /**
+         * 是否设置过值
+         */
+        public boolean isSetValue() {
+            return numberFormat != null || roundingMode != null;
+        }
+
+        public NumberFormatProperty getNumberFormatProperty() {
+            return new NumberFormatProperty(numberFormat, roundingMode);
+        }
     }
 
     @Data
@@ -636,7 +661,6 @@ public class ExcelUtils {
         }
 
         public FontProperty getFontProperty() {
-            // TODO 需要设置默认值
             FontProperty fontProperty = new FontProperty();
             fontProperty.setFontName(fontName);
             fontProperty.setFontHeightInPoints(fontHeightInPoints);
@@ -647,6 +671,20 @@ public class ExcelUtils {
             fontProperty.setUnderline(underline);
             fontProperty.setCharset(charset);
             fontProperty.setBold(bold);
+            return fontProperty;
+        }
+
+        public FontProperty getFontProperty(ExcelFontStyle second) {
+            FontProperty fontProperty = new FontProperty();
+            fontProperty.setFontName(fontName == null ? second.fontName : fontName);
+            fontProperty.setFontHeightInPoints(fontHeightInPoints == null ? second.fontHeightInPoints : fontHeightInPoints);
+            fontProperty.setItalic(italic == null ? second.italic : italic);
+            fontProperty.setStrikeout(strikeout == null ? second.strikeout : strikeout);
+            fontProperty.setColor(color == null ? second.color : color);
+            fontProperty.setTypeOffset(typeOffset == null ? second.typeOffset : typeOffset);
+            fontProperty.setUnderline(underline == null ? second.underline : underline);
+            fontProperty.setCharset(charset == null ? second.charset : charset);
+            fontProperty.setBold(bold == null ? second.bold : bold);
             return fontProperty;
         }
     }
@@ -667,6 +705,17 @@ public class ExcelUtils {
          * 列
          */
         private Integer columnExtend;
+
+        /**
+         * 是否设置过值
+         */
+        public boolean isSetValue() {
+            return eachRow != null || columnExtend != null;
+        }
+
+        // public LoopMergeProperty getLoopMergeProperty() {
+        //     return new LoopMergeProperty(eachRow, columnExtend);
+        // }
     }
 
     @Data
@@ -675,6 +724,10 @@ public class ExcelUtils {
          * 行高
          */
         private Short rowHeight;
+
+        public RowHeightProperty getRowHeightProperty() {
+            return new RowHeightProperty(rowHeight);
+        }
     }
 
     @Data
@@ -819,7 +872,6 @@ public class ExcelUtils {
         }
 
         public StyleProperty getStyleProperty() {
-            // TODO 需要设置默认值
             StyleProperty styleProperty = new StyleProperty();
             styleProperty.setDataFormat(dataFormat);
             // styleProperty.setWriteFont();
@@ -845,6 +897,33 @@ public class ExcelUtils {
             styleProperty.setShrinkToFit(shrinkToFit);
             return styleProperty;
         }
+
+        public StyleProperty getStyleProperty(ExcelCellStyle second) {
+            StyleProperty styleProperty = new StyleProperty();
+            styleProperty.setDataFormat(dataFormat == null ? second.dataFormat : dataFormat);
+            // styleProperty.setWriteFont();
+            styleProperty.setHidden(hidden == null ? second.hidden : hidden);
+            styleProperty.setLocked(locked == null ? second.locked : locked);
+            styleProperty.setQuotePrefix(quotePrefix == null ? second.quotePrefix : quotePrefix);
+            styleProperty.setHorizontalAlignment(horizontalAlignment == null ? second.horizontalAlignment : horizontalAlignment);
+            styleProperty.setWrapped(wrapped == null ? second.wrapped : wrapped);
+            styleProperty.setVerticalAlignment(verticalAlignment == null ? second.verticalAlignment : verticalAlignment);
+            styleProperty.setRotation(rotation == null ? second.rotation : rotation);
+            styleProperty.setIndent(indent == null ? second.indent : indent);
+            styleProperty.setBorderLeft(borderLeft == null ? second.borderLeft : borderLeft);
+            styleProperty.setBorderRight(borderRight == null ? second.borderRight : borderRight);
+            styleProperty.setBorderTop(borderTop == null ? second.borderTop : borderTop);
+            styleProperty.setBorderBottom(borderBottom == null ? second.borderBottom : borderBottom);
+            styleProperty.setLeftBorderColor(leftBorderColor == null ? second.leftBorderColor : leftBorderColor);
+            styleProperty.setRightBorderColor(rightBorderColor == null ? second.rightBorderColor : rightBorderColor);
+            styleProperty.setTopBorderColor(topBorderColor == null ? second.topBorderColor : topBorderColor);
+            styleProperty.setBottomBorderColor(bottomBorderColor == null ? second.bottomBorderColor : bottomBorderColor);
+            styleProperty.setFillPatternType(fillPatternType == null ? second.fillPatternType : fillPatternType);
+            styleProperty.setFillBackgroundColor(fillBackgroundColor == null ? second.fillBackgroundColor : fillBackgroundColor);
+            styleProperty.setFillForegroundColor(fillForegroundColor == null ? second.fillForegroundColor : fillForegroundColor);
+            styleProperty.setShrinkToFit(shrinkToFit == null ? second.shrinkToFit : shrinkToFit);
+            return styleProperty;
+        }
     }
 
     @EqualsAndHashCode(callSuper = true)
@@ -861,6 +940,10 @@ public class ExcelUtils {
         @Override
         public StyleProperty getStyleProperty() {
             return super.getStyleProperty();
+        }
+
+        public StyleProperty getStyleProperty(ContentStyle second) {
+            return super.getStyleProperty(second);
         }
     }
 
@@ -879,6 +962,10 @@ public class ExcelUtils {
         public FontProperty getFontProperty() {
             return super.getFontProperty();
         }
+
+        public FontProperty getFontProperty(HeadFontStyle second) {
+            return super.getFontProperty(second);
+        }
     }
 
     @Data
@@ -887,6 +974,10 @@ public class ExcelUtils {
          * Head行高
          */
         private Short headRowHeight;
+
+        public RowHeightProperty getRowHeightProperty() {
+            return new RowHeightProperty(headRowHeight);
+        }
     }
 
     @EqualsAndHashCode(callSuper = true)
@@ -903,6 +994,10 @@ public class ExcelUtils {
         @Override
         public StyleProperty getStyleProperty() {
             return super.getStyleProperty();
+        }
+
+        public StyleProperty getStyleProperty(HeadStyle second) {
+            return super.getStyleProperty(second);
         }
     }
 
@@ -927,8 +1022,24 @@ public class ExcelUtils {
          * 最后一列
          */
         private Integer lastColumnIndex;
+
+        /**
+         * 是否设置过值
+         */
+        public boolean isSetValue() {
+            return firstRowIndex != null || lastRowIndex != null || firstColumnIndex != null || lastColumnIndex != null;
+        }
+
+        public OnceAbsoluteMergeProperty getOnceAbsoluteMergeProperty() {
+            int firstRowIndex = this.firstRowIndex == null ? -1 : this.firstRowIndex;
+            int lastRowIndex = this.lastRowIndex == null ? -1 : this.lastRowIndex;
+            int firstColumnIndex = this.firstColumnIndex == null ? -1 : this.firstColumnIndex;
+            int lastColumnIndex = this.lastColumnIndex == null ? -1 : this.lastColumnIndex;
+            return new OnceAbsoluteMergeProperty(firstRowIndex, lastRowIndex, firstColumnIndex, lastColumnIndex);
+        }
     }
 
+    @NoArgsConstructor
     @Data
     public static class ExcelReaderHeadConfig implements Serializable {
         /**
@@ -939,9 +1050,6 @@ public class ExcelUtils {
         private final DateTimeFormat dateTimeFormat = new DateTimeFormat();
         private final NumberFormat numberFormat = new NumberFormat();
 
-        // public ExcelReaderHeadConfig() {
-        // }
-
         public ExcelReaderHeadConfig(Class<?> dataType, String... names) {
             this.dataType = dataType;
             if (names != null) {
@@ -950,19 +1058,21 @@ public class ExcelUtils {
         }
     }
 
+    @NoArgsConstructor
     @Data
     public static class ExcelWriterHeadConfig implements Serializable {
         private final ExcelProperty excelProperty = new ExcelProperty();
         private final DateTimeFormat dateTimeFormat = new DateTimeFormat();
         private final NumberFormat numberFormat = new NumberFormat();
         private final ColumnWidth columnWidth = new ColumnWidth();
-        private final ContentFontStyle contentFontStyle = new ContentFontStyle();
-        private final ContentStyle contentStyle = new ContentStyle();
+
         private final HeadFontStyle headFontStyle = new HeadFontStyle();
         private final HeadStyle headStyle = new HeadStyle();
 
-        // public ExcelWriterHeadConfig() {
-        // }
+        private final ContentFontStyle contentFontStyle = new ContentFontStyle();
+        private final ContentStyle contentStyle = new ContentStyle();
+
+        private final ContentLoopMerge contentLoopMerge = new ContentLoopMerge();
 
         public ExcelWriterHeadConfig(String... names) {
             if (names != null) {
@@ -973,12 +1083,15 @@ public class ExcelUtils {
 
     @Data
     public static class WriterStyleConfig implements Serializable {
-        private final ContentRowHeight contentRowHeight = new ContentRowHeight();
-        private final ContentFontStyle contentFontStyle = new ContentFontStyle();
-        private final ContentStyle contentStyle = new ContentStyle();
         private final HeadRowHeight headRowHeight = new HeadRowHeight();
+        private final ContentRowHeight contentRowHeight = new ContentRowHeight();
+
         private final HeadFontStyle headFontStyle = new HeadFontStyle();
         private final HeadStyle headStyle = new HeadStyle();
+
+        private final ContentFontStyle contentFontStyle = new ContentFontStyle();
+        private final ContentStyle contentStyle = new ContentStyle();
+
         private final OnceAbsoluteMerge onceAbsoluteMerge = new OnceAbsoluteMerge();
     }
 
@@ -1031,7 +1144,7 @@ public class ExcelUtils {
         }
 
         // 解析表头配置
-        public void parseHeadMap() {
+        public void parseHeadMap(AnalysisContext context) {
             columns = new HashMap<>();
             LinkedHashMap<String, ExcelReaderHeadConfig> columnsConfig = config.columns;
             Set<String> propertyNameParsed = new HashSet<>(columnsConfig.size());
@@ -1059,6 +1172,7 @@ public class ExcelUtils {
                         propertyNameParsed.add(propertyNameTmp);
                         propertyName = propertyNameTmp;
                         headConfig = headConfigTmp;
+                        headConfig.excelProperty.index = index;
                         break;
                     }
                 }
@@ -1066,6 +1180,19 @@ public class ExcelUtils {
                     continue;
                 }
                 columns.put(index, TupleTow.creat(propertyName, headConfig));
+                // 格式化配置
+                boolean useDateTimeFormat = headConfig.dateTimeFormat.isSetValue();
+                boolean useNumberFormat = headConfig.numberFormat.isSetValue();
+                ExcelReadHeadProperty excelReadHeadProperty = context.currentReadHolder().excelReadHeadProperty();
+                if ((useDateTimeFormat || useNumberFormat) && excelReadHeadProperty != null && excelReadHeadProperty.getContentPropertyMap() != null) {
+                    ExcelContentProperty property = excelReadHeadProperty.getContentPropertyMap().computeIfAbsent(index, idx -> new ExcelContentProperty());
+                    if (useDateTimeFormat) {
+                        property.setDateTimeFormatProperty(headConfig.dateTimeFormat.getDateTimeFormatProperty());
+                    }
+                    if (useNumberFormat) {
+                        property.setNumberFormatProperty(headConfig.numberFormat.getNumberFormatProperty());
+                    }
+                }
             }
             Assert.notEmpty(columns, "无法解析Excel表头，请查看配置是否正确");
         }
@@ -1089,7 +1216,7 @@ public class ExcelUtils {
         public void invoke(Map<Integer, CellData<?>> data, AnalysisContext context) {
             // 第一次需要解析表头
             if (columns == null) {
-                parseHeadMap();
+                parseHeadMap(context);
             }
             ExcelData<Map> excelData = getExcelData(context);
             if (excelData.getStartTime() == null) {
@@ -1112,6 +1239,9 @@ public class ExcelUtils {
                 Integer idx = entry.getKey();
                 CellData<?> cellData = entry.getValue();
                 TupleTow<String, ExcelReaderHeadConfig> tupleTow = columns.get(idx);
+                if (tupleTow == null) {
+                    continue;
+                }
                 String propertyName = tupleTow.getValue1();
                 ExcelReaderHeadConfig headConfig = tupleTow.getValue2();
                 // 忽略当前字段(propertyName)
@@ -1127,15 +1257,16 @@ public class ExcelUtils {
                 if (Objects.equals(Void.class, headConfig.dataType)) {
                     value = null;
                 } else {
-                    // TODO 格式化操作 dateFormat numberFormat
-                    ExcelContentProperty excelContentProperty = contentPropertyMap.get(index);
+                    // 格式化操作 dateFormat numberFormat
+                    ExcelContentProperty excelContentProperty = contentPropertyMap.get(idx);
                     value = ConverterUtils.convertToJavaObject(
                             cellData,
                             headConfig.dataType,
                             excelContentProperty,
                             currentReadHolder.converterMap(),
                             currentReadHolder.globalConfiguration(),
-                            context.readRowHolder().getRowIndex(), index);
+                            context.readRowHolder().getRowIndex(),
+                            idx);
                 }
                 // 写入字段值
                 excelRow.getData().put(propertyName, value);
@@ -1157,7 +1288,7 @@ public class ExcelUtils {
             final ExcelRowReader<Map> excelRowReader = config.getExcelRowReader();
             if (!excelRow.hasError() && excelRowReader != null) {
                 try {
-                    excelRowReader.readRow(data, excelRow, context);
+                    excelRowReader.readRow(excelRow.getData(), excelRow, context);
                 } catch (Throwable e) {
                     excelRow.addErrorInRow(e.getMessage());
                 }
@@ -1313,6 +1444,7 @@ public class ExcelUtils {
                 if (headsStr.endsWith(columnStr) || columnStr.endsWith(headsStr)) {
                     propertyNameParsed.add(propertyNameTmp);
                     headConfig = headConfigTmp;
+                    headConfig.excelProperty.index = columnIndex;
                     break;
                 }
             }
@@ -1322,25 +1454,22 @@ public class ExcelUtils {
             if (headConfig.columnWidth.columnWidth != null) {
                 head.setColumnWidthProperty(new ColumnWidthProperty(headConfig.columnWidth.columnWidth));
             }
-            if (headConfig.headStyle.isSetValue()) {
-                head.setHeadStyleProperty(headConfig.headStyle.getStyleProperty());
-            } else {
-                head.setHeadStyleProperty(config.styleConfig.headStyle.getStyleProperty());
-            }
-            if (headConfig.headFontStyle.isSetValue()) {
-                head.setHeadFontProperty(headConfig.headFontStyle.getFontProperty());
-            } else {
-                head.setHeadFontProperty(config.styleConfig.headFontStyle.getFontProperty());
-            }
-            if (headConfig.contentStyle.isSetValue()) {
-                head.setContentStyleProperty(headConfig.contentStyle.getStyleProperty());
-            } else {
-                head.setContentStyleProperty(config.styleConfig.contentStyle.getStyleProperty());
-            }
-            if (headConfig.contentFontStyle.isSetValue()) {
-                head.setContentFontProperty(headConfig.contentFontStyle.getFontProperty());
-            } else {
-                head.setContentFontProperty(config.styleConfig.contentFontStyle.getFontProperty());
+            // 合并配置
+            head.setHeadStyleProperty(headConfig.headStyle.getStyleProperty(config.styleConfig.headStyle));
+            head.setHeadFontProperty(headConfig.headFontStyle.getFontProperty(config.styleConfig.headFontStyle));
+            head.setContentStyleProperty(headConfig.contentStyle.getStyleProperty(config.styleConfig.contentStyle));
+            head.setContentFontProperty(headConfig.contentFontStyle.getFontProperty(config.styleConfig.contentFontStyle));
+            // 格式化配置
+            boolean useDateTimeFormat = headConfig.dateTimeFormat.isSetValue();
+            boolean useNumberFormat = headConfig.numberFormat.isSetValue();
+            if ((useDateTimeFormat || useNumberFormat) && writeSheetHolder.getExcelWriteHeadProperty() != null && writeSheetHolder.getExcelWriteHeadProperty().getContentPropertyMap() != null) {
+                ExcelContentProperty property = writeSheetHolder.getExcelWriteHeadProperty().getContentPropertyMap().computeIfAbsent(columnIndex, idx -> new ExcelContentProperty());
+                if (useDateTimeFormat) {
+                    property.setDateTimeFormatProperty(headConfig.dateTimeFormat.getDateTimeFormatProperty());
+                }
+                if (useNumberFormat) {
+                    property.setNumberFormatProperty(headConfig.numberFormat.getNumberFormatProperty());
+                }
             }
         }
     }
@@ -1367,6 +1496,52 @@ public class ExcelUtils {
         @Override
         protected WriteCellStyle contentCellStyle(Head head) {
             return build(head.getContentStyleProperty(), head.getContentFontProperty());
+        }
+    }
+
+    private static class LoopMergeStrategy extends AbstractRowWriteHandler {
+        /**
+         * 每一行
+         */
+        private final int eachRow;
+        /**
+         * 延伸栏
+         */
+        private final int columnExtend;
+        /**
+         * 当前列数
+         */
+        private Integer columnIndex;
+
+        private final ExcelWriterHeadConfig headConfig;
+
+        public LoopMergeStrategy(int eachRow, int columnExtend, ExcelWriterHeadConfig headConfig) {
+            this.eachRow = eachRow;
+            this.columnExtend = columnExtend;
+            this.headConfig = headConfig;
+            this.columnIndex = headConfig.excelProperty.index;
+        }
+
+        @Override
+        public void afterRowDispose(WriteSheetHolder writeSheetHolder, WriteTableHolder writeTableHolder, Row row, Integer relativeRowIndex, Boolean isHead) {
+            if (isHead) {
+                return;
+            }
+            if (this.columnIndex == null || this.columnIndex < 0) {
+                columnIndex = headConfig.excelProperty.index;
+                if (columnIndex == null) {
+                    return;
+                }
+            }
+            if (relativeRowIndex % eachRow == 0) {
+                CellRangeAddress cellRangeAddress = new CellRangeAddress(
+                        row.getRowNum(),
+                        row.getRowNum() + eachRow - 1,
+                        columnIndex,
+                        columnIndex + columnExtend - 1
+                );
+                writeSheetHolder.getSheet().addMergedRegionUnsafe(cellRangeAddress);
+            }
         }
     }
 
