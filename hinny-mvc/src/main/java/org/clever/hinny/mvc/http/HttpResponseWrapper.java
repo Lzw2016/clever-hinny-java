@@ -1,29 +1,28 @@
-//package org.clever.hinny.mvc.servlet;
-//
-//import jdk.nashorn.api.scripting.ScriptObjectMirror;
-//import jdk.nashorn.internal.runtime.Undefined;
-//import lombok.Getter;
-//import org.apache.commons.lang.math.NumberUtils;
-//import org.apache.commons.lang3.StringUtils;
-//import org.clever.common.utils.CookieUtils;
-//import org.clever.common.utils.mapper.JacksonMapper;
-//import org.clever.nashorn.utils.ScriptEngineUtils;
-//
-//import javax.servlet.http.HttpServletResponse;
-//import java.io.IOException;
-//import java.util.HashMap;
-//import java.util.Map;
-//
-///**
-// * 作者：lizw <br/>
-// * 创建时间：2019/09/20 17:28 <br/>
-// */
-//public class HttpResponseWrapper extends HashMap<String, Object> {
-//    /**
-//     * Http响应对象
-//     */
-//    private final HttpServletResponse response;
-//    /**
+package org.clever.hinny.mvc.http;
+
+import org.springframework.util.Assert;
+
+import javax.servlet.http.HttpServletResponse;
+
+/**
+ * 作者：lizw <br/>
+ * 创建时间：2019/09/20 17:28 <br/>
+ */
+public class HttpResponseWrapper {
+    private final HttpServletResponse delegate;
+
+    public HttpResponseWrapper(HttpContext httpContext) {
+        Assert.notNull(httpContext, "参数httpContext不能为空");
+        this.delegate = httpContext.response.delegate;
+    }
+
+    protected HttpResponseWrapper(HttpServletResponse response) {
+        Assert.notNull(response, "参数response不能为空");
+        this.delegate = response;
+    }
+
+
+    //    /**
 //     * 响应数据序列化
 //     */
 //    private final JacksonMapper jacksonMapper;
@@ -149,4 +148,4 @@
 //        }
 //        return response;
 //    }
-//}
+}
