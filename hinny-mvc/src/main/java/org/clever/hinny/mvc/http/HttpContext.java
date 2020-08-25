@@ -1,4 +1,4 @@
-package org.clever.hinny.mvc.servlet;
+package org.clever.hinny.mvc.http;
 
 /**
  * 作者：lizw <br/>

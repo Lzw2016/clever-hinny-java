@@ -1,4 +1,4 @@
-package org.clever.hinny.mvc.servlet;
+package org.clever.hinny.mvc.http;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
@@ -11,12 +11,11 @@ import javax.servlet.http.HttpServletRequest;
  */
 @Slf4j
 public class HttpRequestWrapper {
-
-    private final HttpServletRequest request;
+    private final HttpServletRequest delegate;
 
     public HttpRequestWrapper(HttpServletRequest request) {
         Assert.notNull(request, "参数request不能为空");
-        this.request = request;
+        this.delegate = request;
     }
 
 
@@ -81,28 +80,28 @@ public class HttpRequestWrapper {
 //     * </pre>
 //     */
 //    private void init() throws IOException {
-//        String method = request.getMethod();
-//        String url = request.getRequestURL().toString();
-//        String uri = request.getRequestURI();
-//        String contextPath = request.getContextPath();
-//        String servletPath = request.getServletPath();
-//        String pathInfo = request.getPathInfo();
-//        String pathTranslated = request.getPathTranslated();
-//        String authType = request.getAuthType();
-//        String contentType = request.getContentType();
-//        String queryString = request.getQueryString();
-//        String remoteUser = request.getRemoteUser();
-//        String requestedSessionId = request.getRequestedSessionId();
-//        String characterEncoding = request.getCharacterEncoding();
-//        String localAddr = request.getLocalAddr();
-//        String remoteAddr = request.getRemoteAddr();
-//        String remoteHost = request.getRemoteHost();
-//        String localName = request.getLocalName();
-//        String protocol = request.getProtocol();
-//        String scheme = request.getScheme();
-//        String serverName = request.getServerName();
-//        int serverPort = request.getServerPort();
-//        int contentLength = request.getContentLength();
+//        String method = request.getMethod();                              // --
+//        String url = request.getRequestURL().toString();                  // --
+//        String uri = request.getRequestURI();                             // --
+//        String contextPath = request.getContextPath();                    // --
+//        String servletPath = request.getServletPath();                    // --
+//        String pathInfo = request.getPathInfo();                          // --
+//        String pathTranslated = request.getPathTranslated();              // --
+//        String authType = request.getAuthType();                          // --
+//        String contentType = request.getContentType();                    // --
+//        String queryString = request.getQueryString();                    // --
+//        String remoteUser = request.getRemoteUser();                      // --
+//        String requestedSessionId = request.getRequestedSessionId();      // --
+//        String characterEncoding = request.getCharacterEncoding();        // --
+//        String localAddr = request.getLocalAddr();                        // --
+//        String remoteAddr = request.getRemoteAddr();                      // --
+//        String remoteHost = request.getRemoteHost();                      // --
+//        String localName = request.getLocalName();                        // --
+//        String protocol = request.getProtocol();                          // --
+//        String scheme = request.getScheme();                              // --
+//        String serverName = request.getServerName();                      // --
+//        int serverPort = request.getServerPort();                         // --
+//        int contentLength = request.getContentLength();                   // --
 //        int remotePort = request.getRemotePort();
 //        int localPort = request.getLocalPort();
 //        // --------------------------------------------------------------------- 常用属性
