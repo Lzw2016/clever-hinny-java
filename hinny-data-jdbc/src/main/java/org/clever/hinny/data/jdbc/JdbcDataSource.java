@@ -768,21 +768,6 @@ public class JdbcDataSource extends AbstractDataSource {
         return deleteTable(tableName, whereMap, false);
     }
 
-    /**
-     * 删除数据库表数据
-     *
-     * @param tableName 表名称
-     * @param where     自定义where条件(不用写where关键字)
-     */
-    public int deleteTable(String tableName, String where) {
-        Assert.hasText(tableName, "删除表名称不能为空");
-        Assert.hasText(where, "删除条件不能为空");
-        tableName = StringUtils.trim(tableName);
-        TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.deleteSql(tableName, null, false);
-        String sql = String.format("%s where %s", tupleTow.getValue1(), StringUtils.trim(where));
-        return update(sql, tupleTow.getValue2());
-    }
-
     // --------------------------------------------------------------------------------------------
     // Insert 操作
     // --------------------------------------------------------------------------------------------
