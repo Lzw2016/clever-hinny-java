@@ -424,6 +424,7 @@ public class HttpRequestWrapper {
     }
 
     public ServletContextWrapper getServletContext() {
+        // TODO 每次都new?
         return new ServletContextWrapper(delegate.getServletContext());
     }
 
