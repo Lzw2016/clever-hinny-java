@@ -114,23 +114,26 @@ public class SqlUtils {
             paramMap.put(fieldParam, value);
             index++;
         }
-        if (whereMap != null && !whereMap.isEmpty()) {
-            sb.append(" where");
-            index = 0;
-            for (Map.Entry<String, ?> where : whereMap.entrySet()) {
-                String fieldName = where.getKey();
-                Object value = where.getValue();
-                String fieldParam = "where_" + fieldName;
-                if (index == 0) {
-                    sb.append(' ');
-                } else {
-                    sb.append(" and ");
-                }
-                sb.append(getFieldName(fieldName, camelToUnderscore)).append("=:").append(fieldParam);
-                paramMap.put(fieldParam, value);
-                index++;
-            }
-        }
+        TupleTow<String, Map<String, Object>> whereSql = getWhereSql(whereMap, camelToUnderscore);
+        sb.append(whereSql.getValue1());
+        paramMap.putAll(whereSql.getValue2());
+        return TupleTow.creat(sb.toString(), paramMap);
+    }
+
+    /**
+     * 生成删除table的sql
+     *
+     * @param tableName         表名称
+     * @param whereMap          where条件(and条件，只支持=)
+     * @param camelToUnderscore 是否使用驼峰转下划线
+     */
+    public static TupleTow<String, Map<String, Object>> deleteSql(String tableName, Map<String, Object> whereMap, boolean camelToUnderscore) {
+        Map<String, Object> paramMap = new HashMap<>((whereMap == null ? 0 : whereMap.size()));
+        StringBuilder sb = new StringBuilder();
+        sb.append("delete from ").append(tableName);
+        TupleTow<String, Map<String, Object>> whereSql = getWhereSql(whereMap, camelToUnderscore);
+        sb.append(whereSql.getValue1());
+        paramMap.putAll(whereSql.getValue2());
         return TupleTow.creat(sb.toString(), paramMap);
     }
 
@@ -160,6 +163,49 @@ public class SqlUtils {
             index++;
         }
         sb.append(")");
+        return TupleTow.creat(sb.toString(), paramMap);
+    }
+
+    /**
+     * 生成查询table的sql
+     *
+     * @param tableName         表名称
+     * @param whereMap          where条件(and条件，只支持=)
+     * @param camelToUnderscore 是否使用驼峰转下划线
+     */
+    public static TupleTow<String, Map<String, Object>> selectSql(String tableName, Map<String, Object> whereMap, boolean camelToUnderscore) {
+        Map<String, Object> paramMap = new HashMap<>((whereMap == null ? 0 : whereMap.size()));
+        StringBuilder sb = new StringBuilder();
+        sb.append("select * from ").append(tableName);
+        TupleTow<String, Map<String, Object>> whereSql = getWhereSql(whereMap, camelToUnderscore);
+        sb.append(whereSql.getValue1());
+        paramMap.putAll(whereSql.getValue2());
+        return TupleTow.creat(sb.toString(), paramMap);
+    }
+
+    /**
+     * 根据where参数生成where sql字符串
+     */
+    private static TupleTow<String, Map<String, Object>> getWhereSql(Map<String, Object> whereMap, boolean camelToUnderscore) {
+        Map<String, Object> paramMap = new HashMap<>((whereMap == null ? 0 : whereMap.size()));
+        StringBuilder sb = new StringBuilder();
+        if (whereMap != null && !whereMap.isEmpty()) {
+            sb.append(" where");
+            int index = 0;
+            for (Map.Entry<String, ?> where : whereMap.entrySet()) {
+                String fieldName = where.getKey();
+                Object value = where.getValue();
+                String fieldParam = "where_" + fieldName;
+                if (index == 0) {
+                    sb.append(' ');
+                } else {
+                    sb.append(" and ");
+                }
+                sb.append(getFieldName(fieldName, camelToUnderscore)).append("=:").append(fieldParam);
+                paramMap.put(fieldParam, value);
+                index++;
+            }
+        }
         return TupleTow.creat(sb.toString(), paramMap);
     }
 

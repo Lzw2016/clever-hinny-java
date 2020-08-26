@@ -580,6 +580,56 @@ public class JdbcDataSource extends AbstractDataSource {
         return queryByPage(sql, pagination, new HashMap<>(2), true);
     }
 
+    /**
+     * 查询数据库表数据
+     *
+     * @param tableName         表名称
+     * @param whereMap          更新条件字段(只支持=，and条件)
+     * @param camelToUnderscore 字段驼峰转下划线(可选)
+     */
+    public List<Map<String, Object>> queryTableList(String tableName, Map<String, Object> whereMap, boolean camelToUnderscore) {
+        Assert.hasText(tableName, "查询表名称不能为空");
+        Assert.notEmpty(whereMap, "查询条件不能为空");
+        TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.selectSql(tableName, whereMap, camelToUnderscore);
+        String sql = StringUtils.trim(tupleTow.getValue1());
+        return queryList(sql, tupleTow.getValue2());
+    }
+
+    /**
+     * 查询数据库表数据
+     *
+     * @param tableName 表名称
+     * @param whereMap  更新条件字段(只支持=，and条件)
+     */
+    public List<Map<String, Object>> queryTableList(String tableName, Map<String, Object> whereMap) {
+        return queryTableList(tableName, whereMap, false);
+    }
+
+    /**
+     * 查询数据库表数据
+     *
+     * @param tableName         表名称
+     * @param whereMap          更新条件字段(只支持=，and条件)
+     * @param camelToUnderscore 字段驼峰转下划线(可选)
+     */
+    public Map<String, Object> queryTableMap(String tableName, Map<String, Object> whereMap, boolean camelToUnderscore) {
+        Assert.hasText(tableName, "查询表名称不能为空");
+        Assert.notEmpty(whereMap, "查询条件不能为空");
+        TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.selectSql(tableName, whereMap, camelToUnderscore);
+        String sql = StringUtils.trim(tupleTow.getValue1());
+        return queryMap(sql, tupleTow.getValue2());
+    }
+
+    /**
+     * 查询数据库表数据
+     *
+     * @param tableName 表名称
+     * @param whereMap  更新条件字段(只支持=，and条件)
+     */
+    public Map<String, Object> queryTableMap(String tableName, Map<String, Object> whereMap) {
+        return queryTableMap(tableName, whereMap, false);
+    }
+
     // --------------------------------------------------------------------------------------------
     // Update 操作
     // --------------------------------------------------------------------------------------------
@@ -686,6 +736,51 @@ public class JdbcDataSource extends AbstractDataSource {
         int[] res = jdbcTemplate.batchUpdate(sql, paramMapArray);
         SqlLoggerUtils.printfUpdateTotal(res);
         return res;
+    }
+
+    // --------------------------------------------------------------------------------------------
+    // Delete 操作
+    // --------------------------------------------------------------------------------------------
+
+    /**
+     * 删除数据库表数据
+     *
+     * @param tableName         表名称
+     * @param whereMap          更新条件字段(只支持=，and条件)
+     * @param camelToUnderscore 字段驼峰转下划线(可选)
+     */
+    public int deleteTable(String tableName, Map<String, Object> whereMap, boolean camelToUnderscore) {
+        Assert.hasText(tableName, "删除表名称不能为空");
+        Assert.notEmpty(whereMap, "删除条件不能为空");
+        tableName = StringUtils.trim(tableName);
+        TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.deleteSql(tableName, whereMap, camelToUnderscore);
+        String sql = StringUtils.trim(tupleTow.getValue1());
+        return update(sql, tupleTow.getValue2());
+    }
+
+    /**
+     * 删除数据库表数据
+     *
+     * @param tableName 表名称
+     * @param whereMap  更新条件字段(只支持=，and条件)
+     */
+    public int deleteTable(String tableName, Map<String, Object> whereMap) {
+        return deleteTable(tableName, whereMap, false);
+    }
+
+    /**
+     * 删除数据库表数据
+     *
+     * @param tableName 表名称
+     * @param where     自定义where条件(不用写where关键字)
+     */
+    public int deleteTable(String tableName, String where) {
+        Assert.hasText(tableName, "删除表名称不能为空");
+        Assert.hasText(where, "删除条件不能为空");
+        tableName = StringUtils.trim(tableName);
+        TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.deleteSql(tableName, null, false);
+        String sql = String.format("%s where %s", tupleTow.getValue1(), StringUtils.trim(where));
+        return update(sql, tupleTow.getValue2());
     }
 
     // --------------------------------------------------------------------------------------------
