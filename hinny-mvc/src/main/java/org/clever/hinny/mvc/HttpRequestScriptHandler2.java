@@ -22,7 +22,7 @@ import java.util.Set;
  * 创建时间：2020/08/24 21:34 <br/>
  */
 @Slf4j
-public class HttpRequestScriptHandler2<T> implements HandlerInterceptor {
+public abstract class HttpRequestScriptHandler2<E, T> implements HandlerInterceptor {
     /**
      * 没有js file映射时的数据前缀
      */
@@ -67,16 +67,22 @@ public class HttpRequestScriptHandler2<T> implements HandlerInterceptor {
     /**
      * 获取 Script 文件对应的 Script 对象和执行函数名
      */
-    protected TupleTow<T, String> getScriptObject(HttpServletRequest request) {
-        return null;
-    }
+    protected abstract TupleTow<T, String> getScriptObject(HttpServletRequest request);
 
     /**
      * 执行 Script 对象的函数
      */
-    protected Object doHandle(TupleTow<T, String> handlerScript, HttpContext httpContext) {
-        return null;
-    }
+    protected abstract Object doHandle(TupleTow<T, String> handlerScript, HttpContext httpContext);
+
+    /**
+     * 借一个引擎实例
+     */
+    protected abstract E borrowEngineInstance();
+
+    /**
+     * 归还引擎实例(有借有还)
+     */
+    protected abstract void returnEngineInstance(E engineInstance);
 
     @SuppressWarnings("NullableProblems")
     @Override
@@ -85,8 +91,13 @@ public class HttpRequestScriptHandler2<T> implements HandlerInterceptor {
         if (!supportScript(request, response, handler)) {
             return true;
         }
-        // 2.获取处理请求的 Script 文件全路径
-        final long startTime1 = System.currentTimeMillis();
+        long startTime1;        // 开始查找脚本文件时间
+        long startTime2 = -1;    // 开始借一个引擎实例时间
+        long startTime3 = -1;    // 开始加载脚本对象时间
+        long startTime4 = -1;    // 开始执行脚本时间
+        long startTime5 = -1;    // 开始序列化返回值时间
+        // 2.获取处理请求的 Script 文件全路径和执行函数名
+        startTime1 = System.currentTimeMillis();
         final TupleTow<String, String> scriptInfo = getScriptFileFullPathUseCache(request);
         if (scriptInfo == null || StringUtils.isBlank(scriptInfo.getValue1()) || StringUtils.isBlank(scriptInfo.getValue2())) {
             final long tmp = System.currentTimeMillis() - startTime1;
@@ -95,40 +106,60 @@ public class HttpRequestScriptHandler2<T> implements HandlerInterceptor {
             }
             return true;
         }
-        // 3.获取 Script 文件对应的 Script 对象和执行函数名
-        final long startTime2 = System.currentTimeMillis();
-        TupleTow<T, String> scriptHandler = getScriptObject(request);
-        if (scriptHandler == null) {
-            log.warn("获取Script Handler对象失败");
-            return true;
-        }
-        // 4.执行 Script 对象的函数
-        response.setHeader("use-http-request-js-handler", String.format("%s#%s", scriptInfo.getValue1(), scriptInfo.getValue2()));
-        final long startTime3 = System.currentTimeMillis();
-        final HttpContext httpContext = new HttpContext(request, response);
-        Object res = null;
+        E engineInstance = null;
         try {
-            res = doHandle(scriptHandler, httpContext);
-        } catch (Exception e) {
-            log.error("Script Handler执行失败", e);
+            // 3.借一个引擎实例
+            startTime2 = System.currentTimeMillis();
+            engineInstance = borrowEngineInstance();
+            // 4.获取 Script 文件对应的 Script 对象和执行函数名
+            startTime3 = System.currentTimeMillis();
+            final TupleTow<T, String> scriptHandler = getScriptObject(request);
+            if (scriptHandler == null) {
+                log.warn("获取Script Handler对象失败");
+                return true;
+            }
+            // 5.执行 Script 对象的函数
+            response.setHeader("use-http-request-js-handler", String.format("%s#%s", scriptInfo.getValue1(), scriptInfo.getValue2()));
+            startTime4 = System.currentTimeMillis();
+            final HttpContext httpContext = new HttpContext(request, response);
+            Object res = doHandle(scriptHandler, httpContext);
+            // 6.序列化返回数据
+            startTime5 = System.currentTimeMillis();
+            if (res != null && !response.isCommitted() && !httpContext.response.isFinish()) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().println(JacksonMapper.getInstance().toJson(res));
+            }
+        } finally {
+            // 7.归还借得的引擎实例
+            if (engineInstance != null) {
+                returnEngineInstance(engineInstance);
+            }
+            final long endTime = System.currentTimeMillis();
+            // 总耗时
+            final long howLongSum = endTime - startTime1;
+            // 查找脚本耗时
+            final long howLong1 = startTime2 - startTime1;
+            // 借一个引擎耗时
+            final long howLong2 = startTime3 <= -1 ? -1 : startTime3 - startTime2;
+            // 加载脚本耗时
+            final long howLong3 = startTime4 <= -1 ? -1 : startTime4 - startTime3;
+            // 执行脚本耗时
+            final long howLong4 = startTime5 <= -1 ? -1 : startTime5 - startTime4;
+            // 序列化耗时
+            final long howLong5 = endTime - startTime5;
+            // 8.请求处理完成 - 打印日志
+            log.debug(
+                    "使用Script处理请求 | [file={} handler={}] | [总]耗时 {}ms | 查找脚本 {}ms | 借引擎 {}ms | 加载脚本 {}ms | 执行脚本 {}ms | 序列化 {}ms",
+                    scriptInfo.getValue1(),         // Script 文件全路径
+                    scriptInfo.getValue2(),         // Script 函数名
+                    howLongSum,
+                    howLong1,
+                    howLong2 <= -1 ? "-" : howLong2,
+                    howLong3 <= -1 ? "-" : howLong3,
+                    howLong4 <= -1 ? "-" : howLong4,
+                    howLong5 <= -1 ? "-" : howLong5
+            );
         }
-        // 5.序列化返回数据
-        final long startTime4 = System.currentTimeMillis();
-        if (res != null && !response.isCommitted() && !httpContext.response.isFinish()) {
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().println(JacksonMapper.getInstance().toJson(res));
-        }
-        long endTime = System.currentTimeMillis();
-        // 6.请求处理完成 - 打印日志
-        log.debug(
-                "使用Script处理请求 | [file={} handler={}] | [总]耗时 {}ms | [处理]耗时 {}ms | [调用]耗时 {}ms | [序列化]耗时 {}ms",
-                scriptInfo.getValue1(),
-                scriptInfo.getValue2(),
-                endTime - startTime1,
-                endTime - startTime2,
-                endTime - startTime3,
-                endTime - startTime4
-        );
         return false;
     }
 
