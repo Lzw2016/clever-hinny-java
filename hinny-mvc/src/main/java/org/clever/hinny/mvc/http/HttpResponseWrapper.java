@@ -1,5 +1,7 @@
 package org.clever.hinny.mvc.http;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.util.Assert;
 
 import javax.servlet.ServletOutputStream;
@@ -17,6 +19,12 @@ import java.util.Locale;
 public class HttpResponseWrapper {
     protected HttpContext httpContext;
     private final HttpServletResponse delegate;
+    /**
+     * 是否已经写入响应数据
+     */
+    @Setter
+    @Getter
+    protected boolean finish = false;
 
     // public HttpResponseWrapper(HttpContext httpContext) {
     //     Assert.notNull(httpContext, "参数httpContext不能为空");
