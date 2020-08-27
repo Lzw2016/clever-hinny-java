@@ -8,8 +8,8 @@
     <packaging>jar</packaging>
 
     <parent>
-        <artifactId>clever-hinny-java</artifactId>
         <groupId>org.clever</groupId>
+        <artifactId>clever-hinny-java</artifactId>
         <version>${revision}</version>
     </parent>
 
