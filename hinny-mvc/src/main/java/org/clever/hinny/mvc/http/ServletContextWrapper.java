@@ -17,12 +17,14 @@ import java.util.Set;
  * 创建时间：2019-09-27 21:43 <br/>
  */
 public class ServletContextWrapper {
+    protected HttpContext httpContext;
     private final ServletContext delegate;
 
-    public ServletContextWrapper(HttpContext httpContext) {
-        Assert.notNull(httpContext, "参数servletContext不能为空");
-        this.delegate = httpContext.servletContext.delegate;
-    }
+    // public ServletContextWrapper(HttpContext httpContext) {
+    //     Assert.notNull(httpContext, "参数servletContext不能为空");
+    //     this.httpContext = httpContext;
+    //     this.delegate = httpContext.servletContext.delegate;
+    // }
 
     protected ServletContextWrapper(ServletContext servletContext) {
         Assert.notNull(servletContext, "参数servletContext不能为空");
@@ -33,7 +35,6 @@ public class ServletContextWrapper {
      * 返回一个于服务器上指定的URL进行通信的 ServletContext 对象
      */
     public ServletContextWrapper getContext(String uripath) {
-        // TODO 每次都new?
         return new ServletContextWrapper(delegate.getContext(uripath));
     }
 

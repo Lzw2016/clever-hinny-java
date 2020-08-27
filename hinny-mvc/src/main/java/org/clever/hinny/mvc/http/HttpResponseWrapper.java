@@ -15,12 +15,14 @@ import java.util.Locale;
  * 创建时间：2019/09/20 17:28 <br/>
  */
 public class HttpResponseWrapper {
+    protected HttpContext httpContext;
     private final HttpServletResponse delegate;
 
-    public HttpResponseWrapper(HttpContext httpContext) {
-        Assert.notNull(httpContext, "参数httpContext不能为空");
-        this.delegate = httpContext.response.delegate;
-    }
+    // public HttpResponseWrapper(HttpContext httpContext) {
+    //     Assert.notNull(httpContext, "参数httpContext不能为空");
+    //     this.httpContext = httpContext;
+    //     this.delegate = httpContext.response.delegate;
+    // }
 
     protected HttpResponseWrapper(HttpServletResponse response) {
         Assert.notNull(response, "参数response不能为空");

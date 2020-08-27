@@ -18,12 +18,14 @@ import java.util.*;
  * 创建时间：2019/09/20 17:27 <br/>
  */
 public class HttpRequestWrapper {
+    protected HttpContext httpContext;
     private final HttpServletRequest delegate;
 
-    public HttpRequestWrapper(HttpContext httpContext) {
-        Assert.notNull(httpContext, "参数httpContext不能为空");
-        this.delegate = httpContext.request.delegate;
-    }
+    // public HttpRequestWrapper(HttpContext httpContext) {
+    //     Assert.notNull(httpContext, "参数httpContext不能为空");
+    //     this.httpContext = httpContext;
+    //     this.delegate = httpContext.request.delegate;
+    // }
 
     protected HttpRequestWrapper(HttpServletRequest request) {
         Assert.notNull(request, "参数request不能为空");
@@ -266,15 +268,23 @@ public class HttpRequestWrapper {
     /**
      * 返回关于该请求的当前会话。或者若该请求没有会话则就创建一个
      */
-    public HttpSession getSession(boolean create) {
-        return delegate.getSession(create);
+    public HttpSessionWrapper getSession(boolean create) {
+        HttpSession session = delegate.getSession();
+        final boolean exists = session != null;
+        session = delegate.getSession(create);
+        final boolean nowExists = session != null;
+        if (exists != nowExists) {
+            // 创建了 HttpSession - 需要刷新 httpContext.session - 值
+            httpContext.session = new HttpSessionWrapper(session);
+        }
+        return httpContext.session;
     }
 
     /**
      * 返回有关本请求的当前HttpSession，或者若该请求没有会话，且“创建”属性为真，则就创建一个
      */
-    public HttpSession getSession() {
-        return delegate.getSession();
+    public HttpSessionWrapper getSession() {
+        return httpContext.session;
     }
 
     /**
@@ -424,8 +434,7 @@ public class HttpRequestWrapper {
     }
 
     public ServletContextWrapper getServletContext() {
-        // TODO 每次都new?
-        return new ServletContextWrapper(delegate.getServletContext());
+        return httpContext.servletContext;
     }
 
 //    /**

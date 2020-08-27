@@ -12,12 +12,14 @@ import java.util.List;
  * 创建时间：2019/09/20 17:28 <br/>
  */
 public class HttpSessionWrapper {
+    protected HttpContext httpContext;
     private final HttpSession delegate;
 
-    public HttpSessionWrapper(HttpContext httpContext) {
-        Assert.notNull(httpContext, "参数httpContext不能为空");
-        this.delegate = httpContext.session.delegate;
-    }
+    // public HttpSessionWrapper(HttpContext httpContext) {
+    //     Assert.notNull(httpContext, "参数httpContext不能为空");
+    //     this.httpContext = httpContext;
+    //     this.delegate = httpContext.session.delegate;
+    // }
 
     protected HttpSessionWrapper(HttpSession session) {
         Assert.notNull(session, "参数session不能为空");
@@ -108,7 +110,6 @@ public class HttpSessionWrapper {
     }
 
     public ServletContextWrapper getServletContext() {
-        // TODO 每次都new?
-        return new ServletContextWrapper(delegate.getServletContext());
+        return httpContext.servletContext;
     }
 }

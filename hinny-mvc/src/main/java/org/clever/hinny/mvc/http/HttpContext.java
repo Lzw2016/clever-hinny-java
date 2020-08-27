@@ -15,7 +15,7 @@ public class HttpContext {
 
     public final HttpRequestWrapper request;
     public final HttpResponseWrapper response;
-    public final HttpSessionWrapper session;
+    public HttpSessionWrapper session;
     public final ServletContextWrapper servletContext;
 
     public HttpContext(HttpServletRequest request, HttpServletResponse response) {
@@ -23,18 +23,25 @@ public class HttpContext {
         Assert.notNull(response, "参数response不能为空");
         this.request = new HttpRequestWrapper(request);
         this.response = new HttpResponseWrapper(response);
-        HttpSession httpSession = request.getSession();
-
         HttpSessionWrapper sessionWrapper = null;
-        ServletContextWrapper servletContextWrapper = null;
+        HttpSession httpSession = request.getSession();
         if (httpSession != null) {
             sessionWrapper = new HttpSessionWrapper(httpSession);
-            ServletContext servletContext = httpSession.getServletContext();
-            if (servletContext != null) {
-                servletContextWrapper = new ServletContextWrapper(servletContext);
-            }
+        }
+        ServletContextWrapper servletContextWrapper = null;
+        ServletContext servletContext = request.getServletContext();
+        if (servletContext != null) {
+            servletContextWrapper = new ServletContextWrapper(servletContext);
         }
         this.session = sessionWrapper;
         this.servletContext = servletContextWrapper;
+        init();
+    }
+
+    private void init() {
+        this.request.httpContext = this;
+        this.response.httpContext = this;
+        this.session.httpContext = this;
+        this.servletContext.httpContext = this;
     }
 }
