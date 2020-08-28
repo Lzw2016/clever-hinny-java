@@ -60,7 +60,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
      */
     public HttpRequestScriptHandler(String supportPrefix, Set<String> supportSuffix, EngineInstancePool<E, T> engineInstancePool) {
         Assert.notNull(engineInstancePool, "参数engineInstancePool不能为空");
-        this.supportPrefix = StringUtils.isNotBlank(supportPrefix) ? StringUtils.trim(supportPrefix) : "/!";
+        this.supportPrefix = StringUtils.isNotBlank(supportPrefix) ? StringUtils.trim(supportPrefix) : "/!/";
         supportSuffix = supportSuffix != null ? supportSuffix : new HashSet<>(Arrays.asList("", ".json", ".action"));
         supportSuffix = supportSuffix.stream().filter(Objects::nonNull).map(StringUtils::trim).collect(Collectors.toSet());
         this.supportSuffix = Collections.unmodifiableSet(supportSuffix);
