@@ -158,7 +158,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
         if (StringUtils.isBlank(method)) {
             return null;
         }
-        final String filePath = requestPath.substring(0, requestPath.length() - (Separate.length() + method.length()));
+        final String filePath = requestPath.substring(supportPrefix.length(), requestPath.length() - (Separate.length() + method.length()));
         if (StringUtils.isBlank(filePath)) {
             return null;
         }
