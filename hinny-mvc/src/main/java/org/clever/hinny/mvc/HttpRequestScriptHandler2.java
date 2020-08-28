@@ -18,10 +18,8 @@ import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 作者：lizw <br/>
@@ -33,19 +31,6 @@ import java.util.Set;
 @Slf4j
 public abstract class HttpRequestScriptHandler2<E, T> implements HandlerInterceptor {
     /**
-     * 没有js file映射时的数据前缀
-     */
-    private static final String No_FileFullPath_Mapping = "&&&???###";
-    private static final long No_FileFullPath_Mapping_TimeOut = 1000 * 60 * 10;
-    /**
-     * url path --> file full path
-     */
-    private static final Cache<String, String> Path_FileFullPath_Cache = CacheBuilder.newBuilder().maximumSize(4096).initialCapacity(1024).build();
-    /**
-     * 请求支持的后缀，建议使用特殊的后缀表示使用动态js代码处理请求
-     */
-    private static final Set<String> Support_Suffix = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("", ".json", ".action")));
-    /**
      * 是否强制使用Script Handler处理请求
      */
     private static final String Force_Use_Script = "force-use-script";
@@ -54,13 +39,53 @@ public abstract class HttpRequestScriptHandler2<E, T> implements HandlerIntercep
      */
     private static final String Use_Script_Handler_Head = "use-script-handler-file";
     /**
+     * 分隔Script的File Path和MethodName的分隔符
+     */
+    private static final String Separate = "@";
+    /**
+     * TODO ???
+     */
+    private static final String No_Mapping = "&&&???###";
+    private static final long No_Mapping_TimeOut = 1000 * 60 * 10;
+    /**
+     * TODO ??? url path --> file full path
+     */
+    private static final Cache<String, String> Path_Cache = CacheBuilder.newBuilder()
+            .initialCapacity(256)
+            .maximumSize(4096)
+            .build();
+    /**
+     * 支持的请求前缀
+     */
+    private final String supportPrefix;
+    /**
+     * 支持的请求后缀
+     */
+    private final Set<String> supportSuffix;
+    /**
      * 引擎实例对象池
      */
     private final EngineInstancePool<E, T> engineInstancePool;
 
-    public HttpRequestScriptHandler2(EngineInstancePool<E, T> engineInstancePool) {
+    /**
+     * @param supportPrefix      支持的请求前缀
+     * @param supportSuffix      支持的请求后缀
+     * @param engineInstancePool 引擎实例对象池
+     */
+    public HttpRequestScriptHandler2(String supportPrefix, Set<String> supportSuffix, EngineInstancePool<E, T> engineInstancePool) {
         Assert.notNull(engineInstancePool, "参数engineInstancePool不能为空");
+        this.supportPrefix = StringUtils.isNotBlank(supportPrefix) ? StringUtils.trim(supportPrefix) : "/!";
+        supportSuffix = supportSuffix != null ? supportSuffix : new HashSet<>(Arrays.asList("", ".json", ".action"));
+        supportSuffix = supportSuffix.stream().filter(Objects::nonNull).map(StringUtils::trim).collect(Collectors.toSet());
+        this.supportSuffix = Collections.unmodifiableSet(supportSuffix);
         this.engineInstancePool = engineInstancePool;
+    }
+
+    /**
+     * @param engineInstancePool 引擎实例对象池
+     */
+    public HttpRequestScriptHandler2(EngineInstancePool<E, T> engineInstancePool) {
+        this(null, null, engineInstancePool);
     }
 
     /**
@@ -68,36 +93,52 @@ public abstract class HttpRequestScriptHandler2<E, T> implements HandlerIntercep
      */
     protected boolean supportScript(HttpServletRequest request, HttpServletResponse response, Object handler) {
         final String requestUri = request.getRequestURI();
+        // final String method = request.getMethod();
         boolean support = false;
-        for (String suffix : Support_Suffix) {
-            if (StringUtils.isBlank(suffix)) {
-                support = true;
-                continue;
-            }
+        // 支持的请求前缀 - 符合
+        if (!requestUri.startsWith(supportPrefix)) {
+            return false;
+        }
+        // 支持的请求后缀 - 符合
+        for (String suffix : supportSuffix) {
             if (requestUri.endsWith(suffix)) {
                 support = true;
                 break;
             }
         }
-        if (!support) {
-            return false;
-        } else if (handler instanceof HandlerMethod) {
-            if (StringUtils.isBlank(request.getParameter(Force_Use_Script)) || StringUtils.isBlank(request.getHeader(Force_Use_Script))) {
-                log.warn("强制使用Script Handler功能，忽略原生SpringMvc功能 | {}", handler.getClass());
+        // SpringMvc功能冲突处理
+        if (support) {
+            if (handler instanceof HandlerMethod) {
+                if (StringUtils.isBlank(request.getParameter(Force_Use_Script)) || StringUtils.isBlank(request.getHeader(Force_Use_Script))) {
+                    log.warn("强制使用Script Handler功能，忽略原生SpringMvc功能 | {}", handler.getClass());
+                } else {
+                    log.warn("Script Handler被原生SpringMvc功能覆盖 | {}", handler.getClass());
+                    support = false;
+                }
+            } else if (handler instanceof ResourceHttpRequestHandler) {
+                if (StringUtils.isBlank(request.getParameter(Force_Use_Script)) || StringUtils.isBlank(request.getHeader(Force_Use_Script))) {
+                    log.warn("强制使用Script Handler功能，忽略静态资源 | {}", handler.getClass());
+                } else {
+                    log.warn("Script Handler被静态资源覆盖 | {}", handler.getClass());
+                    support = false;
+                }
             } else {
-                log.warn("Script Handler被原生SpringMvc功能覆盖 | {}", handler.getClass());
+                log.warn("未知的Handler类型，覆盖Script Handler | {}", handler.getClass());
                 support = false;
             }
-        } else if (handler instanceof ResourceHttpRequestHandler) {
-            if (StringUtils.isBlank(request.getParameter(Force_Use_Script)) || StringUtils.isBlank(request.getHeader(Force_Use_Script))) {
-                log.warn("强制使用Script Handler功能，忽略静态资源 | {}", handler.getClass());
-            } else {
-                log.warn("Script Handler被静态资源覆盖 | {}", handler.getClass());
+        }
+        // 请求Url格式 - 符合
+        if (support) {
+            int position = requestUri.lastIndexOf("/");
+            if (position <= -1) {
                 support = false;
+            } else {
+                String lastPath = requestUri.substring(position);
+                String[] arr = lastPath.split(Separate);
+                if (arr.length != 2) {
+                    support = false;
+                }
             }
-        } else {
-            log.warn("未知的Handler类型，覆盖Script Handler | {}", handler.getClass());
-            support = false;
         }
         return support;
     }
@@ -107,6 +148,35 @@ public abstract class HttpRequestScriptHandler2<E, T> implements HandlerIntercep
      * {@code TupleTow<ScriptFileFullPath, MethodName>}
      */
     protected TupleTow<String, String> getScriptFileFullPathUseCache(HttpServletRequest request) {
+        String requestUri = request.getRequestURI();
+        for (String suffix : supportSuffix) {
+            if (StringUtils.isBlank(suffix)) {
+                continue;
+            }
+            if (requestUri.endsWith(suffix)) {
+                requestUri = requestUri.substring(0, requestUri.length() - suffix.length());
+                break;
+            }
+        }
+        final String requestPath = requestUri;
+        String method = null;
+        int position = requestPath.lastIndexOf("/");
+        if (position >= 0) {
+            String lastPath = requestPath.substring(position);
+            String[] arr = lastPath.split(Separate);
+            if (arr.length == 2) {
+                method = arr[1];
+            }
+        }
+        if (StringUtils.isBlank(method)) {
+            return null;
+        }
+        final String filePath = requestPath.substring(0, requestPath.length() - (Separate.length() + method.length()));
+        if (StringUtils.isBlank(filePath)) {
+            return null;
+        }
+
+
         // TODO ???
         return null;
     }
