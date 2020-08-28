@@ -7,8 +7,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.clever.common.utils.mapper.JacksonMapper;
 import org.clever.hinny.api.ScriptEngineInstance;
 import org.clever.hinny.api.ScriptObject;
+import org.clever.hinny.api.pool.EngineInstancePool;
 import org.clever.hinny.mvc.http.HttpContext;
 import org.clever.hinny.mvc.support.TupleTow;
+import org.springframework.http.HttpStatus;
+import org.springframework.util.Assert;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
@@ -50,6 +53,15 @@ public abstract class HttpRequestScriptHandler2<E, T> implements HandlerIntercep
      * 使用Script Handler处理请求时对应的Script File信息(响应头信息)
      */
     private static final String Use_Script_Handler_Head = "use-script-handler-file";
+    /**
+     * 引擎实例对象池
+     */
+    private final EngineInstancePool<E, T> engineInstancePool;
+
+    public HttpRequestScriptHandler2(EngineInstancePool<E, T> engineInstancePool) {
+        Assert.notNull(engineInstancePool, "参数engineInstancePool不能为空");
+        this.engineInstancePool = engineInstancePool;
+    }
 
     /**
      * 判断请求是否支持 Script 处理
@@ -122,12 +134,20 @@ public abstract class HttpRequestScriptHandler2<E, T> implements HandlerIntercep
     /**
      * 借一个引擎实例
      */
-    protected abstract ScriptEngineInstance<E, T> borrowEngineInstance();
+    protected ScriptEngineInstance<E, T> borrowEngineInstance() throws Exception {
+        return engineInstancePool.borrowObject();
+    }
 
     /**
      * 归还引擎实例(有借有还)
      */
-    protected abstract void returnEngineInstance(ScriptEngineInstance<E, T> engineInstance);
+    protected void returnEngineInstance(ScriptEngineInstance<E, T> engineInstance) {
+        try {
+            engineInstancePool.returnObject(engineInstance);
+        } catch (Exception e) {
+            log.error("归还ScriptEngineInstance失败", e);
+        }
+    }
 
     @SuppressWarnings("NullableProblems")
     @Override
@@ -156,6 +176,10 @@ public abstract class HttpRequestScriptHandler2<E, T> implements HandlerIntercep
             // 3.借一个引擎实例
             startTime2 = System.currentTimeMillis();
             engineInstance = borrowEngineInstance();
+            if (engineInstance == null) {
+                response.setStatus(HttpStatus.SERVICE_UNAVAILABLE.value());
+                throw new RuntimeException("无法借到ScriptEngineInstance");
+            }
             // 4.获取 Script 文件对应的 Script 对象和执行函数名
             startTime3 = System.currentTimeMillis();
             final TupleTow<ScriptObject<T>, String> scriptHandler = getScriptObject(request, engineInstance, scriptInfo);
@@ -180,18 +204,12 @@ public abstract class HttpRequestScriptHandler2<E, T> implements HandlerIntercep
                 returnEngineInstance(engineInstance);
             }
             final long endTime = System.currentTimeMillis();
-            // 总耗时
-            final long howLongSum = endTime - startTime1;
-            // 查找脚本耗时
-            final long howLong1 = startTime2 - startTime1;
-            // 借一个引擎耗时
-            final long howLong2 = startTime3 <= -1 ? -1 : startTime3 - startTime2;
-            // 加载脚本耗时
-            final long howLong3 = startTime4 <= -1 ? -1 : startTime4 - startTime3;
-            // 执行脚本耗时
-            final long howLong4 = startTime5 <= -1 ? -1 : startTime5 - startTime4;
-            // 序列化耗时
-            final long howLong5 = endTime - startTime5;
+            final long howLongSum = endTime - startTime1;                           // 总耗时
+            final long howLong1 = startTime2 - startTime1;                          // 查找脚本耗时
+            final long howLong2 = startTime3 <= -1 ? -1 : startTime3 - startTime2;  // 借一个引擎耗时
+            final long howLong3 = startTime4 <= -1 ? -1 : startTime4 - startTime3;  // 加载脚本耗时
+            final long howLong4 = startTime5 <= -1 ? -1 : startTime5 - startTime4;  // 执行脚本耗时
+            final long howLong5 = endTime - startTime5;                             // 序列化耗时
             // 8.请求处理完成 - 打印日志
             log.debug(
                     "使用Script处理请求 | [file={} handler={}] | [总]耗时 {}ms | 查找脚本 {}ms | 借引擎 {}ms | 加载脚本 {}ms | 执行脚本 {}ms | 序列化 {}ms",
