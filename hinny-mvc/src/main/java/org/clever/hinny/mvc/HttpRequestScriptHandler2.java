@@ -5,13 +5,16 @@ import com.google.common.cache.CacheBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.clever.common.utils.mapper.JacksonMapper;
+import org.clever.hinny.api.ScriptEngineInstance;
+import org.clever.hinny.api.ScriptObject;
 import org.clever.hinny.mvc.http.HttpContext;
 import org.clever.hinny.mvc.support.TupleTow;
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -20,6 +23,9 @@ import java.util.Set;
 /**
  * 作者：lizw <br/>
  * 创建时间：2020/08/24 21:34 <br/>
+ *
+ * @param <E> script引擎类型
+ * @param <T> script引擎对象类型
  */
 @Slf4j
 public abstract class HttpRequestScriptHandler2<E, T> implements HandlerInterceptor {
@@ -36,6 +42,14 @@ public abstract class HttpRequestScriptHandler2<E, T> implements HandlerIntercep
      * 请求支持的后缀，建议使用特殊的后缀表示使用动态js代码处理请求
      */
     private static final Set<String> Support_Suffix = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("", ".json", ".action")));
+    /**
+     * 是否强制使用Script Handler处理请求
+     */
+    private static final String Force_Use_Script = "force-use-script";
+    /**
+     * 使用Script Handler处理请求时对应的Script File信息(响应头信息)
+     */
+    private static final String Use_Script_Handler_Head = "use-script-handler-file";
 
     /**
      * 判断请求是否支持 Script 处理
@@ -53,6 +67,26 @@ public abstract class HttpRequestScriptHandler2<E, T> implements HandlerIntercep
                 break;
             }
         }
+        if (!support) {
+            return false;
+        } else if (handler instanceof HandlerMethod) {
+            if (StringUtils.isBlank(request.getParameter(Force_Use_Script)) || StringUtils.isBlank(request.getHeader(Force_Use_Script))) {
+                log.warn("强制使用Script Handler功能，忽略原生SpringMvc功能 | {}", handler.getClass());
+            } else {
+                log.warn("Script Handler被原生SpringMvc功能覆盖 | {}", handler.getClass());
+                support = false;
+            }
+        } else if (handler instanceof ResourceHttpRequestHandler) {
+            if (StringUtils.isBlank(request.getParameter(Force_Use_Script)) || StringUtils.isBlank(request.getHeader(Force_Use_Script))) {
+                log.warn("强制使用Script Handler功能，忽略静态资源 | {}", handler.getClass());
+            } else {
+                log.warn("Script Handler被静态资源覆盖 | {}", handler.getClass());
+                support = false;
+            }
+        } else {
+            log.warn("未知的Handler类型，覆盖Script Handler | {}", handler.getClass());
+            support = false;
+        }
         return support;
     }
 
@@ -68,31 +102,41 @@ public abstract class HttpRequestScriptHandler2<E, T> implements HandlerIntercep
     /**
      * 获取 Script 文件对应的 Script 对象和执行函数名
      */
-    protected abstract TupleTow<T, String> getScriptObject(HttpServletRequest request);
+    protected TupleTow<ScriptObject<T>, String> getScriptObject(
+            HttpServletRequest request,
+            ScriptEngineInstance<E, T> engineInstance,
+            TupleTow<String, String> scriptInfo) throws Exception {
+        ScriptObject<T> scriptObject = engineInstance.require(scriptInfo.getValue1());
+        return TupleTow.creat(scriptObject, scriptInfo.getValue2());
+    }
 
     /**
      * 执行 Script 对象的函数
      */
-    protected abstract Object doHandle(TupleTow<T, String> handlerScript, HttpContext httpContext);
+    protected Object doHandle(TupleTow<ScriptObject<T>, String> handlerScript, HttpContext httpContext) {
+        ScriptObject<T> scriptObject = handlerScript.getValue1();
+        String method = handlerScript.getValue2();
+        return scriptObject.callMember(method, httpContext);
+    }
 
     /**
      * 借一个引擎实例
      */
-    protected abstract E borrowEngineInstance();
+    protected abstract ScriptEngineInstance<E, T> borrowEngineInstance();
 
     /**
      * 归还引擎实例(有借有还)
      */
-    protected abstract void returnEngineInstance(E engineInstance);
+    protected abstract void returnEngineInstance(ScriptEngineInstance<E, T> engineInstance);
 
     @SuppressWarnings("NullableProblems")
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         // 1.判断请求是否支持 Script 处理
         if (!supportScript(request, response, handler)) {
             return true;
         }
-        long startTime1;        // 开始查找脚本文件时间
+        long startTime1;         // 开始查找脚本文件时间
         long startTime2 = -1;    // 开始借一个引擎实例时间
         long startTime3 = -1;    // 开始加载脚本对象时间
         long startTime4 = -1;    // 开始执行脚本时间
@@ -107,20 +151,20 @@ public abstract class HttpRequestScriptHandler2<E, T> implements HandlerIntercep
             }
             return true;
         }
-        E engineInstance = null;
+        ScriptEngineInstance<E, T> engineInstance = null;
         try {
             // 3.借一个引擎实例
             startTime2 = System.currentTimeMillis();
             engineInstance = borrowEngineInstance();
             // 4.获取 Script 文件对应的 Script 对象和执行函数名
             startTime3 = System.currentTimeMillis();
-            final TupleTow<T, String> scriptHandler = getScriptObject(request);
+            final TupleTow<ScriptObject<T>, String> scriptHandler = getScriptObject(request, engineInstance, scriptInfo);
             if (scriptHandler == null) {
                 log.warn("获取Script Handler对象失败");
                 return true;
             }
             // 5.执行 Script 对象的函数
-            response.setHeader("use-http-request-js-handler", String.format("%s#%s", scriptInfo.getValue1(), scriptInfo.getValue2()));
+            response.setHeader(Use_Script_Handler_Head, String.format("%s#%s", scriptInfo.getValue1(), scriptInfo.getValue2()));
             startTime4 = System.currentTimeMillis();
             final HttpContext httpContext = new HttpContext(request, response);
             Object res = doHandle(scriptHandler, httpContext);

@@ -62,6 +62,7 @@
 
     <properties>
         <revision>1.0.0-SNAPSHOT</revision>
+        <clever-hinny.version>1.0.0-SNAPSHOT</clever-hinny.version>
         <clever-common.version>2.0.1-SNAPSHOT</clever-common.version>
     </properties>
 
@@ -123,6 +124,12 @@
                 <groupId>org.clever</groupId>
                 <artifactId>clever-common-client</artifactId>
                 <version>${clever-common.version}</version>
+            </dependency>
+            <!--clever hinny-->
+            <dependency>
+                <groupId>org.clever</groupId>
+                <artifactId>clever-hinny-api</artifactId>
+                <version>${clever-hinny.version}</version>
             </dependency>
             <!--jdbc driver-->
             <dependency>
