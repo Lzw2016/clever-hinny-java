@@ -134,7 +134,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
      * {@code TupleTow<ScriptFileFullPath, MethodName>}
      */
     protected TupleTow<String, String> getScriptInfo(HttpServletRequest request) {
-        // 根据请求url解析 scriptInfo(filePath, method)
+        // 根据请求url解析 scriptInfo(filePath, method) - 请求例子: /!aaa/bbb/ccc/ddd/fff@biz.json
         String requestUri = request.getRequestURI();
         for (String suffix : supportSuffix) {
             if (StringUtils.isBlank(suffix)) {
