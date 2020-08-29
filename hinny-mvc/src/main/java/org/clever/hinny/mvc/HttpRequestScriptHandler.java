@@ -292,7 +292,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
             final long howLong5 = endTime - startTime5;                             // 序列化耗时
             // 8.请求处理完成 - 打印日志
             String logText = String.format(
-                    "使用Script处理请求 | [总]耗时:%-8s | 查找脚本:%-8s | 借引擎:%-8s | 加载脚本:%-8s | 执行脚本:%-8s | 序列化:%-8s | -> [%s#%s]",
+                    "使用Script处理请求 | [总]耗时:%-8s | 查找脚本:%-8s | 借引擎:%-8s | 加载脚本:%-8s | 执行脚本:%-8s | 序列化:%-8s | Script=[%s#%s]",
                     howLongSum + "ms",
                     howLong1 + "ms",
                     howLong2 <= -1 ? "-" : howLong2 + "ms",
