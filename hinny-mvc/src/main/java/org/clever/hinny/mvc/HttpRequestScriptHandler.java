@@ -2,7 +2,6 @@ package org.clever.hinny.mvc;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.clever.common.utils.mapper.JacksonMapper;
 import org.clever.hinny.api.ScriptEngineInstance;
 import org.clever.hinny.api.ScriptObject;
 import org.clever.hinny.api.pool.EngineInstancePool;
@@ -215,6 +214,11 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
         }
     }
 
+    /**
+     * 序列化返回对象
+     */
+    protected abstract String serializeRes(Object res);
+
     @SuppressWarnings("NullableProblems")
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -262,7 +266,8 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
             startTime5 = System.currentTimeMillis();
             if (res != null && !response.isCommitted() && !httpContext.response.isFinish()) {
                 response.setContentType("application/json;charset=UTF-8");
-                response.getWriter().println(JacksonMapper.getInstance().toJson(res));
+                String json = serializeRes(res);
+                response.getWriter().println(json);
             }
         } finally {
             // 7.归还借得的引擎实例
