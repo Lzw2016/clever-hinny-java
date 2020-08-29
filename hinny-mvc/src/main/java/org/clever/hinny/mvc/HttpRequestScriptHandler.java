@@ -2,11 +2,13 @@ package org.clever.hinny.mvc;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.clever.common.utils.reflection.ReflectionsUtils;
 import org.clever.hinny.api.ScriptEngineInstance;
 import org.clever.hinny.api.ScriptObject;
 import org.clever.hinny.api.pool.EngineInstancePool;
 import org.clever.hinny.mvc.http.HttpContext;
 import org.clever.hinny.mvc.support.TupleTow;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
 import org.springframework.web.method.HandlerMethod;
@@ -15,6 +17,7 @@ import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -76,7 +79,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
     /**
      * 判断请求是否支持 Script 处理
      */
-    protected boolean supportScript(HttpServletRequest request, HttpServletResponse response, Object handler) {
+    protected boolean supportScript(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
         final String requestUri = request.getRequestURI();
         // final String method = request.getMethod();
         boolean support = false;
@@ -94,18 +97,22 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
         // SpringMvc功能冲突处理
         if (support) {
             if (handler instanceof HandlerMethod) {
-                if (StringUtils.isBlank(request.getParameter(Force_Use_Script)) || StringUtils.isBlank(request.getHeader(Force_Use_Script))) {
+                if (StringUtils.isNotBlank(request.getParameter(Force_Use_Script)) || StringUtils.isNotBlank(request.getHeader(Force_Use_Script))) {
                     log.warn("强制使用Script Handler功能，忽略原生SpringMvc功能 | {}", handler.getClass());
                 } else {
                     log.warn("Script Handler被原生SpringMvc功能覆盖 | {}", handler.getClass());
                     support = false;
                 }
             } else if (handler instanceof ResourceHttpRequestHandler) {
-                if (StringUtils.isBlank(request.getParameter(Force_Use_Script)) || StringUtils.isBlank(request.getHeader(Force_Use_Script))) {
-                    log.warn("强制使用Script Handler功能，忽略静态资源 | {}", handler.getClass());
-                } else {
-                    log.warn("Script Handler被静态资源覆盖 | {}", handler.getClass());
-                    support = false;
+                ResourceHttpRequestHandler resourceHttpRequestHandler = (ResourceHttpRequestHandler) handler;
+                Resource resource = (Resource) ReflectionsUtils.invokeMethodByName(resourceHttpRequestHandler, "getResource", new Object[]{request});
+                if (resource != null && resource.exists()) {
+                    if (StringUtils.isNotBlank(request.getParameter(Force_Use_Script)) || StringUtils.isNotBlank(request.getHeader(Force_Use_Script))) {
+                        log.warn("强制使用Script Handler功能，忽略静态资源 | {}", handler.getClass());
+                    } else {
+                        log.warn("Script Handler被静态资源覆盖 | {}", handler.getClass());
+                        support = false;
+                    }
                 }
             } else {
                 log.warn("未知的Handler类型，覆盖Script Handler | {}", handler.getClass());
