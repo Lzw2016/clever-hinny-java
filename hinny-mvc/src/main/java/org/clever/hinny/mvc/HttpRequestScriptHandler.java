@@ -170,7 +170,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
         if (StringUtils.isBlank(filePath)) {
             return null;
         }
-        TupleTow<String, String> scriptInfo = TupleTow.creat(filePath, method);
+        TupleTow<String, String> scriptInfo = TupleTow.creat(filePath.startsWith("/") ? filePath : String.format("/%s", filePath), method);
         // 判断文件是否存在
         if (fileExists(filePath)) {
             return scriptInfo;
