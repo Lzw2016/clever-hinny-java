@@ -197,12 +197,15 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
     }
 
     /**
-     * 执行 Script 对象的函数
+     * 执行 Script 对象的函数<br />
+     *
+     * @return {@code TupleTow<响应对象, 是否跳过Script处理>}
      */
-    protected Object doHandle(TupleTow<ScriptObject<T>, String> handlerScript, HttpContext httpContext) {
+    protected TupleTow<Object, Boolean> doHandle(TupleTow<ScriptObject<T>, String> handlerScript, HttpContext httpContext) {
         ScriptObject<T> scriptObject = handlerScript.getValue1();
         String method = handlerScript.getValue2();
-        return scriptObject.callMember(method, httpContext);
+        Object res = scriptObject.callMember(method, httpContext);
+        return TupleTow.creat(res, false);
     }
 
     /**
@@ -270,7 +273,12 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
             response.setHeader(Use_Script_Handler_Head, String.format("%s#%s", scriptInfo.getValue1(), scriptInfo.getValue2()));
             startTime4 = System.currentTimeMillis();
             final HttpContext httpContext = new HttpContext(request, response);
-            Object res = doHandle(scriptHandler, httpContext);
+            final TupleTow<Object, Boolean> resTupleTow = doHandle(scriptHandler, httpContext);
+            final Object res = resTupleTow.getValue1();
+            final Boolean breakHandle = resTupleTow.getValue2();
+            if (breakHandle != null && breakHandle) {
+                return true;
+            }
             // 6.序列化返回数据
             startTime5 = System.currentTimeMillis();
             if (res != null && !response.isCommitted() && !httpContext.response.isFinish()) {
