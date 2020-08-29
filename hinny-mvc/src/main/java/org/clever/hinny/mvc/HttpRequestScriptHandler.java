@@ -297,7 +297,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
             final long howLong2 = startTime3 <= -1 ? -1 : startTime3 - startTime2;  // 借一个引擎耗时
             final long howLong3 = startTime4 <= -1 ? -1 : startTime4 - startTime3;  // 加载脚本耗时
             final long howLong4 = startTime5 <= -1 ? -1 : startTime5 - startTime4;  // 执行脚本耗时
-            final long howLong5 = endTime - startTime5;                             // 序列化耗时
+            final long howLong5 = startTime5 <= -1 ? -1 : endTime - startTime5;     // 序列化耗时
             // 8.请求处理完成 - 打印日志
             String logText = String.format(
                     "Script处理请求 | [总]耗时:%-8s | 查找脚本:%-8s | 借引擎:%-8s | 加载脚本:%-8s | 执行脚本:%-8s | 序列化:%-8s | Script=[%s#%s]",
