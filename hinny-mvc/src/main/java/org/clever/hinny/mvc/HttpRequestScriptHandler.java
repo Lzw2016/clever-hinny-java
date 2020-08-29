@@ -291,17 +291,18 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
             final long howLong4 = startTime5 <= -1 ? -1 : startTime5 - startTime4;  // 执行脚本耗时
             final long howLong5 = endTime - startTime5;                             // 序列化耗时
             // 8.请求处理完成 - 打印日志
-            log.debug(
-                    "使用Script处理请求 | [{}#{}] | [总]耗时 {}ms | 查找脚本 {}ms | 借引擎 {}ms | 加载脚本 {}ms | 执行脚本 {}ms | 序列化 {}ms",
-                    scriptInfo.getValue1(),         // Script 文件全路径
-                    scriptInfo.getValue2(),         // Script 函数名
-                    howLongSum,
-                    howLong1,
-                    howLong2 <= -1 ? "-" : howLong2,
-                    howLong3 <= -1 ? "-" : howLong3,
-                    howLong4 <= -1 ? "-" : howLong4,
-                    howLong5 <= -1 ? "-" : howLong5
+            String logText = String.format(
+                    "使用Script处理请求 | [总]耗时:%-8s | 查找脚本:%-8s | 借引擎:%-8s | 加载脚本:%-8s | 执行脚本:%-8s | 序列化:%-8s | -> [%s#%s]",
+                    howLongSum + "ms",
+                    howLong1 + "ms",
+                    howLong2 <= -1 ? "-" : howLong2 + "ms",
+                    howLong3 <= -1 ? "-" : howLong3 + "ms",
+                    howLong4 <= -1 ? "-" : howLong4 + "ms",
+                    howLong5 <= -1 ? "-" : howLong5 + "ms",
+                    scriptInfo.getValue1(),
+                    scriptInfo.getValue2()
             );
+            log.debug(logText);
         }
         return false;
     }
