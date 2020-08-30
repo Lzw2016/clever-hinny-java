@@ -139,7 +139,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
      * 获取处理请求的 Script 文件全路径<br/>
      * {@code TupleTow<ScriptFileFullPath, MethodName>}
      */
-    protected TupleTow<String, String> getScriptInfo(HttpServletRequest request) {
+    protected TupleTow<String, String> getScriptInfo(ScriptEngineInstance<E, T> engineInstance, HttpServletRequest request) {
         // 根据请求url解析 scriptInfo(filePath, method) - 请求例子: /!aaa/bbb/ccc/ddd/fff@biz.json
         String requestUri = request.getRequestURI();
         for (String suffix : supportSuffix) {
@@ -172,7 +172,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
         }
         TupleTow<String, String> scriptInfo = TupleTow.creat(filePath.startsWith("/") ? filePath : String.format("/%s", filePath), method);
         // 判断文件是否存在
-        if (fileExists(filePath)) {
+        if (fileExists(engineInstance, filePath)) {
             return scriptInfo;
         }
         return null;
@@ -181,9 +181,10 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
     /**
      * 判断Script File是否存在
      *
-     * @param fullPath 文件全路径
+     * @param engineInstance 脚本引擎实例
+     * @param fullPath       文件全路径
      */
-    protected abstract boolean fileExists(String fullPath);
+    protected abstract boolean fileExists(ScriptEngineInstance<E, T> engineInstance, String fullPath);
 
     /**
      * 获取 Script 文件对应的 Script 对象和执行函数名
@@ -238,35 +239,33 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
         if (!supportScript(request, response, handler)) {
             return true;
         }
-        long startTime1;         // 开始查找脚本文件时间
-        long startTime2 = -1;    // 开始借一个引擎实例时间
+        long startTime1 = -1;    // 开始借一个引擎实例时间
+        long startTime2 = -1;    // 开始查找脚本文件时间
         long startTime3 = -1;    // 开始加载脚本对象时间
         long startTime4 = -1;    // 开始执行脚本时间
         long startTime5 = -1;    // 开始序列化返回值时间
-        // 2.获取处理请求的 Script 文件全路径和执行函数名
-        startTime1 = System.currentTimeMillis();
-        final TupleTow<String, String> scriptInfo = getScriptInfo(request);
-        if (scriptInfo == null || StringUtils.isBlank(scriptInfo.getValue1()) || StringUtils.isBlank(scriptInfo.getValue2())) {
-            final long tmp = System.currentTimeMillis() - startTime1;
-            if (tmp > 0) {
-                log.debug("Script Handler不存在 | 总耗时 {}ms", tmp);
-            }
-            return true;
-        }
         ScriptEngineInstance<E, T> engineInstance = null;
+        TupleTow<String, String> scriptInfo = null;
         try {
-            // 3.借一个引擎实例
-            startTime2 = System.currentTimeMillis();
+            // 2.借一个引擎实例
+            startTime1 = System.currentTimeMillis();
             engineInstance = borrowEngineInstance();
             if (engineInstance == null) {
                 response.setStatus(HttpStatus.SERVICE_UNAVAILABLE.value());
                 throw new RuntimeException("无法借到ScriptEngineInstance");
             }
+            // 3.获取处理请求的 Script 文件全路径和执行函数名
+            startTime2 = System.currentTimeMillis();
+            scriptInfo = getScriptInfo(engineInstance, request);
+            if (scriptInfo == null || StringUtils.isBlank(scriptInfo.getValue1()) || StringUtils.isBlank(scriptInfo.getValue2())) {
+                log.warn("Script Handler不存在，path=[{}]", request.getRequestURI());
+                return true;
+            }
             // 4.获取 Script 文件对应的 Script 对象和执行函数名
             startTime3 = System.currentTimeMillis();
             final TupleTow<ScriptObject<T>, String> scriptHandler = getScriptObject(request, engineInstance, scriptInfo);
             if (scriptHandler == null) {
-                log.warn("获取Script Handler对象失败");
+                log.warn("获取Script Handler对象失败，ScriptInfo=[{}#{}]", scriptInfo.getValue1(), scriptInfo.getValue2());
                 return true;
             }
             // 5.执行 Script 对象的函数
@@ -293,22 +292,22 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
             }
             final long endTime = System.currentTimeMillis();
             final long howLongSum = endTime - startTime1;                           // 总耗时
-            final long howLong1 = startTime2 - startTime1;                          // 查找脚本耗时
-            final long howLong2 = startTime3 <= -1 ? -1 : startTime3 - startTime2;  // 借一个引擎耗时
+            final long howLong1 = startTime2 <= -1 ? -1 : startTime2 - startTime1;  // 借一个引擎耗时
+            final long howLong2 = startTime3 <= -1 ? -1 : startTime3 - startTime2;  // 查找脚本耗时
             final long howLong3 = startTime4 <= -1 ? -1 : startTime4 - startTime3;  // 加载脚本耗时
             final long howLong4 = startTime5 <= -1 ? -1 : startTime5 - startTime4;  // 执行脚本耗时
             final long howLong5 = startTime5 <= -1 ? -1 : endTime - startTime5;     // 序列化耗时
             // 8.请求处理完成 - 打印日志
             String logText = String.format(
-                    "Script处理请求 | [总]耗时:%-8s | 查找脚本:%-8s | 借引擎:%-8s | 加载脚本:%-8s | 执行脚本:%-8s | 序列化:%-8s | Script=[%s#%s]",
+                    "Script处理请求 | [总]耗时:%-8s | 借引擎:%-8s | 查找脚本:%-8s | 加载脚本:%-8s | 执行脚本:%-8s | 序列化:%-8s | Script=[%s#%s]",
                     howLongSum + "ms",
-                    howLong1 + "ms",
+                    howLong1 <= -1 ? "-" : howLong1 + "ms",
                     howLong2 <= -1 ? "-" : howLong2 + "ms",
                     howLong3 <= -1 ? "-" : howLong3 + "ms",
                     howLong4 <= -1 ? "-" : howLong4 + "ms",
                     howLong5 <= -1 ? "-" : howLong5 + "ms",
-                    scriptInfo.getValue1(),
-                    scriptInfo.getValue2()
+                    scriptInfo == null ? "-" : scriptInfo.getValue1(),
+                    scriptInfo == null ? "-" : scriptInfo.getValue2()
             );
             log.debug(logText);
         }
