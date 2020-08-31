@@ -13,6 +13,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.mvc.ParameterizableViewController;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import javax.servlet.http.HttpServletRequest;
@@ -120,6 +121,8 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
                         }
                     }
                 }
+            } else if (handler instanceof ParameterizableViewController) {
+                support = false;
             } else {
                 log.warn("未知的Handler类型，覆盖Script Handler | {}", handler.getClass());
                 support = false;
