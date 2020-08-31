@@ -295,7 +295,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
             }
             // 6.序列化返回数据
             startTime5 = System.currentTimeMillis();
-            if (res != null && !resIsEmpty(res) && !response.isCommitted()) {
+            if (!resIsEmpty(res) && !response.isCommitted()) {
                 response.setContentType("application/json;charset=UTF-8");
                 String json = serializeRes(res);
                 response.getWriter().println(json);
