@@ -1,6 +1,9 @@
 package org.clever.hinny.core;
 
 import org.springframework.util.Assert;
+import org.springframework.util.ObjectUtils;
+
+import java.util.Collection;
 
 /**
  * 作者：lizw <br/>
@@ -71,9 +74,31 @@ public class AssertUtils {
     }
 
     /**
+     * 断言集合包含元素；也就是说，它不能为null并且必须至少包含一个元素
+     */
+    public void notEmpty(Collection<Object> collection, String message) {
+        if (ObjectUtils.isEmpty(collection)) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    /**
      * 断言数组不包含null元素，注意：如果数组为空，则不会抛出异常
      */
     public void noNullElements(Object[] array, String message) {
         Assert.noNullElements(array, message);
+    }
+
+    /**
+     * 断言集合不包含null元素，注意：如果集合为空，则不会抛出异常
+     */
+    public void noNullElements(Collection<Object> collection, String message) {
+        if (collection != null) {
+            for (Object element : collection) {
+                if (element == null) {
+                    throw new IllegalArgumentException(message);
+                }
+            }
+        }
     }
 }
