@@ -2,7 +2,6 @@ package org.clever.hinny.mvc;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.clever.common.utils.reflection.ReflectionsUtils;
 import org.clever.hinny.api.ScriptEngineInstance;
 import org.clever.hinny.api.ScriptObject;
 import org.clever.hinny.api.pool.EngineInstancePool;
@@ -11,13 +10,14 @@ import org.clever.hinny.mvc.support.TupleTow;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
+import org.springframework.util.ReflectionUtils;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -79,7 +79,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
     /**
      * 判断请求是否支持 Script 处理
      */
-    protected boolean supportScript(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
+    protected boolean supportScript(HttpServletRequest request, HttpServletResponse response, Object handler) {
         final String requestUri = request.getRequestURI();
         // final String method = request.getMethod();
         boolean support = false;
@@ -105,13 +105,19 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
                 }
             } else if (handler instanceof ResourceHttpRequestHandler) {
                 ResourceHttpRequestHandler resourceHttpRequestHandler = (ResourceHttpRequestHandler) handler;
-                Resource resource = (Resource) ReflectionsUtils.invokeMethodByName(resourceHttpRequestHandler, "getResource", new Object[]{request});
-                if (resource != null && resource.exists()) {
-                    if (StringUtils.isNotBlank(request.getParameter(Force_Use_Script)) || StringUtils.isNotBlank(request.getHeader(Force_Use_Script))) {
-                        log.warn("强制使用Script Handler功能，忽略静态资源 | {}", handler.getClass());
-                    } else {
-                        log.warn("Script Handler被静态资源覆盖 | {}", handler.getClass());
-                        support = false;
+                Method method = ReflectionUtils.findMethod(ResourceHttpRequestHandler.class, "getResource", HttpServletRequest.class);
+                if (method != null) {
+                    if (!method.isAccessible()) {
+                        method.setAccessible(true);
+                    }
+                    Resource resource = (Resource) ReflectionUtils.invokeMethod(method, resourceHttpRequestHandler, request);
+                    if (resource != null && resource.exists()) {
+                        if (StringUtils.isNotBlank(request.getParameter(Force_Use_Script)) || StringUtils.isNotBlank(request.getHeader(Force_Use_Script))) {
+                            log.warn("强制使用Script Handler功能，忽略静态资源 | {}", handler.getClass());
+                        } else {
+                            log.warn("Script Handler被静态资源覆盖 | {}", handler.getClass());
+                            support = false;
+                        }
                     }
                 }
             } else {

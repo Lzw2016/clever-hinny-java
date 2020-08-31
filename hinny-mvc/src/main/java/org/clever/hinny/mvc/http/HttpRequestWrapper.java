@@ -1,5 +1,7 @@
 package org.clever.hinny.mvc.http;
 
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.util.Assert;
 
 import javax.servlet.DispatcherType;
@@ -446,4 +448,53 @@ public class HttpRequestWrapper {
 
     //---------------------------------------------------------------------------------------------------------------------------------------------- 高阶封装
 
+    /**
+     * 获取数据库排序查询参数
+     */
+    public Map<String, Object> getQueryBySort() {
+        Map<String, Object> queryBySort = new HashMap<>(5);
+        Map<String, String[]> paramMap = delegate.getParameterMap();
+        // 高优先级排序字段
+        String[] orderFields = paramMap.get("orderFields");
+        queryBySort.put("orderFields", orderFields);
+        String[] sorts = paramMap.get("sorts");
+        queryBySort.put("sorts", sorts);
+        // 低优先级排序字段
+        String[] orderField = paramMap.get("orderField");
+        if (orderField != null && orderField.length > 0) {
+            queryBySort.put("orderField", orderField[0]);
+        }
+        String[] sort = paramMap.get("sort");
+        if (sort != null && sort.length > 0) {
+            queryBySort.put("sort", sort[0]);
+        }
+        // 排序字段 映射Map
+        queryBySort.put("fieldsMapping", new HashMap<>());
+        return queryBySort;
+    }
+
+    /**
+     * 获取数据库分页查询参数
+     */
+    public Map<String, Object> getQueryByPage() {
+        Map<String, Object> queryByPage = new HashMap<>(8);
+        queryByPage.putAll(getQueryBySort());
+        Map<String, String[]> paramMap = delegate.getParameterMap();
+        // 每页的数据量(1 <= pageSize <= 100)
+        String[] pageSize = paramMap.get("pageSize");
+        if (pageSize != null && pageSize.length > 0) {
+            queryByPage.put("pageSize", NumberUtils.toInt(pageSize[0], 10));
+        }
+        // 当前页面的页码数(pageNo >= 1)
+        String[] pageNo = paramMap.get("pageNo");
+        if (pageNo != null && pageNo.length > 0) {
+            queryByPage.put("pageNo", NumberUtils.toInt(pageNo[0], 1));
+        }
+        // 当前页面的页码数(pageNo >= 1)
+        String[] isSearchCount = paramMap.get("isSearchCount");
+        if (isSearchCount != null && isSearchCount.length > 0) {
+            queryByPage.put("isSearchCount", BooleanUtils.toBoolean(isSearchCount[0]));
+        }
+        return queryByPage;
+    }
 }
