@@ -29,8 +29,9 @@ public class CookieUtils {
     /**
      * 设置Cookie
      *
-     * @param name  名称
-     * @param value 值
+     * @param response HTTP请求
+     * @param name     名称
+     * @param value    值
      */
     public void setRooPathCookie(HttpServletResponse response, String name, String value) {
         org.clever.common.utils.CookieUtils.setRooPathCookie(response, name, value);
@@ -39,8 +40,9 @@ public class CookieUtils {
     /**
      * 设置Cookie
      *
-     * @param name  名称
-     * @param value 值
+     * @param response HTTP请求
+     * @param name     名称
+     * @param value    值
      */
     public void setCookie(HttpServletResponse response, String name, String value) {
         org.clever.common.utils.CookieUtils.setCookie(response, name, value);
