@@ -211,7 +211,8 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
      *
      * @return {@code TupleTow<响应对象, 是否跳过Script处理>}
      */
-    protected TupleTow<Object, Boolean> doHandle(TupleTow<ScriptObject<T>, String> handlerScript, HttpContext httpContext) {
+    protected TupleTow<Object, Boolean> doHandle(HttpServletRequest request, HttpServletResponse response, TupleTow<ScriptObject<T>, String> handlerScript) {
+        final HttpContext httpContext = new HttpContext(request, response);
         ScriptObject<T> scriptObject = handlerScript.getValue1();
         String method = handlerScript.getValue2();
         Object res = scriptObject.callMember(method, httpContext);
@@ -237,9 +238,15 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
     }
 
     /**
+     * 返回对象是否是空值
+     */
+    protected abstract boolean resIsEmpty(Object res);
+
+    /**
      * 序列化返回对象
      */
     protected abstract String serializeRes(Object res);
+
 
     @SuppressWarnings("NullableProblems")
     @Override
@@ -280,8 +287,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
             // 5.执行 Script 对象的函数
             response.setHeader(Use_Script_Handler_Head, String.format("%s#%s", scriptInfo.getValue1(), scriptInfo.getValue2()));
             startTime4 = System.currentTimeMillis();
-            final HttpContext httpContext = new HttpContext(request, response);
-            final TupleTow<Object, Boolean> resTupleTow = doHandle(scriptHandler, httpContext);
+            final TupleTow<Object, Boolean> resTupleTow = doHandle(request, response, scriptHandler);
             final Object res = resTupleTow.getValue1();
             final Boolean breakHandle = resTupleTow.getValue2();
             if (breakHandle != null && breakHandle) {
@@ -289,7 +295,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
             }
             // 6.序列化返回数据
             startTime5 = System.currentTimeMillis();
-            if (res != null && !response.isCommitted() && !httpContext.response.isFinish()) {
+            if (res != null && !resIsEmpty(res) && !response.isCommitted()) {
                 response.setContentType("application/json;charset=UTF-8");
                 String json = serializeRes(res);
                 response.getWriter().println(json);
