@@ -38,6 +38,13 @@ public class HttpResponseWrapper {
     }
 
     /**
+     * 原始HTTP响应对象
+     */
+    public HttpServletResponse originalResponse() {
+        return delegate;
+    }
+
+    /**
      * 强制将buffer中的任何内容写入客户端
      */
     public void flushBuffer() throws IOException {

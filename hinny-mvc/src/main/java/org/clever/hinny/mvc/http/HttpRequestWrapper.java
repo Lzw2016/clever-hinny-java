@@ -33,6 +33,13 @@ public class HttpRequestWrapper {
     }
 
     /**
+     * 原始HTTP请求对象
+     */
+    public HttpServletRequest originalRequest() {
+        return delegate;
+    }
+
+    /**
      * 返回一个包含所有的绑定到请求的对象名称的字符串对象的集合
      */
     public List<String> getAttributeNames() {

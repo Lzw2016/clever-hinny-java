@@ -32,6 +32,13 @@ public class ServletContextWrapper {
     }
 
     /**
+     * 原始ServletContext对象
+     */
+    public ServletContext originalContext() {
+        return delegate;
+    }
+    
+    /**
      * 返回一个于服务器上指定的URL进行通信的 ServletContext 对象
      */
     public ServletContextWrapper getContext(String uripath) {

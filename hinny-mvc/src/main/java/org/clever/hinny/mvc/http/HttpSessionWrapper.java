@@ -27,6 +27,13 @@ public class HttpSessionWrapper {
     }
 
     /**
+     * 原始HTTP Session对象
+     */
+    public HttpSession originalSession() {
+        return delegate;
+    }
+
+    /**
      * 返回一个包含所有的绑定到会话的 对象名称的字符串对象的集合
      */
     public List<String> getAttributeNames() {
