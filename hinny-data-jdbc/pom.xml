@@ -27,6 +27,11 @@
             <groupId>org.clever</groupId>
             <artifactId>clever-common-model</artifactId>
         </dependency>
+        <!--clever-dynamic-sql-->
+        <dependency>
+            <groupId>org.clever</groupId>
+            <artifactId>clever-dynamic-sql</artifactId>
+        </dependency>
         <!--other-->
         <dependency>
             <groupId>com.zaxxer</groupId>
