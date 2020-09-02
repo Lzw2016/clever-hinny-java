@@ -89,7 +89,7 @@ public class SqlUtils {
     }
 
     /**
-     * 生成更新table的sql
+     * 生成更新table的sql TODO 不更新null??
      *
      * @param tableName         表名称
      * @param fields            字段值
@@ -137,6 +137,7 @@ public class SqlUtils {
         return TupleTow.creat(sb.toString(), paramMap);
     }
 
+    // TODO 不插入null??
     public static TupleTow<String, Map<String, Object>> insertSql(String tableName, Map<String, Object> fields, boolean camelToUnderscore) {
         Map<String, Object> paramMap = new HashMap<>(fields.size());
         StringBuilder sb = new StringBuilder();

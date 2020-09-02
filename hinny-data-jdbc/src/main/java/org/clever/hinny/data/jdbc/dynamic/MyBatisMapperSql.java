@@ -4,6 +4,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.clever.dynamic.sql.BoundSql;
 import org.clever.dynamic.sql.DynamicSqlParser;
 import org.clever.dynamic.sql.builder.SqlSource;
 import org.clever.dynamic.sql.parsing.XNode;
@@ -24,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 创建时间：2020/09/02 15:56 <br/>
  */
 @Slf4j
-public class MyBatisMapperSqlUtils {
+public class MyBatisMapperSql {
     /**
      * 文件根路径
      */
@@ -38,10 +39,28 @@ public class MyBatisMapperSqlUtils {
      */
     protected final ConcurrentHashMap<String, SqlSource> sqlSourceMap = new ConcurrentHashMap<>(64);
 
-    public MyBatisMapperSqlUtils(String absolutePath) {
+    public MyBatisMapperSql(String absolutePath) {
         this.path = new File(absolutePath);
         Assert.isTrue(path.exists() && path.isDirectory(), "路径：" + path.getAbsolutePath() + "不存在或者不是一个文件夹");
         load();
+    }
+
+    /**
+     * 获取 SqlSource
+     */
+    public SqlSource getSqlSource(String sqlId) {
+        return sqlSourceMap.get(sqlId);
+    }
+
+    /**
+     * 获取 SqlSource
+     */
+    public BoundSql getSqlSource(String sqlId, Object parameter) {
+        SqlSource sqlSource = sqlSourceMap.get(sqlId);
+        if (sqlSource == null) {
+            return null;
+        }
+        return sqlSource.getBoundSql(parameter);
     }
 
     public void reloadAll() {

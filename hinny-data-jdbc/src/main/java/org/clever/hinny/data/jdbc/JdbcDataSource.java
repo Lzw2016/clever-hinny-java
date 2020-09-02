@@ -407,6 +407,15 @@ public class JdbcDataSource extends AbstractDataSource {
     }
 
     /**
+     * SQL Count(获取一个SQL返回的数据总量)
+     *
+     * @param sql sql脚本，参数格式[:param]
+     */
+    public long queryCount(String sql) {
+        return queryCount(sql, Collections.emptyMap());
+    }
+
+    /**
      * 查询多条数据(大量数据)，使用游标读取
      *
      * @param sql       sql脚本，参数格式[:param]
@@ -980,12 +989,7 @@ public class JdbcDataSource extends AbstractDataSource {
     public <T> T beginReadOnlyTX(TransactionCallback<T> action) {
         return beginTX(action, TransactionDefinition.PROPAGATION_REQUIRED, -1, TransactionDefinition.ISOLATION_DEFAULT, true);
     }
-
-    // --------------------------------------------------------------------------------------------
-    // TODO mybatis 动态SQL支持
-    // --------------------------------------------------------------------------------------------
-
-
+    
     // --------------------------------------------------------------------------------------------
     //  其它 操作
     // --------------------------------------------------------------------------------------------
