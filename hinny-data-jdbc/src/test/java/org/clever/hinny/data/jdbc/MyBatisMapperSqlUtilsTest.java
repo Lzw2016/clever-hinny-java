@@ -15,7 +15,7 @@ public class MyBatisMapperSqlUtilsTest {
 
     @Test
     public void t01() throws InterruptedException {
-        String absolutePath = "D:\\SourceCode\\jzt\\门店通\\pharmacy-points-shop-ba\\server";
+        String absolutePath = "D:\\SourceCode\\jzt\\门店通\\pharmacy-points-shop-ba\\server\\src";
         final MyBatisMapperSqlUtils sqlUtils = new MyBatisMapperSqlUtils(absolutePath);
         log.info("sqlUtils -> {}", sqlUtils);
         FileSystemWatcher watcher = new FileSystemWatcher(

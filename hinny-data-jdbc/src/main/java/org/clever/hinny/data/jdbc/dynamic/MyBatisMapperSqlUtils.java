@@ -130,7 +130,7 @@ public class MyBatisMapperSqlUtils {
             final String sqlId = sqlIdSB.toString();
             SqlSource sqlSource = DynamicSqlParser.parserSql(node);
             if (sqlSourceMap.containsKey(sqlId)) {
-                log.warn("# SQL[{}]已存在，覆盖当前SQL | path={}", sqlId, absolutePath);
+                log.warn("# SQL出现冲突(覆盖) | SqlId={} | path={}", sqlId, absolutePath);
             }
             mapperFiles.add(absolutePath, sqlId);
             sqlSourceMap.put(sqlId, sqlSource);
