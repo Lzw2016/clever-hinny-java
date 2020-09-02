@@ -337,6 +337,17 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      *
      * @param sqlId      SqlID
      * @param pagination 分页配置(支持排序)
+     * @param countQuery 是否要执行count查询(可选)
+     */
+    public IPage<Map<String, Object>> queryByPage(String sqlId, QueryByPage pagination, boolean countQuery) {
+        return jdbcDataSource.queryByPage(getSql(sqlId), pagination, countQuery);
+    }
+
+    /**
+     * 分页查询(支持排序)，返回分页对象
+     *
+     * @param sqlId      SqlID
+     * @param pagination 分页配置(支持排序)
      */
     public IPage<Map<String, Object>> queryByPage(String sqlId, QueryByPage pagination) {
         return jdbcDataSource.queryByPage(getSql(sqlId), pagination);
