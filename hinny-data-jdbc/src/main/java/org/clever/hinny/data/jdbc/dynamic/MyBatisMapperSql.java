@@ -105,11 +105,11 @@ public class MyBatisMapperSql {
 
     protected void load() {
         log.info("# ==================================================================================================================================");
-        log.info("# -- 初始化读取Mapper.xml文件 --");
+        log.info("# === 初始化读取Mapper.xml文件 ===");
         long startTime = System.currentTimeMillis();
         reloadAll();
         long endTime = System.currentTimeMillis();
-        log.info("# -- 读取Mapper.xml文件完成 | 耗时: {}ms --", (endTime - startTime));
+        log.info("# === 读取Mapper.xml文件完成 | 耗时: {}ms ===", (endTime - startTime));
         log.info("# ==================================================================================================================================");
     }
 
