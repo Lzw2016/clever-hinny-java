@@ -96,19 +96,22 @@ public class MyBatisMapperSql {
         }
         // 解析新的文件
         if (nowExists) {
+            long startTime = System.currentTimeMillis();
             loadSqlSource(file);
+            long endTime = System.currentTimeMillis();
+            log.info("# 重新解析文件成功 | 耗时: {}ms | path={}", (endTime - startTime), absolutePath);
+        } else {
+            log.info("# 清除文件SQL | path={}", absolutePath);
         }
     }
 
     protected void load() {
         log.info("# ==================================================================================================================================");
-        log.info("# 初始化读取Mapper.xml文件");
-        log.info("# ==================================================================================================================================");
+        log.info("# -- 初始化读取Mapper.xml文件 --");
         long startTime = System.currentTimeMillis();
         reloadAll();
         long endTime = System.currentTimeMillis();
-        log.info("# ==================================================================================================================================");
-        log.info("# 读取Mapper.xml文件完成 | 耗时: {}ms", endTime - startTime);
+        log.info("# -- 读取Mapper.xml文件完成 | 耗时: {}ms --", (endTime - startTime));
         log.info("# ==================================================================================================================================");
     }
 
