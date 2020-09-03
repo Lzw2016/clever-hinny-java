@@ -20,7 +20,13 @@ public class MyBatisMapperSqlTest {
         log.info("sqlUtils -> {}", sqlUtils);
         FileSystemWatcher watcher = new FileSystemWatcher(
                 absolutePath,
-                file -> sqlUtils.reloadFile(file.getAbsolutePath()),
+                file -> {
+                    try {
+                        sqlUtils.reloadFile(file.getAbsolutePath());
+                    } catch (Exception e) {
+                        log.error("", e);
+                    }
+                },
                 new String[]{"*.xml"},
                 new String[]{},
                 IOCase.SYSTEM,
