@@ -1,6 +1,5 @@
 package org.clever.hinny.data.jdbc.dynamic;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -78,8 +77,7 @@ public class MyBatisMapperSql {
         }
     }
 
-    @SneakyThrows
-    public void reloadFile(String absolutePath) {
+    public void reloadFile(String absolutePath) throws Exception {
         if (absolutePath == null || !absolutePath.endsWith(".xml")) {
             return;
         }
