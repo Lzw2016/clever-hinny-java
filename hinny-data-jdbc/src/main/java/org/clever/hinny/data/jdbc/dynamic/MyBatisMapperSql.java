@@ -3,6 +3,7 @@ package org.clever.hinny.data.jdbc.dynamic;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.builder.xml.XMLMapperEntityResolver;
 import org.clever.dynamic.sql.BoundSql;
 import org.clever.dynamic.sql.DynamicSqlParser;
 import org.clever.dynamic.sql.builder.SqlSource;
@@ -117,7 +118,7 @@ public class MyBatisMapperSql {
         final String absolutePath = file.getAbsolutePath();
         final Properties variables = new Properties();
         final String xml = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-        final XPathParser parser = new XPathParser(xml, false, variables);
+        final XPathParser parser = new XPathParser(xml, false, variables, new XMLMapperEntityResolver());
         final XNode mapper = parser.evalNode("/mapper");
         if (mapper == null) {
             return;
