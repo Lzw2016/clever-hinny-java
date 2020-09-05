@@ -29,13 +29,44 @@ public class ValidatorUtils {
      * @param rule 校验规则
      */
     public ValidResult valid(Map<String, Object> bean, Map<String, Object> rule) {
-        final ValidResult result = new ValidResult(true);
-
+        final ValidResult result = new ValidResult(false);
+        if (bean == null || rule == null) {
+            return result;
+        }
+        doValid(result, null, bean, rule);
+        if (result.getErrors().size() > 0) {
+            result.setError(true);
+        }
         return result;
     }
 
-    public void doValid(Map<String, Object> bean, Map<String, ValidatorRuleItem> rule) {
-
+    /**
+     * @param result    校验返回值
+     * @param filedPath 校验字段上层路径
+     * @param bean      当前层级校验数据
+     * @param rule      当前层级校验配置
+     */
+    @SuppressWarnings("unchecked")
+    protected void doValid(ValidResult result, String filedPath, Map<String, Object> bean, Map<String, Object> rule) {
+        for (Map.Entry<String, Object> entry : rule.entrySet()) {
+            final String filed = entry.getKey();                                                                // 字段名
+            final String filedCurrentPath = StringUtils.isBlank(filedPath) ? filed : filedPath + "." + filed;   // 字段路径
+            final Object ruleItem = entry.getValue();                                                           // 校验规则
+            final Object value = bean.get(filed);                                                               // 字段值
+            if (ruleItem == null) {
+                continue;
+            }
+            if (ruleItem instanceof ValidatorRuleItem) {
+                // 当前层级校验
+                List<ValidFieldError> fieldErrorList = doValid(bean, filed, value, (ValidatorRuleItem) ruleItem);
+                result.getErrors().addAll(fieldErrorList);
+            } else if (ruleItem instanceof Map && value instanceof Map) {
+                // 递归校验
+                doValid(result, filedCurrentPath, (Map<String, Object>) value, (Map<String, Object>) ruleItem);
+            } else {
+                throw new IllegalArgumentException("校验配置错误：" + filedCurrentPath);
+            }
+        }
     }
 
     /**
@@ -47,7 +78,7 @@ public class ValidatorUtils {
      * @param rule  校验规则
      * @return 数据校验成功返回空集合，失败返回错误信息
      */
-    public List<ValidFieldError> doValid(Map<String, Object> bean, String filed, Object value, ValidatorRuleItem rule) {
+    protected List<ValidFieldError> doValid(final Map<String, Object> bean, final String filed, final Object value, final ValidatorRuleItem rule) {
         final List<ValidFieldError> fieldErrorList = new ArrayList<>();
         if (rule == null) {
             return fieldErrorList;
@@ -293,7 +324,7 @@ public class ValidatorUtils {
             return true;
         }
         final String valueClass = value.getClass().getName();
-        int sizeInt = 0;
+        int sizeInt;
         if (value instanceof Collection) {
             sizeInt = ((Collection) value).size();
         } else if (value instanceof Map) {
