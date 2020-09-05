@@ -184,7 +184,7 @@ public class ValidatorUtils {
                         if (sb.length() > 4) {
                             sb.append("，且");
                         }
-                        sb.append("小于等于").append(rule.range.max);
+                        sb.append("小于等于").append(rule.length.max);
                     }
                     message = sb.toString();
                 } else {
