@@ -273,10 +273,47 @@ public class ValidatorUtils {
         return fieldErrorList;
     }
 
-
+    @SuppressWarnings("rawtypes")
     protected boolean validSize(String filed, Object value, RuleItemSize size) {
-        // TODO
-        return false;
+        if (value == null) {
+            return true;
+        }
+        if (size.min == null && size.max == null) {
+            return true;
+        }
+        final String valueClass = value.getClass().getName();
+        int sizeInt = 0;
+        if (value instanceof Collection) {
+            sizeInt = ((Collection) value).size();
+        } else if (value instanceof Map) {
+            sizeInt = ((Map) value).size();
+        } else if (value instanceof char[]) {
+            sizeInt = ((char[]) value).length;
+        } else if (value instanceof byte[]) {
+            sizeInt = ((byte[]) value).length;
+        } else if (value instanceof short[]) {
+            sizeInt = ((short[]) value).length;
+        } else if (value instanceof int[]) {
+            sizeInt = ((int[]) value).length;
+        } else if (value instanceof float[]) {
+            sizeInt = ((float[]) value).length;
+        } else if (value instanceof double[]) {
+            sizeInt = ((double[]) value).length;
+        } else if (value instanceof long[]) {
+            sizeInt = ((long[]) value).length;
+        } else if (value instanceof boolean[]) {
+            sizeInt = ((boolean[]) value).length;
+        } else if (value.getClass().isArray()) {
+            sizeInt = ((Object[]) value).length;
+        } else {
+            throw new IllegalArgumentException("字段" + filed + "类型(" + valueClass + ")不支持size配置");
+        }
+        // 最小元素数量
+        if (size.min != null && sizeInt < size.min) {
+            return false;
+        }
+        // 最大元素数量
+        return size.max == null || sizeInt <= size.max;
     }
 
     @SuppressWarnings({"DuplicatedCode", "rawtypes", "unchecked"})
@@ -491,7 +528,7 @@ public class ValidatorUtils {
     @SuppressWarnings("rawtypes")
     protected boolean notEmpty(final Object obj) {
         if (obj == null) {
-            return false;
+            return true;
         }
         if (obj instanceof CharSequence) {
             return StringUtils.isNotBlank((CharSequence) obj);
