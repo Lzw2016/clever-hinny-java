@@ -163,9 +163,20 @@ public class ValidatorUtils {
                 fieldErrorList.add(new ValidFieldError(filed, value, message, code));
             }
         }
-        // TODO 必须符合指定的正则表达式
+        // 必须符合指定的正则表达式
         if (rule.pattern != null && value != null) {
-
+            boolean success;
+            if (value instanceof CharSequence) {
+                String str = value.toString();
+                success = str.matches(rule.pattern);
+            } else {
+                throw new IllegalArgumentException("字段" + filed + "类型(" + valueClass + ")不支持pattern配置");
+            }
+            if (!success) {
+                message = rule.message == null ? String.format("需要匹配正则表达式[%s]", rule.pattern) : rule.message;
+                code = "pattern";
+                fieldErrorList.add(new ValidFieldError(filed, value, message, code));
+            }
         }
         // 数字位数取值范围
         if (rule.digits != null && value != null) {
@@ -250,7 +261,7 @@ public class ValidatorUtils {
         if (rule.email != null && rule.email && value != null) {
             boolean success;
             if (value instanceof CharSequence) {
-                success = EMAIL.matcher("1").matches();
+                success = EMAIL.matcher((CharSequence) value).matches();
             } else {
                 throw new IllegalArgumentException("字段" + filed + "类型(" + valueClass + ")不支持email配置");
             }
@@ -727,8 +738,10 @@ public class ValidatorUtils {
          * 字符串长度范围
          */
         private RuleItemLength length;
-        /*** TODO 必须符合指定的正则表达式 */
-        private Object pattern;
+        /**
+         * 必须符合指定的正则表达式
+         */
+        private String pattern;
         // ------------------------------------------------------------------------------------------- 数字
         /**
          * 数字位数取值范围
