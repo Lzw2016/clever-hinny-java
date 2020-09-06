@@ -100,6 +100,9 @@ public class ValidatorUtils {
      */
     @SuppressWarnings("unchecked")
     protected void doValid(final ValidResult result, final String filedPath, final Map<String, Object> bean, final Map<String, Object> rule, final boolean fast) {
+        if (fast && result.getErrors().size() > 0) {
+            return;
+        }
         for (Map.Entry<String, Object> entry : rule.entrySet()) {
             final String filed = entry.getKey();                                                                // 字段名
             final String filedCurrentPath = StringUtils.isBlank(filedPath) ? filed : filedPath + "." + filed;   // 字段路径
@@ -117,6 +120,9 @@ public class ValidatorUtils {
                 doValid(result, filedCurrentPath, (Map<String, Object>) value, (Map<String, Object>) ruleItem, fast);
             } else {
                 throw new IllegalArgumentException("校验配置错误：" + filedCurrentPath);
+            }
+            if (fast && result.getErrors().size() > 0) {
+                return;
             }
         }
     }
