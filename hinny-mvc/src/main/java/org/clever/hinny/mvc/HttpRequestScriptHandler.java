@@ -250,9 +250,9 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
     /**
      * 异常处理
      */
-    protected void errHandle(Throwable e) {
-        if (e instanceof RuntimeException) {
-            throw (RuntimeException) e;
+    protected void errHandle(Throwable e) throws Exception {
+        if (e instanceof Exception) {
+            throw (Exception) e;
         }
         throw new RuntimeException(e);
     }
