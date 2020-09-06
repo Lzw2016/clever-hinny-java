@@ -247,6 +247,15 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
      */
     protected abstract String serializeRes(Object res);
 
+    /**
+     * 异常处理
+     */
+    protected void errHandle(Throwable e) {
+        if (e instanceof RuntimeException) {
+            throw (RuntimeException) e;
+        }
+        throw new RuntimeException(e);
+    }
 
     @SuppressWarnings("NullableProblems")
     @Override
@@ -300,6 +309,8 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
                 String json = serializeRes(res);
                 response.getWriter().println(json);
             }
+        } catch (Throwable e) {
+            errHandle(e);
         } finally {
             // 7.归还借得的引擎实例
             if (engineInstance != null) {
