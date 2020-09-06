@@ -2,7 +2,10 @@ package org.clever.hinny.core;
 
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.PropertyEditorRegistry;
+import org.springframework.validation.*;
 
+import java.beans.PropertyEditor;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -23,17 +26,55 @@ public class ValidatorUtils {
     }
 
     /**
-     * 对象数据校验(返回验证结果)
+     * 对象数据校验(数据校验错误抛出异常)
+     *
+     * @param bean 数据对象
+     * @param rule 校验规则
+     * @param fast 快速验证(只要有一个错误就返回)
+     */
+    public void validated(final Map<String, Object> bean, final Map<String, Object> rule, final boolean fast) throws BindException {
+        ValidResult result = valid(bean, rule, fast);
+        if (result != null && result.hasError()) {
+            MapBindingResult mapBindingResult = new MapBindingResult(bean, "beanMap");
+            for (ValidFieldError error : result.getErrors()) {
+                FieldError fieldError = new FieldError(
+                        "beanMap",
+                        error.filed,
+                        error.value,
+                        true,
+                        new String[]{error.code},
+                        null,
+                        error.message
+                );
+                mapBindingResult.addError(fieldError);
+            }
+            throw new BindException(mapBindingResult);
+        }
+    }
+
+    /**
+     * 对象数据校验(数据校验错误抛出异常)
      *
      * @param bean 数据对象
      * @param rule 校验规则
      */
-    public ValidResult valid(Map<String, Object> bean, Map<String, Object> rule) {
+    public void validated(final Map<String, Object> bean, final Map<String, Object> rule) throws BindException {
+        validated(bean, rule, false);
+    }
+
+    /**
+     * 对象数据校验(返回验证结果)
+     *
+     * @param bean 数据对象
+     * @param rule 校验规则
+     * @param fast 快速验证(只要有一个错误就返回)
+     */
+    public ValidResult valid(final Map<String, Object> bean, final Map<String, Object> rule, final boolean fast) {
         final ValidResult result = new ValidResult(false);
         if (bean == null || rule == null) {
             return result;
         }
-        doValid(result, null, bean, rule);
+        doValid(result, null, bean, rule, fast);
         if (result.getErrors().size() > 0) {
             result.setError(true);
         }
@@ -41,13 +82,24 @@ public class ValidatorUtils {
     }
 
     /**
+     * 对象数据校验(返回验证结果)
+     *
+     * @param bean 数据对象
+     * @param rule 校验规则
+     */
+    public ValidResult valid(final Map<String, Object> bean, final Map<String, Object> rule) {
+        return valid(bean, rule, false);
+    }
+
+    /**
      * @param result    校验返回值
      * @param filedPath 校验字段上层路径
      * @param bean      当前层级校验数据
      * @param rule      当前层级校验配置
+     * @param fast      快速验证(只要有一个错误就返回)
      */
     @SuppressWarnings("unchecked")
-    protected void doValid(ValidResult result, String filedPath, Map<String, Object> bean, Map<String, Object> rule) {
+    protected void doValid(final ValidResult result, final String filedPath, final Map<String, Object> bean, final Map<String, Object> rule, final boolean fast) {
         for (Map.Entry<String, Object> entry : rule.entrySet()) {
             final String filed = entry.getKey();                                                                // 字段名
             final String filedCurrentPath = StringUtils.isBlank(filedPath) ? filed : filedPath + "." + filed;   // 字段路径
@@ -58,11 +110,11 @@ public class ValidatorUtils {
             }
             if (ruleItem instanceof ValidatorRuleItem) {
                 // 当前层级校验
-                List<ValidFieldError> fieldErrorList = doValid(bean, filed, value, (ValidatorRuleItem) ruleItem);
+                List<ValidFieldError> fieldErrorList = doValid(bean, filed, value, (ValidatorRuleItem) ruleItem, fast);
                 result.getErrors().addAll(fieldErrorList);
             } else if (ruleItem instanceof Map && value instanceof Map) {
                 // 递归校验
-                doValid(result, filedCurrentPath, (Map<String, Object>) value, (Map<String, Object>) ruleItem);
+                doValid(result, filedCurrentPath, (Map<String, Object>) value, (Map<String, Object>) ruleItem, fast);
             } else {
                 throw new IllegalArgumentException("校验配置错误：" + filedCurrentPath);
             }
@@ -76,9 +128,10 @@ public class ValidatorUtils {
      * @param filed 字段名
      * @param value 字段值
      * @param rule  校验规则
+     * @param fast  快速验证(只要有一个错误就返回)
      * @return 数据校验成功返回空集合，失败返回错误信息
      */
-    protected List<ValidFieldError> doValid(final Map<String, Object> bean, final String filed, final Object value, final ValidatorRuleItem rule) {
+    protected List<ValidFieldError> doValid(final Map<String, Object> bean, final String filed, final Object value, final ValidatorRuleItem rule, final boolean fast) {
         final List<ValidFieldError> fieldErrorList = new ArrayList<>();
         if (rule == null) {
             return fieldErrorList;
@@ -103,18 +156,27 @@ public class ValidatorUtils {
             message = rule.message == null ? "不能为空" : rule.message;
             code = "notEmpty";
             fieldErrorList.add(new ValidFieldError(filed, value, message, code));
+            if (fast) {
+                return fieldErrorList;
+            }
         }
         // 值必须等于给定值
         if (rule.equals != null && value != null && !Objects.equals(rule.equals, value)) {
             message = rule.message == null ? String.format("必须等于“%s”", rule.equals) : rule.message;
             code = "equals";
             fieldErrorList.add(new ValidFieldError(filed, value, message, code));
+            if (fast) {
+                return fieldErrorList;
+            }
         }
         // 值必须在给定值列表内
         if (rule.equalsIn != null && value != null && !rule.equalsIn.contains(value)) {
             message = rule.message == null ? String.format("必须在%s集合内", rule.equalsIn) : rule.message;
             code = "equalsIn";
             fieldErrorList.add(new ValidFieldError(filed, value, message, code));
+            if (fast) {
+                return fieldErrorList;
+            }
         }
         // 数值或者时间必须在指定的范围内
         if (rule.range != null && value != null && !validRange(filed, value, rule.range)) {
@@ -143,6 +205,9 @@ public class ValidatorUtils {
             }
             code = "range";
             fieldErrorList.add(new ValidFieldError(filed, value, message, code));
+            if (fast) {
+                return fieldErrorList;
+            }
         }
         // 非空字符串
         if (rule.notBlank != null && rule.notBlank && value != null) {
@@ -156,6 +221,9 @@ public class ValidatorUtils {
                 message = rule.message == null ? "不能为空" : rule.message;
                 code = "notBlank";
                 fieldErrorList.add(new ValidFieldError(filed, value, message, code));
+                if (fast) {
+                    return fieldErrorList;
+                }
             }
         }
         // 字符串长度范围
@@ -192,6 +260,9 @@ public class ValidatorUtils {
                 }
                 code = "length";
                 fieldErrorList.add(new ValidFieldError(filed, value, message, code));
+                if (fast) {
+                    return fieldErrorList;
+                }
             }
         }
         // 必须符合指定的正则表达式
@@ -207,6 +278,9 @@ public class ValidatorUtils {
                 message = rule.message == null ? String.format("需要匹配正则表达式[%s]", rule.pattern) : rule.message;
                 code = "pattern";
                 fieldErrorList.add(new ValidFieldError(filed, value, message, code));
+                if (fast) {
+                    return fieldErrorList;
+                }
             }
         }
         // 数字位数取值范围
@@ -287,6 +361,9 @@ public class ValidatorUtils {
             message = rule.message == null ? "数组或集合元素个数必须在{}-{}内" : rule.message;
             code = "size";
             fieldErrorList.add(new ValidFieldError(filed, value, message, code));
+            if (fast) {
+                return fieldErrorList;
+            }
         }
         // 必须是电子邮箱地址
         if (rule.email != null && rule.email && value != null) {
@@ -300,6 +377,9 @@ public class ValidatorUtils {
                 message = rule.message == null ? "不是一个合法的电子邮件地址" : rule.message;
                 code = "email";
                 fieldErrorList.add(new ValidFieldError(filed, value, message, code));
+                if (fast) {
+                    return fieldErrorList;
+                }
             }
         }
         // 自定义校验(校验失败返回false)
@@ -310,6 +390,9 @@ public class ValidatorUtils {
                 message = rule.message != null ? rule.message : vc.message == null ? "自定义校验失败" : vc.message;
                 code = "validator";
                 fieldErrorList.add(new ValidFieldError(filed, value, message, code));
+                if (fast) {
+                    return fieldErrorList;
+                }
             }
         }
         return fieldErrorList;
@@ -802,5 +885,193 @@ public class ValidatorUtils {
          * 自定义校验(校验失败返回false)
          */
         private Function<ValidatorContext, Boolean> validator;
+    }
+
+    public static class BindingErrorResult implements BindingResult {
+
+        @Override
+        public Object getTarget() {
+            return null;
+        }
+
+        @Override
+        public Map<String, Object> getModel() {
+            return null;
+        }
+
+        @Override
+        public Object getRawFieldValue(String field) {
+            return null;
+        }
+
+        @Override
+        public PropertyEditor findEditor(String field, Class<?> valueType) {
+            return null;
+        }
+
+        @Override
+        public PropertyEditorRegistry getPropertyEditorRegistry() {
+            return null;
+        }
+
+        @Override
+        public String[] resolveMessageCodes(String errorCode) {
+            return new String[0];
+        }
+
+        @Override
+        public String[] resolveMessageCodes(String errorCode, String field) {
+            return new String[0];
+        }
+
+        @Override
+        public void addError(ObjectError error) {
+
+        }
+
+        @Override
+        public String getObjectName() {
+            return null;
+        }
+
+        @Override
+        public void setNestedPath(String nestedPath) {
+
+        }
+
+        @Override
+        public String getNestedPath() {
+            return null;
+        }
+
+        @Override
+        public void pushNestedPath(String subPath) {
+
+        }
+
+        @Override
+        public void popNestedPath() throws IllegalStateException {
+
+        }
+
+        @Override
+        public void reject(String errorCode) {
+
+        }
+
+        @Override
+        public void reject(String errorCode, String defaultMessage) {
+
+        }
+
+        @Override
+        public void reject(String errorCode, Object[] errorArgs, String defaultMessage) {
+
+        }
+
+        @Override
+        public void rejectValue(String field, String errorCode) {
+
+        }
+
+        @Override
+        public void rejectValue(String field, String errorCode, String defaultMessage) {
+
+        }
+
+        @Override
+        public void rejectValue(String field, String errorCode, Object[] errorArgs, String defaultMessage) {
+
+        }
+
+        @Override
+        public void addAllErrors(Errors errors) {
+
+        }
+
+        @Override
+        public boolean hasErrors() {
+            return false;
+        }
+
+        @Override
+        public int getErrorCount() {
+            return 0;
+        }
+
+        @Override
+        public List<ObjectError> getAllErrors() {
+            return null;
+        }
+
+        @Override
+        public boolean hasGlobalErrors() {
+            return false;
+        }
+
+        @Override
+        public int getGlobalErrorCount() {
+            return 0;
+        }
+
+        @Override
+        public List<ObjectError> getGlobalErrors() {
+            return null;
+        }
+
+        @Override
+        public ObjectError getGlobalError() {
+            return null;
+        }
+
+        @Override
+        public boolean hasFieldErrors() {
+            return false;
+        }
+
+        @Override
+        public int getFieldErrorCount() {
+            return 0;
+        }
+
+        @Override
+        public List<FieldError> getFieldErrors() {
+            return null;
+        }
+
+        @Override
+        public FieldError getFieldError() {
+            return null;
+        }
+
+        @Override
+        public boolean hasFieldErrors(String field) {
+            return false;
+        }
+
+        @Override
+        public int getFieldErrorCount(String field) {
+            return 0;
+        }
+
+        @Override
+        public List<FieldError> getFieldErrors(String field) {
+            return null;
+        }
+
+        @Override
+        public FieldError getFieldError(String field) {
+            return null;
+        }
+
+        @Override
+        public Object getFieldValue(String field) {
+            return null;
+        }
+
+        @Override
+        public Class<?> getFieldType(String field) {
+            return null;
+        }
     }
 }
