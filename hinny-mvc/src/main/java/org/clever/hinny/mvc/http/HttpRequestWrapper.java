@@ -1,7 +1,11 @@
 package org.clever.hinny.mvc.http;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.clever.hinny.api.utils.JacksonMapper;
+import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.util.Assert;
 
 import javax.servlet.DispatcherType;
@@ -496,5 +500,72 @@ public class HttpRequestWrapper {
             queryByPage.put("isSearchCount", BooleanUtils.toBoolean(isSearchCount[0]));
         }
         return queryByPage;
+    }
+
+    /**
+     * 从Body中填充数据
+     */
+    @SuppressWarnings("unchecked")
+    public void fillFromBody(Map<String, Object> model, boolean nullOverride) throws IOException {
+        final String body = StringUtils.trim(IOUtils.toString(delegate.getReader()));
+        // body 内容为空
+        if (StringUtils.isBlank(body)) {
+            return;
+        }
+        // body 不是JSON格式
+        if (!body.startsWith("{") || !body.endsWith("}")) {
+            return;
+        }
+        // 反序列化
+        Map<String, Object> jsonMap;
+        try {
+            jsonMap = (Map<String, Object>) JacksonMapper.getInstance().fromJson(body, LinkedHashMap.class);
+            fillData(model, jsonMap, nullOverride);
+        } catch (Exception e) {
+            if (e instanceof HttpMessageConversionException) {
+                throw e;
+            }
+            throw new HttpMessageConversionException("请求body数据转换失败", e);
+        }
+    }
+
+    /**
+     * 从Params中填充数据
+     */
+    public void fillFromParams(Map<String, Object> model, boolean nullOverride) {
+        Map<String, String[]> params = delegate.getParameterMap();
+        try {
+            fillData(model, params, nullOverride);
+        } catch (Exception e) {
+            if (e instanceof HttpMessageConversionException) {
+                throw e;
+            }
+            throw new HttpMessageConversionException("请求params数据转换失败", e);
+        }
+    }
+
+    /**
+     * 从Body中填充数据然后验证数据
+     */
+    public void fillAndValidatedFromBody(Map<String, Object> model, boolean nullOverride) throws IOException {
+
+    }
+
+    /**
+     * 从Params中填充数据然后验证数据
+     */
+    public void fillAndValidatedFromParams(Map<String, Object> model, boolean nullOverride) {
+
+    }
+
+    /**
+     * 填充数据
+     *
+     * @param model        数据结构以及默认值
+     * @param data         填充数据
+     * @param nullOverride null值是否也要覆盖
+     */
+    protected void fillData(Map<String, Object> model, Map<String, ?> data, boolean nullOverride) {
+        // TODO 填充数据
     }
 }
