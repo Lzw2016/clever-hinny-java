@@ -503,6 +503,13 @@ public class HttpRequestWrapper {
     }
 
     /**
+     * 从Body或者Params中填充数据
+     */
+    public void fillFromAny(Map<String, Object> model, boolean nullOverride) throws IOException {
+        // TODO 从Body或者Params中填充数据
+    }
+
+    /**
      * 从Body中填充数据
      */
     @SuppressWarnings("unchecked")
@@ -545,17 +552,24 @@ public class HttpRequestWrapper {
     }
 
     /**
+     * 从Body或者Params中填充数据然后验证数据
+     */
+    public void fillAndValidatedFromAny(Map<String, Object> model, boolean nullOverride) throws IOException {
+        // TODO 从Body或者Params中填充数据然后验证数据
+    }
+
+    /**
      * 从Body中填充数据然后验证数据
      */
     public void fillAndValidatedFromBody(Map<String, Object> model, boolean nullOverride) throws IOException {
-
+        // TODO 从Body中填充数据然后验证数据
     }
 
     /**
      * 从Params中填充数据然后验证数据
      */
     public void fillAndValidatedFromParams(Map<String, Object> model, boolean nullOverride) {
-
+        // TODO 从Params中填充数据然后验证数据
     }
 
     /**
