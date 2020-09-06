@@ -35,10 +35,10 @@ public class ValidatorUtils {
     public void validated(final Map<String, Object> bean, final Map<String, Object> rule, final boolean fast) throws BindException {
         ValidResult result = valid(bean, rule, fast);
         if (result != null && result.hasError()) {
-            MapBindingResult mapBindingResult = new MapBindingResult(bean, "beanMap");
+            MapBindingResult mapBindingResult = new MapBindingResult(bean, bean.getClass().getName());
             for (ValidFieldError error : result.getErrors()) {
                 FieldError fieldError = new FieldError(
-                        "beanMap",
+                        bean.getClass().getName(),
                         error.filed,
                         error.value,
                         true,
