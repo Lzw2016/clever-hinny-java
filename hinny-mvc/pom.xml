@@ -28,6 +28,10 @@
             <groupId>org.clever</groupId>
             <artifactId>clever-hinny-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.clever</groupId>
+            <artifactId>hinny-core</artifactId>
+        </dependency>
         <!--lib-->
         <dependency>
             <groupId>org.springframework</groupId>

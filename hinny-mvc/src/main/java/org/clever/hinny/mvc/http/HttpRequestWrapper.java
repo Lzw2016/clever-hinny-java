@@ -5,8 +5,10 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.clever.hinny.api.utils.JacksonMapper;
+import org.clever.hinny.core.ValidatorUtils;
 import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.util.Assert;
+import org.springframework.validation.BindException;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.RequestDispatcher;
@@ -503,31 +505,15 @@ public class HttpRequestWrapper {
     }
 
     /**
-     * 从Body或者Params中填充数据
-     */
-    public void fillFromAny(Map<String, Object> model, boolean nullOverride) throws IOException {
-        // TODO 从Body或者Params中填充数据
-    }
-
-    /**
      * 从Body中填充数据
+     *
+     * @param model    数据结构以及初始值
+     * @param fillNull null值是否也要填充
      */
-    @SuppressWarnings("unchecked")
-    public void fillFromBody(Map<String, Object> model, boolean nullOverride) throws IOException {
-        final String body = StringUtils.trim(IOUtils.toString(delegate.getReader()));
-        // body 内容为空
-        if (StringUtils.isBlank(body)) {
-            return;
-        }
-        // body 不是JSON格式
-        if (!body.startsWith("{") || !body.endsWith("}")) {
-            return;
-        }
-        // 反序列化
-        Map<String, Object> jsonMap;
+    public void fillFromBody(Map<String, Object> model, boolean fillNull) throws IOException {
         try {
-            jsonMap = (Map<String, Object>) JacksonMapper.getInstance().fromJson(body, LinkedHashMap.class);
-            fillData(model, jsonMap, nullOverride);
+            Map<String, Object> bodyMap = getBodyMap();
+            fillData(model, bodyMap, fillNull);
         } catch (Exception e) {
             if (e instanceof HttpMessageConversionException) {
                 throw e;
@@ -537,12 +523,24 @@ public class HttpRequestWrapper {
     }
 
     /**
-     * 从Params中填充数据
+     * 从Body中填充数据
+     *
+     * @param model 数据结构以及初始值
      */
-    public void fillFromParams(Map<String, Object> model, boolean nullOverride) {
+    public void fillFromBody(Map<String, Object> model) throws IOException {
+        fillFromBody(model, true);
+    }
+
+    /**
+     * 从Params中填充数据
+     *
+     * @param model    数据结构以及初始值
+     * @param fillNull null值是否也要填充
+     */
+    public void fillFromParams(Map<String, Object> model, boolean fillNull) {
         Map<String, String[]> params = delegate.getParameterMap();
         try {
-            fillData(model, params, nullOverride);
+            fillData(model, params, fillNull);
         } catch (Exception e) {
             if (e instanceof HttpMessageConversionException) {
                 throw e;
@@ -552,34 +550,149 @@ public class HttpRequestWrapper {
     }
 
     /**
-     * 从Body或者Params中填充数据然后验证数据
+     * 从Params中填充数据
+     *
+     * @param model 数据结构以及初始值
      */
-    public void fillAndValidatedFromAny(Map<String, Object> model, boolean nullOverride) throws IOException {
-        // TODO 从Body或者Params中填充数据然后验证数据
+    public void fillFromParams(Map<String, Object> model) {
+        fillFromParams(model, true);
+    }
+
+    /**
+     * 从Body或者Params中填充数据
+     *
+     * @param model    数据结构以及初始值
+     * @param fillNull null值是否也要填充
+     */
+    public void fillFromAny(Map<String, Object> model, boolean fillNull) throws IOException {
+        try {
+            Map<String, String[]> params = delegate.getParameterMap();
+            Map<String, Object> bodyMap = getBodyMap();
+            Map<String, Object> fillMap = new HashMap<>(params.size() + bodyMap.size());
+            fillMap.putAll(params);
+            for (Map.Entry<String, Object> entry : bodyMap.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                if (fillMap.containsKey(key) && model.containsKey(key)) {
+                    throw new IllegalArgumentException("参数字段:" + key + "值冲突，params或body中都存在字段:" + key);
+                }
+                fillMap.put(key, value);
+            }
+            fillData(model, fillMap, fillNull);
+        } catch (Exception e) {
+            if (e instanceof HttpMessageConversionException) {
+                throw e;
+            }
+            throw new HttpMessageConversionException("请求params或body数据转换失败", e);
+        }
+    }
+
+    /**
+     * 从Body或者Params中填充数据
+     *
+     * @param model 数据结构以及初始值
+     */
+    public void fillFromAny(Map<String, Object> model) throws IOException {
+        fillFromAny(model, true);
     }
 
     /**
      * 从Body中填充数据然后验证数据
+     *
+     * @param model    数据结构以及初始值
+     * @param rule     校验规则
+     * @param fillNull null值是否也要填充
+     * @param fast     快速验证(只要有一个错误就抛出异常)
      */
-    public void fillAndValidatedFromBody(Map<String, Object> model, boolean nullOverride) throws IOException {
-        // TODO 从Body中填充数据然后验证数据
+    public void fillAndValidatedFromBody(Map<String, Object> model, Map<String, Object> rule, boolean fillNull, boolean fast) throws IOException, BindException {
+        fillFromBody(model, fillNull);
+        ValidatorUtils.Instance.validated(model, rule, fast);
+    }
+
+    /**
+     * 从Body中填充数据然后验证数据
+     *
+     * @param model 数据结构以及初始值
+     * @param rule  校验规则
+     */
+    public void fillAndValidatedFromBody(Map<String, Object> model, Map<String, Object> rule) throws IOException, BindException {
+        fillAndValidatedFromBody(model, rule, true, false);
     }
 
     /**
      * 从Params中填充数据然后验证数据
+     *
+     * @param model    数据结构以及初始值
+     * @param rule     校验规则
+     * @param fillNull null值是否也要填充
+     * @param fast     快速验证(只要有一个错误就抛出异常)
      */
-    public void fillAndValidatedFromParams(Map<String, Object> model, boolean nullOverride) {
-        // TODO 从Params中填充数据然后验证数据
+    public void fillAndValidatedFromParams(Map<String, Object> model, Map<String, Object> rule, boolean fillNull, boolean fast) throws BindException {
+        fillFromParams(model, fillNull);
+        ValidatorUtils.Instance.validated(model, rule, fast);
+    }
+
+    /**
+     * 从Params中填充数据然后验证数据
+     *
+     * @param model 数据结构以及初始值
+     * @param rule  校验规则
+     */
+    public void fillAndValidatedFromParams(Map<String, Object> model, Map<String, Object> rule) throws BindException {
+        fillAndValidatedFromParams(model, rule, true, false);
+    }
+
+    /**
+     * 从Body或者Params中填充数据然后验证数据
+     *
+     * @param model    数据结构以及初始值
+     * @param rule     校验规则
+     * @param fillNull null值是否也要填充
+     * @param fast     快速验证(只要有一个错误就抛出异常)
+     */
+    public void fillAndValidatedFromAny(Map<String, Object> model, Map<String, Object> rule, boolean fillNull, boolean fast) throws IOException, BindException {
+        fillFromAny(model, fillNull);
+        ValidatorUtils.Instance.validated(model, rule, fast);
+    }
+
+    /**
+     * 从Body或者Params中填充数据然后验证数据
+     *
+     * @param model 数据结构以及初始值
+     * @param rule  校验规则
+     */
+    public void fillAndValidatedFromAny(Map<String, Object> model, Map<String, Object> rule) throws IOException, BindException {
+        fillAndValidatedFromAny(model, rule, true, false);
+    }
+
+    /**
+     * 获取Body数据
+     */
+    @SuppressWarnings("unchecked")
+    protected Map<String, Object> getBodyMap() throws IOException {
+        Map<String, Object> bodyMap = new HashMap<>();
+        final String body = StringUtils.trim(IOUtils.toString(delegate.getReader()));
+        // body 内容为空
+        if (StringUtils.isBlank(body)) {
+            return bodyMap;
+        }
+        // body 不是JSON格式
+        if (!body.startsWith("{") || !body.endsWith("}")) {
+            return bodyMap;
+        }
+        // 反序列化
+        bodyMap = (Map<String, Object>) JacksonMapper.getInstance().fromJson(body, LinkedHashMap.class);
+        return bodyMap;
     }
 
     /**
      * 填充数据
      *
-     * @param model        数据结构以及默认值
-     * @param data         填充数据
-     * @param nullOverride null值是否也要覆盖
+     * @param model    数据结构以及初始值
+     * @param data     填充数据
+     * @param fillNull null值是否也要填充
      */
-    protected void fillData(Map<String, Object> model, Map<String, ?> data, boolean nullOverride) {
+    protected void fillData(Map<String, Object> model, Map<String, ?> data, boolean fillNull) {
         // TODO 填充数据
     }
 }
