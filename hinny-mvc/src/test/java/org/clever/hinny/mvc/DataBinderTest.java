@@ -1,6 +1,5 @@
 package org.clever.hinny.mvc;
 
-import com.sun.beans.editors.FloatEditor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -101,10 +100,10 @@ public class DataBinderTest {
         editor.setAsText("[1,2,3,4]");
         log.info("Value --> {}", editor.getValue());
 
-        // com.sun.beans.editors
-        editor = new FloatEditor();
-        editor.setAsText("123");
-        log.info("Value --> {}", editor.getValue());
+//        // com.sun.beans.editors
+//        editor = new FloatEditor();
+//        editor.setAsText("123");
+//        log.info("Value --> {}", editor.getValue());
     }
 
     @Test
