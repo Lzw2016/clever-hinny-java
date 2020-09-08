@@ -706,7 +706,10 @@ public class HttpRequestWrapper {
      */
     @SuppressWarnings("unchecked")
     protected void fillData(final Map<String, Object> model, final Map<String, ?> data, final boolean fillNull, final int currentDeep) {
-        // TODO 填充数据 conversionService
+        if (model.size() <= 0) {
+            model.putAll(data);
+            return;
+        }
         for (Map.Entry<String, Object> entry : model.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
