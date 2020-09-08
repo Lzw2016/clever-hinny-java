@@ -563,6 +563,25 @@ public class HttpRequestWrapper {
     }
 
     /**
+     * 获取请求参数(Parameter和Body都会取)
+     */
+    public Map<String, Object> getRequestData() throws IOException {
+        Map<String, Object> params = getParams();
+        Map<String, Object> body = getBody();
+        Map<String, Object> data = new HashMap<>(params.size() + body.size());
+        data.putAll(params);
+        for (Map.Entry<String, Object> entry : body.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            if (data.containsKey(key)) {
+                throw new IllegalArgumentException("参数字段:" + key + "值冲突，params或body中都存在字段:" + key);
+            }
+            data.put(key, value);
+        }
+        return data;
+    }
+
+    /**
      * 从Body中填充数据
      *
      * @param model    数据结构以及初始值
