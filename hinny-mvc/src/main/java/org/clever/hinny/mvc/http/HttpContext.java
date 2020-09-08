@@ -1,5 +1,6 @@
 package org.clever.hinny.mvc.http;
 
+import org.springframework.core.convert.ConversionService;
 import org.springframework.util.Assert;
 
 import javax.servlet.ServletContext;
@@ -18,10 +19,10 @@ public class HttpContext {
     public HttpSessionWrapper session;
     public final ServletContextWrapper servletContext;
 
-    public HttpContext(HttpServletRequest request, HttpServletResponse response) {
+    public HttpContext(HttpServletRequest request, HttpServletResponse response, ConversionService conversionService) {
         Assert.notNull(request, "参数request不能为空");
         Assert.notNull(response, "参数response不能为空");
-        this.request = new HttpRequestWrapper(request);
+        this.request = new HttpRequestWrapper(request, conversionService);
         this.response = new HttpResponseWrapper(response);
         HttpSessionWrapper sessionWrapper = null;
         HttpSession httpSession = request.getSession();
@@ -36,6 +37,10 @@ public class HttpContext {
         this.session = sessionWrapper;
         this.servletContext = servletContextWrapper;
         init();
+    }
+
+    public HttpContext(HttpServletRequest request, HttpServletResponse response) {
+        this(request, response, null);
     }
 
     private void init() {
