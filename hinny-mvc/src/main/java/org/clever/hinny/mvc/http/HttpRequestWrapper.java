@@ -10,6 +10,8 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.util.Assert;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BindException;
 
 import javax.servlet.DispatcherType;
@@ -516,6 +518,51 @@ public class HttpRequestWrapper {
     }
 
     /**
+     * 获取参数对象
+     */
+    public Map<String, Object> getParams() {
+        Map<String, String[]> params = delegate.getParameterMap();
+        Map<String, Object> result = new HashMap<>(params.size());
+        for (Map.Entry<String, String[]> entry : params.entrySet()) {
+            String key = entry.getKey();
+            String[] values = entry.getValue();
+            if (values != null && values.length >= 1) {
+                result.put(key, values[0]);
+            } else {
+                result.put(key, null);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 获取Body对象
+     */
+    public Map<String, Object> getBody() throws IOException {
+        return getBodyMap();
+    }
+
+    /**
+     * 获取参数Map
+     */
+    public MultiValueMap<String, String> getParamsMap() {
+        Map<String, String[]> map = delegate.getParameterMap();
+        MultiValueMap<String, String> result = new LinkedMultiValueMap<>();
+        for (Map.Entry<String, String[]> entry : map.entrySet()) {
+            String key = entry.getKey();
+            String[] values = entry.getValue();
+            if (values != null && values.length > 0) {
+                for (String value : values) {
+                    result.add(key, value);
+                }
+            } else {
+                result.add(key, null);
+            }
+        }
+        return result;
+    }
+
+    /**
      * 从Body中填充数据
      *
      * @param model    数据结构以及初始值
@@ -742,13 +789,11 @@ public class HttpRequestWrapper {
             }
             // 数据结构值为“数组”
             if (value.getClass().isArray()) {
-                // TODO 元素类型是否需要处理
                 model.put(key, conversionService.convert(dataValue, value.getClass()));
                 continue;
             }
             // 数据结构值为“集合”
             if (value instanceof Collection) {
-                // TODO 元素类型是否需要处理
                 model.put(key, conversionService.convert(dataValue, value.getClass()));
                 continue;
             }
