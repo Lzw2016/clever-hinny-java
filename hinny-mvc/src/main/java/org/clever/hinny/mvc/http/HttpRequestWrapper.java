@@ -1,11 +1,14 @@
 package org.clever.hinny.mvc.http;
 
+import lombok.Setter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.clever.hinny.api.utils.JacksonMapper;
 import org.clever.hinny.core.ValidatorUtils;
+import org.springframework.core.convert.ConversionService;
+import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.util.Assert;
 import org.springframework.validation.BindException;
@@ -26,6 +29,8 @@ import java.util.*;
  * 创建时间：2019/09/20 17:27 <br/>
  */
 public class HttpRequestWrapper {
+    @Setter
+    private ConversionService conversionService = new DefaultFormattingConversionService();
     protected HttpContext httpContext;
     private final HttpServletRequest delegate;
 
@@ -513,7 +518,7 @@ public class HttpRequestWrapper {
     public void fillFromBody(Map<String, Object> model, boolean fillNull) throws IOException {
         try {
             Map<String, Object> bodyMap = getBodyMap();
-            fillData(model, bodyMap, fillNull);
+            fillData(model, bodyMap, fillNull, 1);
         } catch (Exception e) {
             if (e instanceof HttpMessageConversionException) {
                 throw e;
@@ -540,7 +545,7 @@ public class HttpRequestWrapper {
     public void fillFromParams(Map<String, Object> model, boolean fillNull) {
         Map<String, String[]> params = delegate.getParameterMap();
         try {
-            fillData(model, params, fillNull);
+            fillData(model, params, fillNull, 1);
         } catch (Exception e) {
             if (e instanceof HttpMessageConversionException) {
                 throw e;
@@ -578,7 +583,7 @@ public class HttpRequestWrapper {
                 }
                 fillMap.put(key, value);
             }
-            fillData(model, fillMap, fillNull);
+            fillData(model, fillMap, fillNull, 1);
         } catch (Exception e) {
             if (e instanceof HttpMessageConversionException) {
                 throw e;
@@ -688,11 +693,66 @@ public class HttpRequestWrapper {
     /**
      * 填充数据
      *
-     * @param model    数据结构以及初始值
-     * @param data     填充数据
-     * @param fillNull null值是否也要填充
+     * @param model       数据结构以及初始值
+     * @param data        填充数据
+     * @param fillNull    null值是否也要填充
+     * @param currentDeep 当前填充深度(从1开始)
      */
-    protected void fillData(Map<String, Object> model, Map<String, ?> data, boolean fillNull) {
-        // TODO 填充数据
+    @SuppressWarnings("unchecked")
+    protected void fillData(final Map<String, Object> model, final Map<String, ?> data, final boolean fillNull, final int currentDeep) {
+        // TODO 填充数据 conversionService
+        for (Map.Entry<String, Object> entry : model.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            Object dataValue = data.get(key);
+            // 填充数据为空
+            if (dataValue == null) {
+                if (fillNull) {
+                    model.put(key, null);
+                }
+                continue;
+            }
+            // 如果是dataValue是Parameter中的值，且数组长度为1，者转换成String
+            if (currentDeep == 1 && delegate.getParameterValues(key) != null && dataValue instanceof String[] && ((String[]) dataValue).length <= 1) {
+                dataValue = ((String[]) dataValue)[0];
+            }
+            // 数据结构值为空
+            if (value == null) {
+                model.put(key, dataValue);
+                continue;
+            }
+            // 数据结构值为“Map”
+            if (value instanceof Map) {
+                if (dataValue instanceof Map) {
+                    int nextDeep = currentDeep + 1;
+                    fillData((Map<String, Object>) value, (Map<String, Object>) dataValue, fillNull, nextDeep);
+                } else {
+                    model.put(key, dataValue);
+                }
+                continue;
+            }
+            // 数据结构值为“数组”
+            if (value.getClass().isArray()) {
+                // TODO 元素类型是否需要处理
+                model.put(key, conversionService.convert(dataValue, value.getClass()));
+                continue;
+            }
+            // 数据结构值为“集合”
+            if (value instanceof Collection) {
+                // TODO 元素类型是否需要处理
+                model.put(key, conversionService.convert(dataValue, value.getClass()));
+                continue;
+            }
+            // 数据结构值为“基础类型” (byte | short | int | long | float | double | char | boolean | String)
+            if (value instanceof Number
+                    || value instanceof CharSequence
+                    || value instanceof Character
+                    || value instanceof Boolean) {
+                model.put(key, conversionService.convert(dataValue, value.getClass()));
+                continue;
+            }
+            // 数据结构值为“其他类型”
+            model.put(key, conversionService.convert(dataValue, value.getClass()));
+        }
     }
 }
