@@ -1,6 +1,5 @@
 package org.clever.hinny.mvc.http;
 
-import lombok.Setter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -29,8 +28,7 @@ import java.util.*;
  * 创建时间：2019/09/20 17:27 <br/>
  */
 public class HttpRequestWrapper {
-    @Setter
-    private ConversionService conversionService = new DefaultFormattingConversionService();
+    private final ConversionService conversionService;
     protected HttpContext httpContext;
     private final HttpServletRequest delegate;
 
@@ -40,9 +38,17 @@ public class HttpRequestWrapper {
     //     this.delegate = httpContext.request.delegate;
     // }
 
-    protected HttpRequestWrapper(HttpServletRequest request) {
+    protected HttpRequestWrapper(HttpServletRequest request, ConversionService conversionService) {
         Assert.notNull(request, "参数request不能为空");
         this.delegate = request;
+        if (conversionService == null) {
+            conversionService = new DefaultFormattingConversionService();
+        }
+        this.conversionService = conversionService;
+    }
+
+    protected HttpRequestWrapper(HttpServletRequest request) {
+        this(request, null);
     }
 
     /**
