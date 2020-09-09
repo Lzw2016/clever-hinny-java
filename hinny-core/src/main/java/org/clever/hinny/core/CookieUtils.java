@@ -30,57 +30,76 @@ public class CookieUtils {
      * 设置Cookie
      *
      * @param response HTTP请求
+     * @param path     Cookie的Path
      * @param name     名称
      * @param value    值
      */
-    public void setRooPathCookie(HttpServletResponse response, String name, String value) {
-        org.clever.common.utils.CookieUtils.setRooPathCookie(response, name, value);
+    public static void setCookie(HttpServletResponse response, String path, String name, String value) {
+        org.clever.common.utils.CookieUtils.setCookie(response, path, name, value);
     }
 
     /**
-     * 设置Cookie
+     * 设置Cookie(当前路径)
      *
-     * @param response HTTP请求
-     * @param name     名称
-     * @param value    值
+     * @param name  名称
+     * @param value 值
      */
-    public void setCookie(HttpServletResponse response, String name, String value) {
-        org.clever.common.utils.CookieUtils.setCookie(response, name, value);
+    public static void setCookieForCurrentPath(HttpServletResponse response, String name, String value) {
+        org.clever.common.utils.CookieUtils.setCookieForCurrentPath(response, name, value);
     }
 
     /**
-     * 获得指定Cookie的值
+     * 设置Cookie(根路径)
      *
-     * @param request  请求对象
-     * @param response 响应对象，设置移除Cookie时(isRemove=true),此对象不能传null
-     * @param name     名字
-     * @param isRemove 是否移除
-     * @return Cookie值，不存在返回null
+     * @param name  名称
+     * @param value 值
      */
-    public String getCookie(HttpServletRequest request, HttpServletResponse response, String name, boolean isRemove) {
-        return org.clever.common.utils.CookieUtils.getCookie(request, response, name, isRemove);
+    public static void setCookieForRooPath(HttpServletResponse response, String name, String value) {
+        org.clever.common.utils.CookieUtils.setCookieForRooPath(response, name, value);
     }
 
     /**
      * 获得指定Cookie的值
      *
      * @param request 请求对象
-     * @param name    名称
-     * @return Cookie值
+     * @param name    名字
+     * @return Cookie值，不存在返回null
      */
-    public String getCookie(HttpServletRequest request, String name) {
+    public static String getCookie(HttpServletRequest request, String name) {
         return org.clever.common.utils.CookieUtils.getCookie(request, name);
     }
 
     /**
-     * 获得指定Cookie的值，并删除
+     * 删除指定Cookie
      *
      * @param request  请求对象
      * @param response 响应对象
      * @param name     名称
-     * @return Cookie值
+     * @param path     Cookie的Path
      */
-    public String getCookieAndRemove(HttpServletRequest request, HttpServletResponse response, String name) {
-        return org.clever.common.utils.CookieUtils.getCookieAndRemove(request, response, name);
+    public static void delCookie(HttpServletRequest request, HttpServletResponse response, String name, String path) {
+        org.clever.common.utils.CookieUtils.delCookie(request, response, name, path);
+    }
+
+    /**
+     * 删除指定Cookie(当前路径)
+     *
+     * @param request  请求对象
+     * @param response 响应对象
+     * @param name     名称
+     */
+    public static void delCookieForCurrentPath(HttpServletRequest request, HttpServletResponse response, String name) {
+        org.clever.common.utils.CookieUtils.delCookieForCurrentPath(request, response, name);
+    }
+
+    /**
+     * 删除指定Cookie(根路径)
+     *
+     * @param request  请求对象
+     * @param response 响应对象
+     * @param name     名称
+     */
+    public static void delCookieForRooPath(HttpServletRequest request, HttpServletResponse response, String name) {
+        org.clever.common.utils.CookieUtils.delCookieForRooPath(request, response, name);
     }
 }
