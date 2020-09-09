@@ -283,9 +283,7 @@ public class HttpResponseWrapper {
      */
     public void setDownloadFileName(String fileName, Long contentLength) {
         fileName = StringUtils.trim(fileName);
-        if (!fileName.toLowerCase().endsWith(".xlsx") && !fileName.toLowerCase().endsWith(".xls")) {
-            fileName = fileName + ".xlsx";
-        }
+        Assert.hasText(fileName, "参数fileName不能为空");
         fileName = EncodeDecodeUtils.browserDownloadFileName(httpContext.request.getHeader("User-Agent"), fileName);
         delegate.setContentType("application/force-download");
         delegate.setHeader("Content-Disposition", "attachment;fileName=" + fileName);
