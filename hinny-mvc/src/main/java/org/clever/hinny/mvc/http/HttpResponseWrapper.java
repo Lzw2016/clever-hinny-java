@@ -1,5 +1,7 @@
 package org.clever.hinny.mvc.http;
 
+import org.apache.commons.lang3.StringUtils;
+import org.clever.common.utils.codec.EncodeDecodeUtils;
 import org.springframework.util.Assert;
 
 import javax.servlet.ServletOutputStream;
@@ -272,4 +274,32 @@ public class HttpResponseWrapper {
     }
 
     //---------------------------------------------------------------------------------------------------------------------------------------------- 高阶封装
+
+    /**
+     * 设置当前响应是下载文件
+     *
+     * @param fileName      文件名称
+     * @param contentLength 文件内容大小
+     */
+    public void setDownloadFileName(String fileName, Long contentLength) {
+        fileName = StringUtils.trim(fileName);
+        if (!fileName.toLowerCase().endsWith(".xlsx") && !fileName.toLowerCase().endsWith(".xls")) {
+            fileName = fileName + ".xlsx";
+        }
+        fileName = EncodeDecodeUtils.browserDownloadFileName(httpContext.request.getHeader("User-Agent"), fileName);
+        delegate.setContentType("application/force-download");
+        delegate.setHeader("Content-Disposition", "attachment;fileName=" + fileName);
+        if (contentLength != null && contentLength >= 0) {
+            delegate.setContentLengthLong(contentLength);
+        }
+    }
+
+    /**
+     * 设置当前响应是下载文件
+     *
+     * @param fileName 文件名称
+     */
+    public void setDownloadFileName(String fileName) {
+        setDownloadFileName(fileName, null);
+    }
 }
