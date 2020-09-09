@@ -295,7 +295,7 @@ public class IOUtils {
     /**
      * 写入二进制数据
      */
-    public void writeByteArray(byte[] data, OutputStream output) throws IOException {
+    public void writeByteArray(OutputStream output, byte[] data) throws IOException {
         org.apache.commons.io.IOUtils.write(data, output);
     }
 
