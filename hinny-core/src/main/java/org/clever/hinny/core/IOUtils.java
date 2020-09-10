@@ -27,7 +27,7 @@ public class IOUtils {
      */
     public String getAbsolutePath(String path) {
         File file = new File(path);
-        return file.getAbsolutePath();
+        return FilenameUtils.normalize(file.getAbsolutePath());
     }
 
     /**
