@@ -65,9 +65,9 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      * @param sqlId    SqlID
      * @param paramMap 查询参数
      */
-    public Map<String, Object> queryMap(String sqlId, Map<String, Object> paramMap) {
+    public Map<String, Object> queryEntity(String sqlId, Map<String, Object> paramMap) {
         TupleTow<String, Map<String, Object>> sqlInfo = getSql(sqlId, paramMap);
-        return jdbcDataSource.queryMap(sqlInfo.getValue1(), sqlInfo.getValue2());
+        return jdbcDataSource.queryMap(sqlInfo.getValue1(), sqlInfo.getValue2(), true);
     }
 
     /**
@@ -75,8 +75,8 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      *
      * @param sqlId SqlID
      */
-    public Map<String, Object> queryMap(String sqlId) {
-        return jdbcDataSource.queryMap(getSql(sqlId));
+    public Map<String, Object> queryEntity(String sqlId) {
+        return jdbcDataSource.queryMap(getSql(sqlId), true);
     }
 
     /**
@@ -87,7 +87,7 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      */
     public List<Map<String, Object>> queryList(String sqlId, Map<String, Object> paramMap) {
         TupleTow<String, Map<String, Object>> sqlInfo = getSql(sqlId, paramMap);
-        return jdbcDataSource.queryList(sqlInfo.getValue1(), sqlInfo.getValue2());
+        return jdbcDataSource.queryList(sqlInfo.getValue1(), sqlInfo.getValue2(), true);
     }
 
     /**
@@ -96,7 +96,7 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      * @param sqlId SqlID
      */
     public List<Map<String, Object>> queryList(String sqlId) {
-        return jdbcDataSource.queryList(getSql(sqlId));
+        return jdbcDataSource.queryList(getSql(sqlId), true);
     }
 
     /**
@@ -249,7 +249,7 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      */
     public void query(String sqlId, Map<String, Object> paramMap, int batchSize, Consumer<BatchData> consumer) {
         TupleTow<String, Map<String, Object>> sqlInfo = getSql(sqlId, paramMap);
-        jdbcDataSource.query(sqlInfo.getValue1(), sqlInfo.getValue2(), batchSize, consumer);
+        jdbcDataSource.query(sqlInfo.getValue1(), sqlInfo.getValue2(), batchSize, consumer, true);
     }
 
     /**
@@ -260,7 +260,7 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      * @param consumer  游标批次读取数据消费者
      */
     public void query(String sqlId, int batchSize, Consumer<BatchData> consumer) {
-        jdbcDataSource.query(getSql(sqlId), batchSize, consumer);
+        jdbcDataSource.query(getSql(sqlId), batchSize, consumer, true);
     }
 
     /**
@@ -272,7 +272,7 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      */
     public void query(String sqlId, Map<String, Object> paramMap, Consumer<RowData> consumer) {
         TupleTow<String, Map<String, Object>> sqlInfo = getSql(sqlId, paramMap);
-        jdbcDataSource.query(sqlInfo.getValue1(), sqlInfo.getValue2(), consumer);
+        jdbcDataSource.query(sqlInfo.getValue1(), sqlInfo.getValue2(), consumer, true);
     }
 
     /**
@@ -282,7 +282,7 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      * @param consumer 游标读取数据消费者
      */
     public void query(String sqlId, Consumer<RowData> consumer) {
-        jdbcDataSource.query(getSql(sqlId), consumer);
+        jdbcDataSource.query(getSql(sqlId), consumer, true);
     }
 
     /**
@@ -294,7 +294,7 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      */
     public List<Map<String, Object>> queryBySort(String sqlId, QueryBySort sort, Map<String, Object> paramMap) {
         TupleTow<String, Map<String, Object>> sqlInfo = getSql(sqlId, paramMap);
-        return jdbcDataSource.queryBySort(sqlInfo.getValue1(), sort, sqlInfo.getValue2());
+        return jdbcDataSource.queryBySort(sqlInfo.getValue1(), sort, sqlInfo.getValue2(), true);
     }
 
     /**
@@ -304,7 +304,7 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      * @param sort  排序配置
      */
     public List<Map<String, Object>> queryBySort(String sqlId, QueryBySort sort) {
-        return jdbcDataSource.queryBySort(getSql(sqlId), sort);
+        return jdbcDataSource.queryBySort(getSql(sqlId), sort, true);
     }
 
     /**
@@ -317,7 +317,7 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      */
     public IPage<Map<String, Object>> queryByPage(String sqlId, QueryByPage pagination, Map<String, Object> paramMap, boolean countQuery) {
         TupleTow<String, Map<String, Object>> sqlInfo = getSql(sqlId, paramMap);
-        return jdbcDataSource.queryByPage(sqlInfo.getValue1(), pagination, sqlInfo.getValue2(), countQuery);
+        return jdbcDataSource.queryByPage(sqlInfo.getValue1(), pagination, sqlInfo.getValue2(), countQuery, true);
     }
 
     /**
@@ -329,7 +329,7 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      */
     public IPage<Map<String, Object>> queryByPage(String sqlId, QueryByPage pagination, Map<String, Object> paramMap) {
         TupleTow<String, Map<String, Object>> sqlInfo = getSql(sqlId, paramMap);
-        return jdbcDataSource.queryByPage(sqlInfo.getValue1(), pagination, sqlInfo.getValue2());
+        return jdbcDataSource.queryByPage(sqlInfo.getValue1(), pagination, sqlInfo.getValue2(), true);
     }
 
     /**
@@ -340,7 +340,7 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      * @param countQuery 是否要执行count查询(可选)
      */
     public IPage<Map<String, Object>> queryByPage(String sqlId, QueryByPage pagination, boolean countQuery) {
-        return jdbcDataSource.queryByPage(getSql(sqlId), pagination, countQuery);
+        return jdbcDataSource.queryByPage(getSql(sqlId), pagination, Collections.emptyMap(), countQuery, true);
     }
 
     /**
@@ -350,18 +350,7 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      * @param pagination 分页配置(支持排序)
      */
     public IPage<Map<String, Object>> queryByPage(String sqlId, QueryByPage pagination) {
-        return jdbcDataSource.queryByPage(getSql(sqlId), pagination);
-    }
-
-    /**
-     * 查询数据库表数据
-     *
-     * @param tableName         表名称
-     * @param whereMap          更新条件字段(只支持=，and条件)
-     * @param camelToUnderscore 字段驼峰转下划线(可选)
-     */
-    public List<Map<String, Object>> queryTableList(String tableName, Map<String, Object> whereMap, boolean camelToUnderscore) {
-        return jdbcDataSource.queryTableList(tableName, whereMap, camelToUnderscore);
+        return jdbcDataSource.queryByPage(getSql(sqlId), pagination, Collections.emptyMap(), true, true);
     }
 
     /**
@@ -371,18 +360,7 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      * @param whereMap  更新条件字段(只支持=，and条件)
      */
     public List<Map<String, Object>> queryTableList(String tableName, Map<String, Object> whereMap) {
-        return jdbcDataSource.queryTableList(tableName, whereMap);
-    }
-
-    /**
-     * 查询数据库表数据
-     *
-     * @param tableName         表名称
-     * @param whereMap          更新条件字段(只支持=，and条件)
-     * @param camelToUnderscore 字段驼峰转下划线(可选)
-     */
-    public Map<String, Object> queryTableMap(String tableName, Map<String, Object> whereMap, boolean camelToUnderscore) {
-        return jdbcDataSource.queryTableMap(tableName, whereMap, camelToUnderscore);
+        return jdbcDataSource.queryTableList(tableName, whereMap, true, true);
     }
 
     /**
@@ -391,8 +369,8 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      * @param tableName 表名称
      * @param whereMap  更新条件字段(只支持=，and条件)
      */
-    public Map<String, Object> queryTableMap(String tableName, Map<String, Object> whereMap) {
-        return jdbcDataSource.queryTableMap(tableName, whereMap);
+    public Map<String, Object> queryTableEntity(String tableName, Map<String, Object> whereMap) {
+        return jdbcDataSource.queryTableMap(tableName, whereMap, true, true);
     }
 
     // --------------------------------------------------------------------------------------------
@@ -422,36 +400,12 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
     /**
      * 更新数据库表数据
      *
-     * @param tableName         表名称
-     * @param fields            更新字段值
-     * @param whereMap          更新条件字段(只支持=，and条件)
-     * @param camelToUnderscore 字段驼峰转下划线(可选)
-     */
-    public int updateTable(String tableName, Map<String, Object> fields, Map<String, Object> whereMap, boolean camelToUnderscore) {
-        return jdbcDataSource.updateTable(tableName, fields, whereMap, camelToUnderscore);
-    }
-
-    /**
-     * 更新数据库表数据
-     *
      * @param tableName 表名称
      * @param fields    更新字段值
      * @param whereMap  更新条件字段(只支持=，and条件)
      */
     public int updateTable(String tableName, Map<String, Object> fields, Map<String, Object> whereMap) {
-        return jdbcDataSource.updateTable(tableName, fields, whereMap);
-    }
-
-    /**
-     * 更新数据库表数据
-     *
-     * @param tableName         表名称
-     * @param fields            更新字段值
-     * @param where             自定义where条件(不用写where关键字)
-     * @param camelToUnderscore 字段驼峰转下划线(可选)
-     */
-    public int updateTable(String tableName, Map<String, Object> fields, String where, boolean camelToUnderscore) {
-        return jdbcDataSource.updateTable(tableName, fields, where, camelToUnderscore);
+        return jdbcDataSource.updateTable(tableName, fields, whereMap, true);
     }
 
     /**
@@ -462,7 +416,7 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      * @param where     自定义where条件(不用写where关键字)
      */
     public int updateTable(String tableName, Map<String, Object> fields, String where) {
-        return jdbcDataSource.updateTable(tableName, fields, where);
+        return jdbcDataSource.updateTable(tableName, fields, where, true);
     }
 
     /**
@@ -482,22 +436,11 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
     /**
      * 删除数据库表数据
      *
-     * @param tableName         表名称
-     * @param whereMap          更新条件字段(只支持=，and条件)
-     * @param camelToUnderscore 字段驼峰转下划线(可选)
-     */
-    public int deleteTable(String tableName, Map<String, Object> whereMap, boolean camelToUnderscore) {
-        return jdbcDataSource.deleteTable(tableName, whereMap, camelToUnderscore);
-    }
-
-    /**
-     * 删除数据库表数据
-     *
      * @param tableName 表名称
      * @param whereMap  更新条件字段(只支持=，and条件)
      */
     public int deleteTable(String tableName, Map<String, Object> whereMap) {
-        return jdbcDataSource.deleteTable(tableName, whereMap);
+        return jdbcDataSource.deleteTable(tableName, whereMap, true);
     }
 
     // --------------------------------------------------------------------------------------------
@@ -527,33 +470,11 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
     /**
      * 数据插入到表
      *
-     * @param tableName         表名称
-     * @param fields            字段名
-     * @param camelToUnderscore 字段驼峰转下划线(可选)
-     */
-    public InsertResult insertTable(String tableName, Map<String, Object> fields, boolean camelToUnderscore) {
-        return jdbcDataSource.insertTable(tableName, fields, camelToUnderscore);
-    }
-
-    /**
-     * 数据插入到表
-     *
      * @param tableName 表名称
      * @param fields    字段名
      */
     public InsertResult insertTable(String tableName, Map<String, Object> fields) {
-        return jdbcDataSource.insertTable(tableName, fields);
-    }
-
-    /**
-     * 数据插入到表
-     *
-     * @param tableName         表名称
-     * @param fieldsList        字段名集合
-     * @param camelToUnderscore 字段驼峰转下划线(可选)
-     */
-    public List<InsertResult> insertTables(String tableName, Collection<Map<String, Object>> fieldsList, boolean camelToUnderscore) {
-        return jdbcDataSource.insertTables(tableName, fieldsList, camelToUnderscore);
+        return jdbcDataSource.insertTable(tableName, fields, true);
     }
 
     /**
@@ -563,7 +484,7 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
      * @param fieldsList 字段名集合
      */
     public List<InsertResult> insertTables(String tableName, Collection<Map<String, Object>> fieldsList) {
-        return jdbcDataSource.insertTables(tableName, fieldsList);
+        return jdbcDataSource.insertTables(tableName, fieldsList, true);
     }
 
     // --------------------------------------------------------------------------------------------
