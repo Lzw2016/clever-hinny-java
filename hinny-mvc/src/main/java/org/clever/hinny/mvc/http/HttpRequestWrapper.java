@@ -829,10 +829,8 @@ public class HttpRequestWrapper {
 
     /**
      * 获取第一个上传的文件
-     *
-     * @param filename 文件名称
      */
-    public UploadFile getFirstUploadFile(String filename) {
+    public UploadFile getFirstUploadFile() {
         Assert.isTrue(delegate instanceof MultipartHttpServletRequest, "当前请求并非上传文件的请求");
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) delegate;
         MultiValueMap<String, MultipartFile> fileMap = multipartRequest.getMultiFileMap();
