@@ -592,6 +592,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param paramMap         参数，参数格式[:param]
      * @param underlineToCamel 下划线转驼峰
      */
+    @SuppressWarnings("DuplicatedCode")
     public List<Map<String, Object>> queryBySort(String sql, QueryBySort sort, Map<String, Object> paramMap, boolean underlineToCamel) {
         Assert.hasText(sql, "sql不能为空");
         sql = StringUtils.trim(sql);
