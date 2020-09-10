@@ -282,7 +282,7 @@ public class JdbcDataSource extends AbstractDataSource {
     /**
      * 查询多条数据，返回一个Map数组
      *
-     * @param sql sql脚本，参数格式[:param]
+     * @param sql              sql脚本，参数格式[:param]
      * @param underlineToCamel 下划线转驼峰
      */
     public List<Map<String, Object>> queryList(String sql, boolean underlineToCamel) {
@@ -620,9 +620,9 @@ public class JdbcDataSource extends AbstractDataSource {
     /**
      * 排序查询
      *
-     * @param sql               sql脚本，参数格式[:param]
-     * @param sort              排序配置
-     * @param underlineToCamel  下划线转驼峰
+     * @param sql              sql脚本，参数格式[:param]
+     * @param sort             排序配置
+     * @param underlineToCamel 下划线转驼峰
      */
     public List<Map<String, Object>> queryBySort(String sql, QueryBySort sort, boolean underlineToCamel) {
         return queryBySort(sql, sort, Collections.emptyMap(), underlineToCamel);
@@ -791,7 +791,7 @@ public class JdbcDataSource extends AbstractDataSource {
         String sql = StringUtils.trim(tupleTow.getValue1());
         Map<String, Object> data = queryMap(sql, tupleTow.getValue2());
         if (underlineToCamel) {
-            data = UnderlineToCamelUtils.underlineToCamel(whereMap);
+            data = UnderlineToCamelUtils.underlineToCamel(data);
         }
         return data;
     }
@@ -1210,7 +1210,7 @@ public class JdbcDataSource extends AbstractDataSource {
     }
 
     // --------------------------------------------------------------------------------------------
-    //  内部 函数
+    //  内部函数
     // --------------------------------------------------------------------------------------------
 
     /**
