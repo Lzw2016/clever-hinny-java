@@ -13,6 +13,8 @@ import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BindException;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.RequestDispatcher;
@@ -21,7 +23,9 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.Principal;
 import java.util.*;
 
@@ -743,6 +747,107 @@ public class HttpRequestWrapper {
     }
 
     /**
+     * 获取上传的文件名称
+     */
+    public List<String> getUploadFileNames() {
+        Assert.isTrue(delegate instanceof MultipartHttpServletRequest, "当前请求并非上传文件的请求");
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) delegate;
+        List<String> fileNames = new ArrayList<>();
+        Iterator<String> names = multipartRequest.getFileNames();
+        while (names.hasNext()) {
+            fileNames.add(names.next());
+        }
+        return fileNames;
+    }
+
+    /**
+     * 获取上传的文件
+     *
+     * @param filename 文件名称
+     */
+    public UploadFile getUploadFile(String filename) {
+        Assert.isTrue(delegate instanceof MultipartHttpServletRequest, "当前请求并非上传文件的请求");
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) delegate;
+        MultipartFile file = multipartRequest.getFile(filename);
+        if (file == null) {
+            return null;
+        }
+        return new UploadFile(file);
+    }
+
+    /**
+     * 获取上传的文件
+     *
+     * @param filename 文件名称
+     */
+    public List<UploadFile> getUploadFiles(String filename) {
+        Assert.isTrue(delegate instanceof MultipartHttpServletRequest, "当前请求并非上传文件的请求");
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) delegate;
+        List<MultipartFile> files = multipartRequest.getFiles(filename);
+        List<UploadFile> uploadFiles = new ArrayList<>(files.size());
+        for (MultipartFile file : files) {
+            uploadFiles.add(new UploadFile(file));
+        }
+        return uploadFiles;
+    }
+
+    /**
+     * 获取所有上传的文件
+     */
+    public MultiValueMap<String, UploadFile> getAllUploadFiles() {
+        Assert.isTrue(delegate instanceof MultipartHttpServletRequest, "当前请求并非上传文件的请求");
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) delegate;
+        MultiValueMap<String, MultipartFile> fileMap = multipartRequest.getMultiFileMap();
+        MultiValueMap<String, UploadFile> multiFiles = new LinkedMultiValueMap<>(fileMap.size());
+        for (Map.Entry<String, List<MultipartFile>> entry : fileMap.entrySet()) {
+            String name = entry.getKey();
+            List<MultipartFile> files = entry.getValue();
+            List<UploadFile> uploadFiles = new ArrayList<>(files == null ? 0 : files.size());
+            if (files != null) {
+                for (MultipartFile file : files) {
+                    uploadFiles.add(new UploadFile(file));
+                }
+            }
+            multiFiles.put(name, uploadFiles);
+        }
+        return multiFiles;
+    }
+
+    /**
+     * 获取所有上传的文件
+     *
+     * @param filename 文件名称
+     */
+    public List<UploadFile> getAllUploadFiles(String filename) {
+        MultiValueMap<String, UploadFile> allFiles = getAllUploadFiles();
+        List<UploadFile> allUploadFiles = new ArrayList<>(allFiles.size());
+        for (List<UploadFile> files : allFiles.values()) {
+            allUploadFiles.addAll(files);
+        }
+        return allUploadFiles;
+    }
+
+    /**
+     * 获取第一个上传的文件
+     *
+     * @param filename 文件名称
+     */
+    public UploadFile getFirstUploadFile(String filename) {
+        Assert.isTrue(delegate instanceof MultipartHttpServletRequest, "当前请求并非上传文件的请求");
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) delegate;
+        MultiValueMap<String, MultipartFile> fileMap = multipartRequest.getMultiFileMap();
+        for (Map.Entry<String, List<MultipartFile>> entry : fileMap.entrySet()) {
+            List<MultipartFile> files = entry.getValue();
+            for (MultipartFile file : files) {
+                if (!file.isEmpty()) {
+                    return new UploadFile(file);
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * 获取Body数据
      */
     @SuppressWarnings("unchecked")
@@ -826,6 +931,70 @@ public class HttpRequestWrapper {
             }
             // 数据结构值为“其他类型”
             model.put(key, conversionService.convert(dataValue, value.getClass()));
+        }
+    }
+
+    public static class UploadFile {
+        private final MultipartFile multipartFile;
+
+        public UploadFile(MultipartFile multipartFile) {
+            this.multipartFile = multipartFile;
+        }
+
+        /**
+         * 参数的名称
+         */
+        public String getName() {
+            return multipartFile.getName();
+        }
+
+        /**
+         * 原始文件名，如果在多部分形式中未选择文件，则为空字符串；如果未定义或不可用，则为空字符串
+         */
+        public String getOriginalFilename() {
+            return multipartFile.getOriginalFilename();
+        }
+
+        /**
+         * 内容类型，如果未定义，则为空（或在多部分形式中未选择文件）
+         */
+        public String getContentType() {
+            return multipartFile.getContentType();
+        }
+
+        /**
+         * 返回上传的文件是否为空，即没有在多部分表单中选择文件或所选文件没有内容
+         */
+        public boolean isEmpty() {
+            return multipartFile.isEmpty();
+        }
+
+        /**
+         * 文件的大小，如果为空，则为0
+         */
+        public long getSize() {
+            return multipartFile.getSize();
+        }
+
+        /**
+         * 文件的内容为字节，如果为空，则为空字节数组
+         */
+        public byte[] getBytes() throws IOException {
+            return multipartFile.getBytes();
+        }
+
+        /**
+         * 文件的内容为流，如果为空，则为空流
+         */
+        public InputStream getInputStream() throws IOException {
+            return multipartFile.getInputStream();
+        }
+
+        /**
+         * 将接收到的文件传输到给定的目标文件
+         */
+        public void transferTo(String filePath) throws IOException, IllegalStateException {
+            multipartFile.transferTo(new File(filePath));
         }
     }
 }
