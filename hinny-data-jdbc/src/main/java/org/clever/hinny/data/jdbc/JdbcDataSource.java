@@ -46,6 +46,14 @@ import java.util.function.Consumer;
 @Slf4j
 public class JdbcDataSource extends AbstractDataSource {
     /**
+     * 默认需要下划线转驼峰
+     */
+    private static final boolean Default_UnderlineToCamel = true;
+    /**
+     * 默认需要驼峰转下划线
+     */
+    private static final boolean Default_CamelToUnderscore = true;
+    /**
      * 分页时最大的页大小
      */
     private static final int Max_Page_Size = 1000;
@@ -197,16 +205,40 @@ public class JdbcDataSource extends AbstractDataSource {
     /**
      * 查询一条数据，返回一个Map
      *
-     * @param sql      sql脚本，参数格式[:param]
-     * @param paramMap 参数(可选)，参数格式[:param]
+     * @param sql              sql脚本，参数格式[:param]
+     * @param paramMap         参数(可选)，参数格式[:param]
+     * @param underlineToCamel 下划线转驼峰
      */
-    public Map<String, Object> queryMap(String sql, Map<String, Object> paramMap) {
+    public Map<String, Object> queryMap(String sql, Map<String, Object> paramMap, boolean underlineToCamel) {
         Assert.hasText(sql, "sql不能为空");
         sql = StringUtils.trim(sql);
         SqlLoggerUtils.printfSql(sql, paramMap);
         Map<String, Object> res = jdbcTemplate.queryForObject(sql, paramMap, new ColumnMapRowMapper());
         SqlLoggerUtils.printfTotal(res);
+        if (underlineToCamel) {
+            res = UnderlineToCamelUtils.underlineToCamel(res);
+        }
         return res;
+    }
+
+    /**
+     * 查询一条数据，返回一个Map
+     *
+     * @param sql      sql脚本，参数格式[:param]
+     * @param paramMap 参数(可选)，参数格式[:param]
+     */
+    public Map<String, Object> queryMap(String sql, Map<String, Object> paramMap) {
+        return queryMap(sql, paramMap, Default_UnderlineToCamel);
+    }
+
+    /**
+     * 查询一条数据，返回一个Map
+     *
+     * @param sql              sql脚本，参数格式[:param]
+     * @param underlineToCamel 下划线转驼峰
+     */
+    public Map<String, Object> queryMap(String sql, boolean underlineToCamel) {
+        return queryMap(sql, Collections.emptyMap(), underlineToCamel);
     }
 
     /**
@@ -215,7 +247,26 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param sql sql脚本，参数格式[:param]
      */
     public Map<String, Object> queryMap(String sql) {
-        return queryMap(sql, Collections.emptyMap());
+        return queryMap(sql, Collections.emptyMap(), Default_UnderlineToCamel);
+    }
+
+    /**
+     * 查询多条数据，返回一个Map数组
+     *
+     * @param sql              sql脚本，参数格式[:param]
+     * @param paramMap         参数(可选)，参数格式[:param]
+     * @param underlineToCamel 下划线转驼峰
+     */
+    public List<Map<String, Object>> queryList(String sql, Map<String, Object> paramMap, boolean underlineToCamel) {
+        Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
+        SqlLoggerUtils.printfSql(sql, paramMap);
+        List<Map<String, Object>> resList = jdbcTemplate.queryForList(sql, paramMap);
+        SqlLoggerUtils.printfTotal(resList);
+        if (underlineToCamel) {
+            resList = UnderlineToCamelUtils.underlineToCamel(resList);
+        }
+        return resList;
     }
 
     /**
@@ -225,12 +276,17 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param paramMap 参数(可选)，参数格式[:param]
      */
     public List<Map<String, Object>> queryList(String sql, Map<String, Object> paramMap) {
-        Assert.hasText(sql, "sql不能为空");
-        sql = StringUtils.trim(sql);
-        SqlLoggerUtils.printfSql(sql, paramMap);
-        List<Map<String, Object>> resList = jdbcTemplate.queryForList(sql, paramMap);
-        SqlLoggerUtils.printfTotal(resList);
-        return resList;
+        return queryList(sql, paramMap, Default_UnderlineToCamel);
+    }
+
+    /**
+     * 查询多条数据，返回一个Map数组
+     *
+     * @param sql sql脚本，参数格式[:param]
+     * @param underlineToCamel 下划线转驼峰
+     */
+    public List<Map<String, Object>> queryList(String sql, boolean underlineToCamel) {
+        return queryList(sql, Collections.emptyMap(), underlineToCamel);
     }
 
     /**
@@ -239,7 +295,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param sql sql脚本，参数格式[:param]
      */
     public List<Map<String, Object>> queryList(String sql) {
-        return queryList(sql, Collections.emptyMap());
+        return queryList(sql, Collections.emptyMap(), Default_UnderlineToCamel);
     }
 
     /**
@@ -418,17 +474,18 @@ public class JdbcDataSource extends AbstractDataSource {
     /**
      * 查询多条数据(大量数据)，使用游标读取
      *
-     * @param sql       sql脚本，参数格式[:param]
-     * @param paramMap  参数(可选)，参数格式[:param]
-     * @param batchSize 一个批次的数据量
-     * @param consumer  游标批次读取数据消费者
+     * @param sql              sql脚本，参数格式[:param]
+     * @param paramMap         参数(可选)，参数格式[:param]
+     * @param batchSize        一个批次的数据量
+     * @param consumer         游标批次读取数据消费者
+     * @param underlineToCamel 下划线转驼峰
      */
-    public void query(String sql, Map<String, Object> paramMap, int batchSize, Consumer<BatchData> consumer) {
+    public void query(String sql, Map<String, Object> paramMap, int batchSize, Consumer<BatchData> consumer, boolean underlineToCamel) {
         Assert.hasText(sql, "sql不能为空");
         Assert.notNull(consumer, "数据消费者不能为空");
         sql = StringUtils.trim(sql);
         SqlLoggerUtils.printfSql(sql, paramMap);
-        final BatchDataReaderCallback batchDataReaderCallback = new BatchDataReaderCallback(batchSize, consumer);
+        final BatchDataReaderCallback batchDataReaderCallback = new BatchDataReaderCallback(batchSize, consumer, underlineToCamel);
         if (paramMap == null) {
             jdbcTemplate.query(sql, batchDataReaderCallback);
         } else {
@@ -442,26 +499,51 @@ public class JdbcDataSource extends AbstractDataSource {
      * 查询多条数据(大量数据)，使用游标读取
      *
      * @param sql       sql脚本，参数格式[:param]
+     * @param paramMap  参数(可选)，参数格式[:param]
      * @param batchSize 一个批次的数据量
      * @param consumer  游标批次读取数据消费者
      */
-    public void query(String sql, int batchSize, Consumer<BatchData> consumer) {
-        query(sql, null, batchSize, consumer);
+    public void query(String sql, Map<String, Object> paramMap, int batchSize, Consumer<BatchData> consumer) {
+        query(sql, paramMap, batchSize, consumer, Default_UnderlineToCamel);
     }
 
     /**
      * 查询多条数据(大量数据)，使用游标读取
      *
-     * @param sql      sql脚本，参数格式[:param]
-     * @param paramMap 参数(可选)，参数格式[:param]
-     * @param consumer 游标读取数据消费者
+     * @param sql              sql脚本，参数格式[:param]
+     * @param batchSize        一个批次的数据量
+     * @param consumer         游标批次读取数据消费者
+     * @param underlineToCamel 下划线转驼峰
      */
-    public void query(String sql, Map<String, Object> paramMap, Consumer<RowData> consumer) {
+    public void query(String sql, int batchSize, Consumer<BatchData> consumer, boolean underlineToCamel) {
+        query(sql, null, batchSize, consumer, underlineToCamel);
+    }
+
+    /**
+     * 查询多条数据(大量数据)，使用游标读取
+     *
+     * @param sql       sql脚本，参数格式[:param]
+     * @param batchSize 一个批次的数据量
+     * @param consumer  游标批次读取数据消费者
+     */
+    public void query(String sql, int batchSize, Consumer<BatchData> consumer) {
+        query(sql, null, batchSize, consumer, Default_UnderlineToCamel);
+    }
+
+    /**
+     * 查询多条数据(大量数据)，使用游标读取
+     *
+     * @param sql              sql脚本，参数格式[:param]
+     * @param paramMap         参数(可选)，参数格式[:param]
+     * @param consumer         游标读取数据消费者
+     * @param underlineToCamel 下划线转驼峰
+     */
+    public void query(String sql, Map<String, Object> paramMap, Consumer<RowData> consumer, boolean underlineToCamel) {
         Assert.hasText(sql, "sql不能为空");
         Assert.notNull(consumer, "数据消费者不能为空");
         sql = StringUtils.trim(sql);
         SqlLoggerUtils.printfSql(sql, paramMap);
-        final RowDataReaderCallback rowDataReaderCallback = new RowDataReaderCallback(consumer);
+        final RowDataReaderCallback rowDataReaderCallback = new RowDataReaderCallback(consumer, underlineToCamel);
         if (paramMap == null) {
             jdbcTemplate.query(sql, rowDataReaderCallback);
         } else {
@@ -474,10 +556,54 @@ public class JdbcDataSource extends AbstractDataSource {
      * 查询多条数据(大量数据)，使用游标读取
      *
      * @param sql      sql脚本，参数格式[:param]
+     * @param paramMap 参数(可选)，参数格式[:param]
+     * @param consumer 游标读取数据消费者
+     */
+    public void query(String sql, Map<String, Object> paramMap, Consumer<RowData> consumer) {
+        query(sql, paramMap, consumer, Default_UnderlineToCamel);
+    }
+
+    /**
+     * 查询多条数据(大量数据)，使用游标读取
+     *
+     * @param sql              sql脚本，参数格式[:param]
+     * @param consumer         游标读取数据消费者
+     * @param underlineToCamel 下划线转驼峰
+     */
+    public void query(String sql, Consumer<RowData> consumer, boolean underlineToCamel) {
+        query(sql, null, consumer, underlineToCamel);
+    }
+
+    /**
+     * 查询多条数据(大量数据)，使用游标读取
+     *
+     * @param sql      sql脚本，参数格式[:param]
      * @param consumer 游标读取数据消费者
      */
     public void query(String sql, Consumer<RowData> consumer) {
-        query(sql, null, consumer);
+        query(sql, null, consumer, Default_UnderlineToCamel);
+    }
+
+    /**
+     * 排序查询
+     *
+     * @param sql              sql脚本，参数格式[:param]
+     * @param sort             排序配置
+     * @param paramMap         参数，参数格式[:param]
+     * @param underlineToCamel 下划线转驼峰
+     */
+    public List<Map<String, Object>> queryBySort(String sql, QueryBySort sort, Map<String, Object> paramMap, boolean underlineToCamel) {
+        Assert.hasText(sql, "sql不能为空");
+        sql = StringUtils.trim(sql);
+        // 构造排序以及分页sql
+        String sortSql = SqlUtils.concatOrderBy(sql, sort);
+        SqlLoggerUtils.printfSql(sortSql, paramMap);
+        List<Map<String, Object>> res = jdbcTemplate.queryForList(sortSql, paramMap);
+        SqlLoggerUtils.printfTotal(res);
+        if (underlineToCamel) {
+            res = UnderlineToCamelUtils.underlineToCamel(res);
+        }
+        return res;
     }
 
     /**
@@ -488,14 +614,18 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param paramMap 参数，参数格式[:param]
      */
     public List<Map<String, Object>> queryBySort(String sql, QueryBySort sort, Map<String, Object> paramMap) {
-        Assert.hasText(sql, "sql不能为空");
-        sql = StringUtils.trim(sql);
-        // 构造排序以及分页sql
-        String sortSql = SqlUtils.concatOrderBy(sql, sort);
-        SqlLoggerUtils.printfSql(sortSql, paramMap);
-        List<Map<String, Object>> res = jdbcTemplate.queryForList(sortSql, paramMap);
-        SqlLoggerUtils.printfTotal(res);
-        return res;
+        return queryBySort(sql, sort, paramMap, Default_UnderlineToCamel);
+    }
+
+    /**
+     * 排序查询
+     *
+     * @param sql               sql脚本，参数格式[:param]
+     * @param sort              排序配置
+     * @param underlineToCamel  下划线转驼峰
+     */
+    public List<Map<String, Object>> queryBySort(String sql, QueryBySort sort, boolean underlineToCamel) {
+        return queryBySort(sql, sort, Collections.emptyMap(), underlineToCamel);
     }
 
     /**
@@ -505,18 +635,19 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param sort 排序配置
      */
     public List<Map<String, Object>> queryBySort(String sql, QueryBySort sort) {
-        return queryBySort(sql, sort, Collections.emptyMap());
+        return queryBySort(sql, sort, Collections.emptyMap(), Default_UnderlineToCamel);
     }
 
     /**
      * 分页查询(支持排序)，返回分页对象
      *
-     * @param sql        sql脚本，参数格式[:param]
-     * @param pagination 分页配置(支持排序)
-     * @param paramMap   参数，参数格式[:param]
-     * @param countQuery 是否要执行count查询(可选)
+     * @param sql              sql脚本，参数格式[:param]
+     * @param pagination       分页配置(支持排序)
+     * @param paramMap         参数，参数格式[:param]
+     * @param countQuery       是否要执行count查询(可选)
+     * @param underlineToCamel 下划线转驼峰
      */
-    public IPage<Map<String, Object>> queryByPage(String sql, QueryByPage pagination, Map<String, Object> paramMap, boolean countQuery) {
+    public IPage<Map<String, Object>> queryByPage(String sql, QueryByPage pagination, Map<String, Object> paramMap, boolean countQuery, boolean underlineToCamel) {
         Assert.hasText(sql, "sql不能为空");
         Assert.notNull(pagination, "分页配置不能为空");
         sql = StringUtils.trim(sql);
@@ -542,6 +673,9 @@ public class JdbcDataSource extends AbstractDataSource {
         List<Map<String, Object>> listData = jdbcTemplate.queryForList(pageSql, paramMap);
         SqlLoggerUtils.printfTotal(listData);
         // 设置返回数据
+        if (underlineToCamel) {
+            listData = UnderlineToCamelUtils.underlineToCamel(listData);
+        }
         page.setRecords(listData);
         // 排序信息
         List<String> orderFieldsTmp = pagination.getOrderFieldsSql();
@@ -563,9 +697,21 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param sql        sql脚本，参数格式[:param]
      * @param pagination 分页配置(支持排序)
      * @param paramMap   参数，参数格式[:param]
+     * @param countQuery 是否要执行count查询(可选)
+     */
+    public IPage<Map<String, Object>> queryByPage(String sql, QueryByPage pagination, Map<String, Object> paramMap, boolean countQuery) {
+        return queryByPage(sql, pagination, paramMap, countQuery, Default_UnderlineToCamel);
+    }
+
+    /**
+     * 分页查询(支持排序)，返回分页对象
+     *
+     * @param sql        sql脚本，参数格式[:param]
+     * @param pagination 分页配置(支持排序)
+     * @param paramMap   参数，参数格式[:param]
      */
     public IPage<Map<String, Object>> queryByPage(String sql, QueryByPage pagination, Map<String, Object> paramMap) {
-        return queryByPage(sql, pagination, paramMap, true);
+        return queryByPage(sql, pagination, paramMap, true, Default_UnderlineToCamel);
     }
 
     /**
@@ -594,14 +740,30 @@ public class JdbcDataSource extends AbstractDataSource {
      *
      * @param tableName         表名称
      * @param whereMap          更新条件字段(只支持=，and条件)
-     * @param camelToUnderscore 字段驼峰转下划线(可选)
+     * @param camelToUnderscore whereMap字段驼峰转下划线(可选)
+     * @param underlineToCamel  返回数据下划线转驼峰
      */
-    public List<Map<String, Object>> queryTableList(String tableName, Map<String, Object> whereMap, boolean camelToUnderscore) {
+    public List<Map<String, Object>> queryTableList(String tableName, Map<String, Object> whereMap, boolean camelToUnderscore, boolean underlineToCamel) {
         Assert.hasText(tableName, "查询表名称不能为空");
         Assert.notEmpty(whereMap, "查询条件不能为空");
         TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.selectSql(tableName, whereMap, camelToUnderscore);
         String sql = StringUtils.trim(tupleTow.getValue1());
-        return queryList(sql, tupleTow.getValue2());
+        List<Map<String, Object>> listData = queryList(sql, tupleTow.getValue2());
+        if (underlineToCamel) {
+            listData = UnderlineToCamelUtils.underlineToCamel(listData);
+        }
+        return listData;
+    }
+
+    /**
+     * 查询数据库表数据
+     *
+     * @param tableName         表名称
+     * @param whereMap          更新条件字段(只支持=，and条件)
+     * @param camelToUnderscore whereMap字段驼峰转下划线(可选)
+     */
+    public List<Map<String, Object>> queryTableList(String tableName, Map<String, Object> whereMap, boolean camelToUnderscore) {
+        return queryTableList(tableName, whereMap, camelToUnderscore, Default_UnderlineToCamel);
     }
 
     /**
@@ -611,7 +773,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param whereMap  更新条件字段(只支持=，and条件)
      */
     public List<Map<String, Object>> queryTableList(String tableName, Map<String, Object> whereMap) {
-        return queryTableList(tableName, whereMap, false);
+        return queryTableList(tableName, whereMap, Default_CamelToUnderscore, Default_UnderlineToCamel);
     }
 
     /**
@@ -619,14 +781,30 @@ public class JdbcDataSource extends AbstractDataSource {
      *
      * @param tableName         表名称
      * @param whereMap          更新条件字段(只支持=，and条件)
-     * @param camelToUnderscore 字段驼峰转下划线(可选)
+     * @param camelToUnderscore whereMap字段驼峰转下划线(可选)
+     * @param underlineToCamel  返回数据下划线转驼峰
      */
-    public Map<String, Object> queryTableMap(String tableName, Map<String, Object> whereMap, boolean camelToUnderscore) {
+    public Map<String, Object> queryTableMap(String tableName, Map<String, Object> whereMap, boolean camelToUnderscore, boolean underlineToCamel) {
         Assert.hasText(tableName, "查询表名称不能为空");
         Assert.notEmpty(whereMap, "查询条件不能为空");
         TupleTow<String, Map<String, Object>> tupleTow = SqlUtils.selectSql(tableName, whereMap, camelToUnderscore);
         String sql = StringUtils.trim(tupleTow.getValue1());
-        return queryMap(sql, tupleTow.getValue2());
+        Map<String, Object> data = queryMap(sql, tupleTow.getValue2());
+        if (underlineToCamel) {
+            data = UnderlineToCamelUtils.underlineToCamel(whereMap);
+        }
+        return data;
+    }
+
+    /**
+     * 查询数据库表数据
+     *
+     * @param tableName         表名称
+     * @param whereMap          更新条件字段(只支持=，and条件)
+     * @param camelToUnderscore whereMap字段驼峰转下划线(可选)
+     */
+    public Map<String, Object> queryTableMap(String tableName, Map<String, Object> whereMap, boolean camelToUnderscore) {
+        return queryTableMap(tableName, whereMap, camelToUnderscore, Default_UnderlineToCamel);
     }
 
     /**
@@ -636,7 +814,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param whereMap  更新条件字段(只支持=，and条件)
      */
     public Map<String, Object> queryTableMap(String tableName, Map<String, Object> whereMap) {
-        return queryTableMap(tableName, whereMap, false);
+        return queryTableMap(tableName, whereMap, Default_CamelToUnderscore, Default_UnderlineToCamel);
     }
 
     // --------------------------------------------------------------------------------------------
@@ -989,7 +1167,7 @@ public class JdbcDataSource extends AbstractDataSource {
     public <T> T beginReadOnlyTX(TransactionCallback<T> action) {
         return beginTX(action, TransactionDefinition.PROPAGATION_REQUIRED, -1, TransactionDefinition.ISOLATION_DEFAULT, true);
     }
-    
+
     // --------------------------------------------------------------------------------------------
     //  其它 操作
     // --------------------------------------------------------------------------------------------
@@ -1030,6 +1208,10 @@ public class JdbcDataSource extends AbstractDataSource {
             throw new UnsupportedOperationException("当前数据源类型：" + dataSource.getClass().getName() + "，不支持此操作");
         }
     }
+
+    // --------------------------------------------------------------------------------------------
+    //  内部 函数
+    // --------------------------------------------------------------------------------------------
 
     /**
      * 创建事务执行模板对象
