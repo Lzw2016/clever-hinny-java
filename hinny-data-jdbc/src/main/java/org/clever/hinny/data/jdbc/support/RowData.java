@@ -50,4 +50,16 @@ public class RowData implements Serializable {
         this.rowData = rowData;
         this.rowCount = rowCount;
     }
+
+    public int[] originalGetColumnTypes() {
+        int[] result = new int[columnTypes.size()];
+        for (int i = 0; i < columnTypes.size(); i++) {
+            result[i] = columnTypes.get(i);
+        }
+        return result;
+    }
+
+    public Object getRowData() {
+        return rowData;
+    }
 }
