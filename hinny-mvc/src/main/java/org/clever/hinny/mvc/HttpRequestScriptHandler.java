@@ -199,10 +199,11 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
                 // 构造scriptInfo
                 TupleTow<String, String> scriptInfo = TupleTow.creat(filePath.startsWith("/") ? filePath : String.format("/%s", filePath), method);
                 // 判断文件是否存在
-                if (fileExists(engineInstance, filePath)) {
+                if (fileExists(engineInstance, scriptInfo.getValue1())) {
                     return scriptInfo;
+                } else {
+                    log.debug("Script File不存在，filePath=[{}]", scriptInfo.getValue1());
                 }
-
             }
         }
         return null;
@@ -304,7 +305,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
             startTime2 = System.currentTimeMillis();
             scriptInfo = getScriptInfo(engineInstance, request);
             if (scriptInfo == null || StringUtils.isBlank(scriptInfo.getValue1()) || StringUtils.isBlank(scriptInfo.getValue2())) {
-                log.warn("Script Handler不存在，path=[{}]", request.getRequestURI());
+                log.debug("Script Handler不存在，path=[{}]", request.getRequestURI());
                 return true;
             }
             // 4.获取 Script 文件对应的 Script 对象和执行函数名
