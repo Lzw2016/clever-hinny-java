@@ -7,6 +7,7 @@ import org.clever.hinny.api.ScriptObject;
 import org.clever.hinny.api.pool.EngineInstancePool;
 import org.clever.hinny.mvc.http.HttpContext;
 import org.clever.hinny.mvc.support.TupleTow;
+import org.clever.hinny.mvc.support.UrlPathUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
@@ -44,9 +45,10 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
      */
     private static final String Separate = "@";
     /**
-     * 支持的请求前缀
+     * “请求路径”和“脚本路径”映射规则，{@code Map<请求路径, 脚本路径>}<br />
+     * 路径处理时使用“脚本路径”替换“请求路径”<br />
      */
-    private final String supportPrefix;
+    private final LinkedHashMap<String, String> prefixMapping;
     /**
      * 支持的请求后缀
      */
@@ -57,13 +59,15 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
     private final EngineInstancePool<E, T> engineInstancePool;
 
     /**
-     * @param supportPrefix      支持的请求前缀
+     * @param prefixMapping      “请求路径”和“脚本路径”映射规则
      * @param supportSuffix      支持的请求后缀
      * @param engineInstancePool 引擎实例对象池
      */
-    public HttpRequestScriptHandler(String supportPrefix, Set<String> supportSuffix, EngineInstancePool<E, T> engineInstancePool) {
+    public HttpRequestScriptHandler(LinkedHashMap<String, String> prefixMapping, Set<String> supportSuffix, EngineInstancePool<E, T> engineInstancePool) {
         Assert.notNull(engineInstancePool, "参数engineInstancePool不能为空");
-        this.supportPrefix = StringUtils.isNotBlank(supportPrefix) ? StringUtils.trim(supportPrefix) : "/!/";
+        this.prefixMapping = prefixMapping == null || prefixMapping.isEmpty() ? new LinkedHashMap<String, String>() {{
+            put("/!/", "");
+        }} : prefixMapping;
         supportSuffix = supportSuffix != null ? supportSuffix : new HashSet<>(Arrays.asList("", ".json", ".action"));
         supportSuffix = supportSuffix.stream().filter(Objects::nonNull).map(StringUtils::trim).collect(Collectors.toSet());
         this.supportSuffix = Collections.unmodifiableSet(supportSuffix);
@@ -85,9 +89,16 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
         // final String method = request.getMethod();
         boolean support = false;
         // 支持的请求前缀 - 符合
-        if (!requestUri.startsWith(supportPrefix)) {
+        for (String supportPrefix : prefixMapping.keySet()) {
+            if (requestUri.startsWith(supportPrefix)) {
+                support = true;
+                break;
+            }
+        }
+        if (!support) {
             return false;
         }
+        support = false;
         // 支持的请求后缀 - 符合
         for (String suffix : supportSuffix) {
             if (requestUri.endsWith(suffix)) {
@@ -173,16 +184,26 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
         if (StringUtils.isBlank(method)) {
             return null;
         }
-        final int beginIndex = supportPrefix.length() - 1;
-        final int endIndex = requestPath.length() - (Separate.length() + method.length());
-        final String filePath = requestPath.substring(Math.max(beginIndex, 0), endIndex);
-        if (StringUtils.isBlank(filePath)) {
-            return null;
-        }
-        TupleTow<String, String> scriptInfo = TupleTow.creat(filePath.startsWith("/") ? filePath : String.format("/%s", filePath), method);
-        // 判断文件是否存在
-        if (fileExists(engineInstance, filePath)) {
-            return scriptInfo;
+        for (Map.Entry<String, String> entry : prefixMapping.entrySet()) {
+            // 请求路径
+            String requestPrefixPath = entry.getKey();
+            // 脚本路径
+            String scriptPrefixPath = entry.getValue();
+            if (requestPath.startsWith(requestPrefixPath)) {
+                final int beginIndex = requestPrefixPath.length() - 1;
+                final int endIndex = requestPath.length() - (Separate.length() + method.length());
+                final String filePath = UrlPathUtils.connectPath(scriptPrefixPath, requestPath.substring(Math.max(beginIndex, 0), endIndex));
+                if (StringUtils.isBlank(filePath)) {
+                    return null;
+                }
+                // 构造scriptInfo
+                TupleTow<String, String> scriptInfo = TupleTow.creat(filePath.startsWith("/") ? filePath : String.format("/%s", filePath), method);
+                // 判断文件是否存在
+                if (fileExists(engineInstance, filePath)) {
+                    return scriptInfo;
+                }
+
+            }
         }
         return null;
     }
