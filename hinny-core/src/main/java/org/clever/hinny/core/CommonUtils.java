@@ -59,4 +59,24 @@ public class CommonUtils {
     public Date now() {
         return new Date();
     }
+
+    /**
+     * 获取对象的Java类型
+     */
+    public Class<?> getClass(Object obj) {
+        if (obj == null) {
+            return null;
+        }
+        return obj.getClass();
+    }
+
+    /**
+     * 获取对象的Java类型名称
+     */
+    public String getClassName(Object obj) {
+        if (obj == null) {
+            return null;
+        }
+        return obj.getClass().getName();
+    }
 }
