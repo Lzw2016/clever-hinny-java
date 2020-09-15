@@ -19,6 +19,26 @@ public class StringUtils {
     //----------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
+     * 获取字符串byte[]数据
+     */
+    public byte[] getByteFromString(String str) {
+        if (str == null) {
+            return null;
+        }
+        return str.getBytes();
+    }
+
+    /**
+     * 根据byte[]数据初始化字符串
+     */
+    public String getStringFromByte(byte[] bytes) {
+        if (bytes == null) {
+            return null;
+        }
+        return new String(bytes);
+    }
+
+    /**
      * 调用对象的toString方法，如果对象为空返回默认值
      *
      * @param object     需要toString的对象
