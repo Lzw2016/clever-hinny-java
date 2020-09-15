@@ -50,4 +50,11 @@ public class ThreadUtils {
     public void sleep(Number millis) throws InterruptedException {
         Thread.sleep(millis.longValue());
     }
+
+    /**
+     * 获取当前线程
+     */
+    public Thread currentThread() {
+        return Thread.currentThread();
+    }
 }
