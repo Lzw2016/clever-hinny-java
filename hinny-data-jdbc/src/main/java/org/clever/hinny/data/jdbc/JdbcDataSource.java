@@ -54,6 +54,10 @@ public class JdbcDataSource extends AbstractDataSource {
      */
     private static final boolean Default_CamelToUnderscore = true;
     /**
+     * 事务默认是否只读
+     */
+    private static final boolean Default_ReadOnly = false;
+    /**
      * 分页时最大的页大小
      */
     private static final int Max_Page_Size = 1000;
@@ -872,7 +876,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param whereMap  更新条件字段(只支持=，and条件)
      */
     public int updateTable(String tableName, Map<String, Object> fields, Map<String, Object> whereMap) {
-        return updateTable(tableName, fields, whereMap, false);
+        return updateTable(tableName, fields, whereMap, Default_CamelToUnderscore);
     }
 
     /**
@@ -901,7 +905,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param where     自定义where条件(不用写where关键字)
      */
     public int updateTable(String tableName, Map<String, Object> fields, String where) {
-        return updateTable(tableName, fields, where, false);
+        return updateTable(tableName, fields, where, Default_CamelToUnderscore);
     }
 
     /**
@@ -953,7 +957,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param whereMap  更新条件字段(只支持=，and条件)
      */
     public int deleteTable(String tableName, Map<String, Object> whereMap) {
-        return deleteTable(tableName, whereMap, false);
+        return deleteTable(tableName, whereMap, Default_CamelToUnderscore);
     }
 
     // --------------------------------------------------------------------------------------------
@@ -1015,7 +1019,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param fields    字段名
      */
     public InsertResult insertTable(String tableName, Map<String, Object> fields) {
-        return insertTable(tableName, fields, false);
+        return insertTable(tableName, fields, Default_CamelToUnderscore);
     }
 
     /**
@@ -1045,7 +1049,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @param fieldsList 字段名集合
      */
     public List<InsertResult> insertTables(String tableName, Collection<Map<String, Object>> fieldsList) {
-        return insertTables(tableName, fieldsList, false);
+        return insertTables(tableName, fieldsList, Default_CamelToUnderscore);
     }
 
     // --------------------------------------------------------------------------------------------
@@ -1080,7 +1084,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @see org.springframework.transaction.TransactionDefinition
      */
     public <T> T beginTX(TransactionCallback<T> action, int propagationBehavior, int timeout, int isolationLevel) {
-        return beginTX(action, propagationBehavior, timeout, isolationLevel, false);
+        return beginTX(action, propagationBehavior, timeout, isolationLevel, Default_ReadOnly);
     }
 
     /**
@@ -1093,7 +1097,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @see org.springframework.transaction.TransactionDefinition
      */
     public <T> T beginTX(TransactionCallback<T> action, int propagationBehavior, int timeout) {
-        return beginTX(action, propagationBehavior, timeout, TransactionDefinition.ISOLATION_DEFAULT, false);
+        return beginTX(action, propagationBehavior, timeout, TransactionDefinition.ISOLATION_DEFAULT, Default_ReadOnly);
     }
 
     /**
@@ -1105,7 +1109,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @see org.springframework.transaction.TransactionDefinition
      */
     public <T> T beginTX(TransactionCallback<T> action, int propagationBehavior) {
-        return beginTX(action, propagationBehavior, -1, TransactionDefinition.ISOLATION_DEFAULT, false);
+        return beginTX(action, propagationBehavior, -1, TransactionDefinition.ISOLATION_DEFAULT, Default_ReadOnly);
     }
 
     /**
@@ -1116,7 +1120,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @see org.springframework.transaction.TransactionDefinition
      */
     public <T> T beginTX(TransactionCallback<T> action) {
-        return beginTX(action, TransactionDefinition.PROPAGATION_REQUIRED, -1, TransactionDefinition.ISOLATION_DEFAULT, false);
+        return beginTX(action, TransactionDefinition.PROPAGATION_REQUIRED, -1, TransactionDefinition.ISOLATION_DEFAULT, Default_ReadOnly);
     }
 
     /**
@@ -1130,7 +1134,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @see org.springframework.transaction.TransactionDefinition
      */
     public <T> T beginReadOnlyTX(TransactionCallback<T> action, int propagationBehavior, int timeout, int isolationLevel) {
-        return beginTX(action, propagationBehavior, timeout, isolationLevel, true);
+        return beginTX(action, propagationBehavior, timeout, isolationLevel, Default_ReadOnly);
     }
 
     /**
@@ -1143,7 +1147,7 @@ public class JdbcDataSource extends AbstractDataSource {
      * @see org.springframework.transaction.TransactionDefinition
      */
     public <T> T beginReadOnlyTX(TransactionCallback<T> action, int propagationBehavior, int timeout) {
-        return beginTX(action, propagationBehavior, timeout, TransactionDefinition.ISOLATION_DEFAULT, true);
+        return beginTX(action, propagationBehavior, timeout, TransactionDefinition.ISOLATION_DEFAULT, Default_ReadOnly);
     }
 
     /**
