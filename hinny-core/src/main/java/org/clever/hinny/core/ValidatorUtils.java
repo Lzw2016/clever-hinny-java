@@ -216,7 +216,7 @@ public class ValidatorUtils {
             }
         }
         // 非空字符串
-        if (rule.notBlank != null && rule.notBlank && value != null) {
+        if (rule.notBlank != null && rule.notBlank) {
             boolean success;
             if (value instanceof CharSequence) {
                 success = StringUtils.isNotBlank((CharSequence) value);
