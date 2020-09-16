@@ -734,11 +734,18 @@ public class StringUtils {
 
     /**
      * <pre>
-     *
+     *  .lastIndexOf(null, *, *)          = -1
+     *  .lastIndexOf("", *,  *)           = -1
+     *  .lastIndexOf("aabaabaa", 'b', 8)  = 5
+     *  .lastIndexOf("aabaabaa", 'b', 4)  = 2
+     *  .lastIndexOf("aabaabaa", 'b', 0)  = -1
+     *  .lastIndexOf("aabaabaa", 'b', 9)  = 5
+     *  .lastIndexOf("aabaabaa", 'b', -1) = -1
+     *  .lastIndexOf("aabaabaa", 'a', 0)  = 0
      * </pre>
      */
     public int lastIndexOf(CharSequence seq, int searchChar, int startPos) {
-        return org.clever.common.utils.StringUtils.lastIndexOf(seq, searchChar);
+        return org.clever.common.utils.StringUtils.lastIndexOf(seq, searchChar,startPos);
     }
 
     /**
