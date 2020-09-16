@@ -1,17 +1,24 @@
 package org.clever.hinny.mvc;
 
 import lombok.Data;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.clever.hinny.mvc.support.IntegerToDateConverter;
+import org.clever.hinny.mvc.support.StringToDateConverter;
 import org.junit.Test;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.propertyeditors.CustomCollectionEditor;
 import org.springframework.boot.autoconfigure.web.format.WebConversionService;
+import org.springframework.core.convert.converter.GenericConverter;
+import org.springframework.core.convert.support.GenericConversionService;
 import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.format.support.FormattingConversionService;
 import org.springframework.validation.BindException;
 import org.springframework.validation.DataBinder;
 
 import java.beans.PropertyEditor;
+import java.lang.reflect.Field;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,16 +113,46 @@ public class DataBinderTest {
 //        log.info("Value --> {}", editor.getValue());
     }
 
+    @SuppressWarnings("unchecked")
+    @SneakyThrows
     @Test
     public void t04() {
         FormattingConversionService conversionService = new DefaultFormattingConversionService();
+        conversionService.addConverter(String.class, Date.class, StringToDateConverter.Instance);
+        conversionService.addConverter(Integer.class, Date.class, IntegerToDateConverter.Instance);
+        conversionService.addConverter(int.class, Date.class, IntegerToDateConverter.Instance);
+
         log.info("--> {}", conversionService.convert("false", Boolean.class));
 
 //        log.info("--> {}", conversionService.convert(new String[]{"111", "222"}, Integer[].class));
-//        log.info("--> {}", conversionService.convert("222", Integer[].class));
-
-                log.info("--> {}", conversionService.convert("222", List.class));
+//        log.info("--> {}", conversionService.convert("2020-09-10 12:13:45", Date.class));
 //        org.springframework.core.convert.converter.Converter
+
+        Field field = GenericConversionService.class.getDeclaredField("converters");
+        Object converters = reflectGetValue(conversionService, field);
+        field = converters.getClass().getDeclaredField("converters");
+        converters = reflectGetValue(converters, field);
+        Map<GenericConverter.ConvertiblePair, ?> convertersMap = (Map<GenericConverter.ConvertiblePair, ?>) converters;
+        for (Map.Entry<GenericConverter.ConvertiblePair, ?> entry : convertersMap.entrySet()) {
+            GenericConverter.ConvertiblePair key = entry.getKey();
+            log.info("-> {}", key.toString());
+            if ("java.lang.String -> java.util.Date".equals(key.toString())) {
+                log.info("### -> {}", entry.getValue());
+            }
+            if ("java.lang.Long -> java.util.Date".equals(key.toString())) {
+                log.info("### -> {}", entry.getValue());
+            }
+        }
+
+        log.info("--> {}", conversionService.convert(122L, Date.class));
+        log.info("--> {}", conversionService.convert(122, Date.class));
+        log.info("--> {}", conversionService.convert("2020-09-10 12:13:45", Date.class));
+    }
+
+    @SneakyThrows
+    private Object reflectGetValue(Object instance, Field field) {
+        field.setAccessible(true);
+        return field.get(instance);
     }
 
 // org.springframework.beans.PropertyEditorRegistrySupport
