@@ -218,7 +218,9 @@ public class ValidatorUtils {
         // 非空字符串
         if (rule.notBlank != null && rule.notBlank) {
             boolean success;
-            if (value instanceof CharSequence) {
+            if (value == null) {
+                success = false;
+            } else if (value instanceof CharSequence) {
                 success = StringUtils.isNotBlank((CharSequence) value);
             } else {
                 throw new IllegalArgumentException("字段" + filed + "类型(" + valueClass + ")不支持notBlank配置");
