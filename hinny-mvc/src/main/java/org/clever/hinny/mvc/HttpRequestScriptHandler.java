@@ -8,18 +8,11 @@ import org.clever.hinny.api.pool.EngineInstancePool;
 import org.clever.hinny.mvc.http.HttpContext;
 import org.clever.hinny.mvc.support.TupleTow;
 import org.clever.hinny.mvc.support.UrlPathUtils;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
-import org.springframework.util.ReflectionUtils;
-import org.springframework.web.method.HandlerMethod;
-import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.web.servlet.mvc.ParameterizableViewController;
-import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,11 +24,7 @@ import java.util.stream.Collectors;
  * @param <T> script引擎对象类型
  */
 @Slf4j
-public abstract class HttpRequestScriptHandler<E, T> implements HandlerInterceptor {
-    /**
-     * 是否强制使用Script Handler处理请求
-     */
-    private static final String Force_Use_Script = "force-use-script";
+public abstract class HttpRequestScriptHandler<E, T> implements ScriptHandler {
     /**
      * 使用Script Handler处理请求时对应的Script File信息(响应头信息)
      */
@@ -84,7 +73,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
     /**
      * 判断请求是否支持 Script 处理
      */
-    protected boolean supportScript(HttpServletRequest request, HttpServletResponse response, Object handler) {
+    protected boolean supportScript(HttpServletRequest request, HttpServletResponse response) {
         final String requestUri = request.getRequestURI();
         // final String method = request.getMethod();
         boolean support = false;
@@ -104,39 +93,6 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
             if (requestUri.endsWith(suffix)) {
                 support = true;
                 break;
-            }
-        }
-        // SpringMvc功能冲突处理
-        if (support) {
-            if (handler instanceof HandlerMethod) {
-                if (StringUtils.isNotBlank(request.getParameter(Force_Use_Script)) || StringUtils.isNotBlank(request.getHeader(Force_Use_Script))) {
-                    log.warn("强制使用Script Handler功能，忽略原生SpringMvc功能 | {}", handler.getClass());
-                } else {
-                    log.warn("Script Handler被原生SpringMvc功能覆盖 | {}", handler.getClass());
-                    support = false;
-                }
-            } else if (handler instanceof ResourceHttpRequestHandler) {
-                ResourceHttpRequestHandler resourceHttpRequestHandler = (ResourceHttpRequestHandler) handler;
-                Method method = ReflectionUtils.findMethod(ResourceHttpRequestHandler.class, "getResource", HttpServletRequest.class);
-                if (method != null) {
-                    if (!method.isAccessible()) {
-                        method.setAccessible(true);
-                    }
-                    Resource resource = (Resource) ReflectionUtils.invokeMethod(method, resourceHttpRequestHandler, request);
-                    if (resource != null && resource.exists()) {
-                        if (StringUtils.isNotBlank(request.getParameter(Force_Use_Script)) || StringUtils.isNotBlank(request.getHeader(Force_Use_Script))) {
-                            log.warn("强制使用Script Handler功能，忽略静态资源 | {}", handler.getClass());
-                        } else {
-                            log.warn("Script Handler被静态资源覆盖 | {}", handler.getClass());
-                            support = false;
-                        }
-                    }
-                }
-            } else if (handler instanceof ParameterizableViewController) {
-                support = false;
-            } else {
-                log.warn("未知的Handler类型，覆盖Script Handler | {}", handler.getClass());
-                support = false;
             }
         }
         // 请求Url格式 - 符合
@@ -279,12 +235,11 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
         throw new RuntimeException(e);
     }
 
-    @SuppressWarnings("NullableProblems")
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+    public void handle(HttpServletRequest request, HttpServletResponse response) throws Exception {
         // 1.判断请求是否支持 Script 处理
-        if (!supportScript(request, response, handler)) {
-            return true;
+        if (!supportScript(request, response)) {
+            return;
         }
         long startTime1 = -1;    // 开始借一个引擎实例时间
         long startTime2 = -1;    // 开始查找脚本文件时间
@@ -306,14 +261,14 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
             scriptInfo = getScriptInfo(engineInstance, request);
             if (scriptInfo == null || StringUtils.isBlank(scriptInfo.getValue1()) || StringUtils.isBlank(scriptInfo.getValue2())) {
                 log.debug("Script Handler不存在，path=[{}]", request.getRequestURI());
-                return true;
+                return;
             }
             // 4.获取 Script 文件对应的 Script 对象和执行函数名
             startTime3 = System.currentTimeMillis();
             final TupleTow<ScriptObject<T>, String> scriptHandler = getScriptObject(request, engineInstance, scriptInfo);
             if (scriptHandler == null) {
                 log.warn("获取Script Handler对象失败，ScriptInfo=[{}#{}]", scriptInfo.getValue1(), scriptInfo.getValue2());
-                return true;
+                return;
             }
             // 5.执行 Script 对象的函数
             response.setHeader(Use_Script_Handler_Head, String.format("%s#%s", scriptInfo.getValue1(), scriptInfo.getValue2()));
@@ -322,7 +277,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
             final Object res = resTupleTow.getValue1();
             final Boolean breakHandle = resTupleTow.getValue2();
             if (breakHandle != null && breakHandle) {
-                return true;
+                return;
             }
             // 6.序列化返回数据
             startTime5 = System.currentTimeMillis();
@@ -359,16 +314,5 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
             );
             log.debug(logText);
         }
-        return false;
     }
-
-//    @Override
-//    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) {
-//        log.debug("=================================================== postHandle");
-//    }
-//
-//    @Override
-//    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
-//        log.debug("=================================================== afterCompletion");
-//    }
 }
