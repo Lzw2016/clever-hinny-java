@@ -13,6 +13,7 @@ import org.springframework.util.Assert;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -235,10 +236,18 @@ public abstract class HttpRequestScriptHandler<E, T> implements ScriptHandler {
         throw new RuntimeException(e);
     }
 
+    /**
+     * 处理404响应
+     */
+    protected void notFoundHandle(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+    }
+
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response) throws Exception {
         // 1.判断请求是否支持 Script 处理
         if (!supportScript(request, response)) {
+            notFoundHandle(request, response);
             return;
         }
         long startTime1 = -1;    // 开始借一个引擎实例时间
@@ -261,6 +270,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements ScriptHandler {
             scriptInfo = getScriptInfo(engineInstance, request);
             if (scriptInfo == null || StringUtils.isBlank(scriptInfo.getValue1()) || StringUtils.isBlank(scriptInfo.getValue2())) {
                 log.debug("Script Handler不存在，path=[{}]", request.getRequestURI());
+                notFoundHandle(request, response);
                 return;
             }
             // 4.获取 Script 文件对应的 Script 对象和执行函数名
@@ -268,6 +278,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements ScriptHandler {
             final TupleTow<ScriptObject<T>, String> scriptHandler = getScriptObject(request, engineInstance, scriptInfo);
             if (scriptHandler == null) {
                 log.warn("获取Script Handler对象失败，ScriptInfo=[{}#{}]", scriptInfo.getValue1(), scriptInfo.getValue2());
+                notFoundHandle(request, response);
                 return;
             }
             // 5.执行 Script 对象的函数
@@ -277,6 +288,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements ScriptHandler {
             final Object res = resTupleTow.getValue1();
             final Boolean breakHandle = resTupleTow.getValue2();
             if (breakHandle != null && breakHandle) {
+                notFoundHandle(request, response);
                 return;
             }
             // 6.序列化返回数据
