@@ -91,6 +91,17 @@ public abstract class HttpRequestScriptHandler<E, T> implements ScriptHandler {
         support = false;
         // 支持的请求后缀 - 符合
         for (String suffix : supportSuffix) {
+            // 没有后缀
+            if (StringUtils.isBlank(suffix)) {
+                int positionBySeparator = requestUri.lastIndexOf("/");
+                int positionPoint = requestUri.lastIndexOf(".");
+                if (positionPoint < 0 || positionPoint < positionBySeparator) {
+                    support = true;
+                    break;
+                }
+                continue;
+            }
+            // 有后缀
             if (requestUri.endsWith(suffix)) {
                 support = true;
                 break;
