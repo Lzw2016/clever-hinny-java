@@ -7,7 +7,7 @@ import org.clever.common.model.request.QueryByPage;
 import org.clever.common.model.request.QueryBySort;
 import org.clever.dynamic.sql.BoundSql;
 import org.clever.hinny.data.common.AbstractDataSource;
-import org.clever.hinny.data.jdbc.dynamic.MyBatisMapperSql;
+import org.clever.hinny.data.jdbc.mybatis.MyBatisMapperSql;
 import org.clever.hinny.data.jdbc.support.*;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.util.Assert;

@@ -2,8 +2,8 @@ package org.clever.hinny.data.jdbc;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOCase;
-import org.clever.hinny.data.jdbc.dynamic.MyBatisMapperSql;
 import org.clever.hinny.data.jdbc.dynamic.watch.FileSystemWatcher;
+import org.clever.hinny.data.jdbc.mybatis.FileSystemMyBatisMapperSql;
 import org.junit.Test;
 
 /**
@@ -16,7 +16,7 @@ public class MyBatisMapperSqlTest {
     @Test
     public void t01() throws InterruptedException {
         String absolutePath = "D:\\SourceCode\\jzt\\门店通\\pharmacy-points-shop-ba\\server\\src";
-        final MyBatisMapperSql sqlUtils = new MyBatisMapperSql(absolutePath);
+        final FileSystemMyBatisMapperSql sqlUtils = new FileSystemMyBatisMapperSql(absolutePath);
         log.info("sqlUtils -> {}", sqlUtils);
         FileSystemWatcher watcher = new FileSystemWatcher(
                 absolutePath,

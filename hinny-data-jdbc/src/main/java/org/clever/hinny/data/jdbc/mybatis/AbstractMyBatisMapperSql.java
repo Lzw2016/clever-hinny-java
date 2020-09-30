@@ -1,7 +1,7 @@
-package org.clever.hinny.data.jdbc.dynamic;
+package org.clever.hinny.data.jdbc.mybatis;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.clever.dynamic.sql.BoundSql;
 import org.clever.dynamic.sql.DynamicSqlParser;
@@ -9,27 +9,21 @@ import org.clever.dynamic.sql.builder.SqlSource;
 import org.clever.dynamic.sql.parsing.XNode;
 import org.clever.dynamic.sql.parsing.XPathParser;
 import org.clever.dynamic.sql.parsing.xml.XMLMapperEntityResolver;
-import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import java.io.File;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 作者：lizw <br/>
- * 创建时间：2020/09/02 15:56 <br/>
+ * 创建时间：2020/09/30 15:37 <br/>
  */
 @Slf4j
-public class MyBatisMapperSql {
-    /**
-     * 文件根路径
-     */
-    protected final File path;
+public abstract class AbstractMyBatisMapperSql implements MyBatisMapperSql {
     /**
      * 所有的Mapper文件 {@code MultiValueMap<Mapper文件绝对路径, SqlId>}
      */
@@ -38,12 +32,6 @@ public class MyBatisMapperSql {
      * SqlSource对象 {@code Map<SqlId, SqlSource对象>}
      */
     protected final ConcurrentHashMap<String, SqlSource> sqlSourceMap = new ConcurrentHashMap<>(64);
-
-    public MyBatisMapperSql(String absolutePath) {
-        this.path = new File(absolutePath);
-        Assert.isTrue(path.exists() && path.isDirectory(), "路径：" + path.getAbsolutePath() + "不存在或者不是一个文件夹");
-        load();
-    }
 
     /**
      * 获取 SqlSource
@@ -63,61 +51,15 @@ public class MyBatisMapperSql {
         return sqlSource.getBoundSql(parameter);
     }
 
-    public void reloadAll() {
-        mapperFiles.clear();
-        sqlSourceMap.clear();
-        Collection<File> files = FileUtils.listFiles(path, new String[]{"xml"}, true);
-        for (File file : files) {
-            final String absolutePath = file.getAbsolutePath();
-            log.info("# 解析文件: {}", absolutePath);
-            try {
-                loadSqlSource(file);
-            } catch (Exception e) {
-                log.error("解析Mapper.xml文件失败 | path={}", absolutePath);
-            }
-        }
-    }
-
-    public void reloadFile(String absolutePath) throws Exception {
-        if (absolutePath == null || !absolutePath.endsWith(".xml")) {
-            return;
-        }
-        final boolean preExists = mapperFiles.containsKey(absolutePath);
-        final File file = new File(absolutePath);
-        final boolean nowExists = file.exists() && file.isFile();
-        // 删除之前的 SqlId
-        if (preExists) {
-            List<String> sqlIds = mapperFiles.get(absolutePath);
-            if (sqlIds != null) {
-                sqlIds.forEach(sqlSourceMap::remove);
-            }
-            mapperFiles.remove(absolutePath);
-        }
-        // 解析新的文件
-        if (nowExists) {
-            long startTime = System.currentTimeMillis();
-            loadSqlSource(file);
-            long endTime = System.currentTimeMillis();
-            log.info("# 重新解析文件成功 | 耗时: {}ms | path={}", (endTime - startTime), absolutePath);
-        } else {
-            log.info("# 清除文件SQL | path={}", absolutePath);
-        }
-    }
-
-    protected void load() {
-        log.info("# ==================================================================================================================================");
-        log.info("# === 初始化读取Mapper.xml文件 ===");
-        long startTime = System.currentTimeMillis();
-        reloadAll();
-        long endTime = System.currentTimeMillis();
-        log.info("# === 读取Mapper.xml文件完成 | 耗时: {}ms ===", (endTime - startTime));
-        log.info("# ==================================================================================================================================");
-    }
-
-    protected void loadSqlSource(File file) throws Exception {
-        final String absolutePath = file.getAbsolutePath();
+    /**
+     * 加载指定文件
+     *
+     * @param absolutePath 文件绝对路径
+     * @param inputStream  文件输入流
+     */
+    protected void loadSqlSource(String absolutePath, InputStream inputStream) throws Exception {
         final Properties variables = new Properties();
-        final String xml = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+        final String xml = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
         final XPathParser parser = new XPathParser(xml, false, variables, new XMLMapperEntityResolver());
         final XNode mapper = parser.evalNode("/mapper");
         if (mapper == null) {
@@ -157,5 +99,30 @@ public class MyBatisMapperSql {
             sqlSourceMap.put(sqlId, sqlSource);
             log.info("# SQL读取成功,SqlId: {}", sqlId);
         }
+    }
+
+    /**
+     * 加载所有文件
+     */
+    public abstract void reloadAll();
+
+    /**
+     * 重新加载指定文件
+     *
+     * @param absolutePath 文件绝对路径
+     */
+    public abstract void reloadFile(String absolutePath);
+
+    /**
+     * 初始化加载所有配置
+     */
+    protected void initLoad() {
+        log.info("# ==================================================================================================================================");
+        log.info("# === 初始化读取Mapper.xml文件 ===");
+        long startTime = System.currentTimeMillis();
+        reloadAll();
+        long endTime = System.currentTimeMillis();
+        log.info("# === 读取Mapper.xml文件完成 | 耗时: {}ms ===", (endTime - startTime));
+        log.info("# ==================================================================================================================================");
     }
 }
