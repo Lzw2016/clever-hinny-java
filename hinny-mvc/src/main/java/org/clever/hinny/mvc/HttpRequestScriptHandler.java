@@ -8,12 +8,18 @@ import org.clever.hinny.api.pool.EngineInstancePool;
 import org.clever.hinny.mvc.http.HttpContext;
 import org.clever.hinny.mvc.support.TupleTow;
 import org.clever.hinny.mvc.support.UrlPathUtils;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
+import org.springframework.util.ReflectionUtils;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.mvc.ParameterizableViewController;
+import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,35 +31,48 @@ import java.util.stream.Collectors;
  * @param <T> script引擎对象类型
  */
 @Slf4j
-public abstract class HttpRequestScriptHandler<E, T> implements ScriptHandler {
+public abstract class HttpRequestScriptHandler<E, T> implements HandlerInterceptor, ScriptHandler {
+    /**
+     * 是否强制使用Script Handler处理请求
+     */
+    protected static final String Force_Use_Script = "force-use-script";
     /**
      * 使用Script Handler处理请求时对应的Script File信息(响应头信息)
      */
-    private static final String Use_Script_Handler_Head = "use-script-handler-file";
+    protected static final String Use_Script_Handler_Head = "use-script-handler-file";
     /**
      * 分隔Script的File Path和MethodName的分隔符
      */
-    private static final String Separate = "@";
+    protected static final String Separate = "@";
     /**
      * “请求路径”和“脚本路径”映射规则，{@code Map<请求路径, 脚本路径>}<br />
      * 路径处理时使用“脚本路径”替换“请求路径”<br />
      */
-    private final LinkedHashMap<String, String> prefixMapping;
+    protected final LinkedHashMap<String, String> prefixMapping;
     /**
      * 支持的请求后缀
      */
-    private final Set<String> supportSuffix;
+    protected final Set<String> supportSuffix;
     /**
      * 引擎实例对象池
      */
-    private final EngineInstancePool<E, T> engineInstancePool;
+    protected final EngineInstancePool<E, T> engineInstancePool;
+    /**
+     * 异常处理对象
+     */
+    protected final ExceptionResolver exceptionResolver;
 
     /**
      * @param prefixMapping      “请求路径”和“脚本路径”映射规则
      * @param supportSuffix      支持的请求后缀
      * @param engineInstancePool 引擎实例对象池
+     * @param exceptionResolver  异常处理对象
      */
-    public HttpRequestScriptHandler(LinkedHashMap<String, String> prefixMapping, Set<String> supportSuffix, EngineInstancePool<E, T> engineInstancePool) {
+    public HttpRequestScriptHandler(
+            LinkedHashMap<String, String> prefixMapping,
+            Set<String> supportSuffix,
+            EngineInstancePool<E, T> engineInstancePool,
+            ExceptionResolver exceptionResolver) {
         Assert.notNull(engineInstancePool, "参数engineInstancePool不能为空");
         this.prefixMapping = prefixMapping == null || prefixMapping.isEmpty() ? new LinkedHashMap<String, String>() {{
             put("/!/", "");
@@ -62,19 +81,20 @@ public abstract class HttpRequestScriptHandler<E, T> implements ScriptHandler {
         supportSuffix = supportSuffix.stream().filter(Objects::nonNull).map(StringUtils::trim).collect(Collectors.toSet());
         this.supportSuffix = Collections.unmodifiableSet(supportSuffix);
         this.engineInstancePool = engineInstancePool;
+        this.exceptionResolver = exceptionResolver;
     }
 
     /**
      * @param engineInstancePool 引擎实例对象池
      */
     public HttpRequestScriptHandler(EngineInstancePool<E, T> engineInstancePool) {
-        this(null, null, engineInstancePool);
+        this(null, null, engineInstancePool, null);
     }
 
     /**
      * 判断请求是否支持 Script 处理
      */
-    protected boolean supportScript(HttpServletRequest request, HttpServletResponse response) {
+    protected boolean supportScript(HttpServletRequest request, HttpServletResponse response, Object handler) {
         final String requestUri = request.getRequestURI();
         // final String method = request.getMethod();
         boolean support = false;
@@ -105,6 +125,39 @@ public abstract class HttpRequestScriptHandler<E, T> implements ScriptHandler {
             if (requestUri.endsWith(suffix)) {
                 support = true;
                 break;
+            }
+        }
+        // SpringMvc功能冲突处理
+        if (handler != null && support) {
+            if (handler instanceof HandlerMethod) {
+                if (StringUtils.isNotBlank(request.getParameter(Force_Use_Script)) || StringUtils.isNotBlank(request.getHeader(Force_Use_Script))) {
+                    log.warn("强制使用Script Handler功能，忽略原生SpringMvc功能 | {}", handler.getClass());
+                } else {
+                    log.warn("Script Handler被原生SpringMvc功能覆盖 | {}", handler.getClass());
+                    support = false;
+                }
+            } else if (handler instanceof ResourceHttpRequestHandler) {
+                ResourceHttpRequestHandler resourceHttpRequestHandler = (ResourceHttpRequestHandler) handler;
+                Method method = ReflectionUtils.findMethod(ResourceHttpRequestHandler.class, "getResource", HttpServletRequest.class);
+                if (method != null) {
+                    if (!method.isAccessible()) {
+                        method.setAccessible(true);
+                    }
+                    Resource resource = (Resource) ReflectionUtils.invokeMethod(method, resourceHttpRequestHandler, request);
+                    if (resource != null && resource.exists()) {
+                        if (StringUtils.isNotBlank(request.getParameter(Force_Use_Script)) || StringUtils.isNotBlank(request.getHeader(Force_Use_Script))) {
+                            log.warn("强制使用Script Handler功能，忽略静态资源 | {}", handler.getClass());
+                        } else {
+                            log.warn("Script Handler被静态资源覆盖 | {}", handler.getClass());
+                            support = false;
+                        }
+                    }
+                }
+            } else if (handler instanceof ParameterizableViewController) {
+                support = false;
+            } else {
+                log.warn("未知的Handler类型，覆盖Script Handler | {}", handler.getClass());
+                support = false;
             }
         }
         // 请求Url格式 - 符合
@@ -247,19 +300,19 @@ public abstract class HttpRequestScriptHandler<E, T> implements ScriptHandler {
         throw new RuntimeException(e);
     }
 
-    /**
-     * 处理404响应
-     */
-    protected void notFoundHandle(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.sendError(HttpServletResponse.SC_NOT_FOUND);
-    }
+    // /**
+    //  * 处理404响应
+    //  */
+    // protected void notFoundHandle(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    //     response.sendError(HttpServletResponse.SC_NOT_FOUND);
+    // }
 
     @Override
-    public void handle(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public boolean handle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         // 1.判断请求是否支持 Script 处理
-        if (!supportScript(request, response)) {
-            notFoundHandle(request, response);
-            return;
+        if (!supportScript(request, response, handler)) {
+            // notFoundHandle(request, response);
+            return false;
         }
         long startTime1 = -1;    // 开始借一个引擎实例时间
         long startTime2 = -1;    // 开始查找脚本文件时间
@@ -281,16 +334,16 @@ public abstract class HttpRequestScriptHandler<E, T> implements ScriptHandler {
             scriptInfo = getScriptInfo(engineInstance, request);
             if (scriptInfo == null || StringUtils.isBlank(scriptInfo.getValue1()) || StringUtils.isBlank(scriptInfo.getValue2())) {
                 log.debug("Script Handler不存在，path=[{}]", request.getRequestURI());
-                notFoundHandle(request, response);
-                return;
+                // notFoundHandle(request, response);
+                return false;
             }
             // 4.获取 Script 文件对应的 Script 对象和执行函数名
             startTime3 = System.currentTimeMillis();
             final TupleTow<ScriptObject<T>, String> scriptHandler = getScriptObject(request, engineInstance, scriptInfo);
             if (scriptHandler == null) {
                 log.warn("获取Script Handler对象失败，ScriptInfo=[{}#{}]", scriptInfo.getValue1(), scriptInfo.getValue2());
-                notFoundHandle(request, response);
-                return;
+                // notFoundHandle(request, response);
+                return false;
             }
             // 5.执行 Script 对象的函数
             response.setHeader(Use_Script_Handler_Head, String.format("%s#%s", scriptInfo.getValue1(), scriptInfo.getValue2()));
@@ -299,15 +352,15 @@ public abstract class HttpRequestScriptHandler<E, T> implements ScriptHandler {
             final Object res = resTupleTow.getValue1();
             final Boolean breakHandle = resTupleTow.getValue2();
             if (breakHandle != null && breakHandle) {
-                notFoundHandle(request, response);
-                return;
+                // notFoundHandle(request, response);
+                return false;
             }
             // 6.序列化返回数据
             startTime5 = System.currentTimeMillis();
             if (!resIsEmpty(res) && !response.isCommitted()) {
                 response.setContentType("application/json;charset=UTF-8");
                 String json = serializeRes(res);
-                response.getWriter().println(json);
+                response.getWriter().print(json);
             }
         } catch (Throwable e) {
             errHandle(e);
@@ -336,6 +389,30 @@ public abstract class HttpRequestScriptHandler<E, T> implements ScriptHandler {
                     scriptInfo == null ? "-" : scriptInfo.getValue2()
             );
             log.debug(logText);
+        }
+        return true;
+    }
+
+    @SuppressWarnings("NullableProblems")
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        try {
+            return !handle(request, response, handler);
+        } catch (Exception e) {
+            Object res;
+            if (exceptionResolver != null) {
+                res = exceptionResolver.resolveException(request, response, handler, e);
+            } else {
+                log.info("Script处理请求异常", e);
+                response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+                res = DefaultExceptionResolver.Instance.newErrorResponse(request, response, e);
+            }
+            if (res != null) {
+                response.setContentType("application/json;charset=UTF-8");
+                String json = serializeRes(res);
+                response.getWriter().println(json);
+            }
+            return false;
         }
     }
 }

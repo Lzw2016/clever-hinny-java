@@ -14,6 +14,8 @@ public interface ScriptHandler {
      *
      * @param request  HTTP请求
      * @param response HTTP响应
+     * @param handler  原始处理请求的对象
+     * @return 已处理请求返回true，未处理返回false
      */
-    void handle(HttpServletRequest request, HttpServletResponse response) throws Exception;
+    boolean handle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception;
 }

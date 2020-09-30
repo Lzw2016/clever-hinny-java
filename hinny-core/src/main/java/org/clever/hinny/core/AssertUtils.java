@@ -67,7 +67,7 @@ public class AssertUtils {
     }
 
     /**
-     * 断言数组包含元素；也就是说，它不能为null并且必须至少包含一个元素
+     * 断言数组包含元素；也就是说，它不能为null并且必须至少包含一个元素 TODO ???
      */
     public void notEmpty(Object[] array, String message) {
         Assert.notEmpty(array, message);
@@ -83,7 +83,7 @@ public class AssertUtils {
     }
 
     /**
-     * 断言数组不包含null元素，注意：如果数组为空，则不会抛出异常
+     * 断言数组不包含null元素，注意：如果数组为空，则不会抛出异常 TODO ???
      */
     public void noNullElements(Object[] array, String message) {
         Assert.noNullElements(array, message);
