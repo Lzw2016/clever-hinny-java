@@ -41,6 +41,24 @@ public class StringUtils {
     }
 
     /**
+     * 字符串下划线转驼峰格式
+     *
+     * @param param          需要转换的字符串
+     * @param firstUpperCase 首字母是否大写
+     * @return 转换好的字符串
+     */
+    public static String underlineToCamel(String param, boolean firstUpperCase) {
+        if (org.apache.commons.lang3.StringUtils.isBlank(param)) {
+            return param;
+        }
+        String res = StrFormatter.underlineToCamel(param);
+        if (firstUpperCase) {
+            res = String.valueOf(res.charAt(0)).toUpperCase() + res.substring(1);
+        }
+        return res;
+    }
+
+    /**
      * 获取字符串byte[]数据
      */
     public byte[] getByteFromString(String str) {
