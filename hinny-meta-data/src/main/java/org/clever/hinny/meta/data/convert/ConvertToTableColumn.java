@@ -2,6 +2,7 @@ package org.clever.hinny.meta.data.convert;
 
 import org.clever.hinny.meta.data.model.TableColumn;
 import schemacrawler.schema.Column;
+import schemacrawler.schema.Schema;
 import schemacrawler.schema.Table;
 
 /**
@@ -10,8 +11,9 @@ import schemacrawler.schema.Table;
  */
 public class ConvertToTableColumn {
     public static TableColumn convert(Table table, Column column) {
+        final Schema schema = table.getSchema();
         TableColumn tableColumn = new TableColumn();
-        tableColumn.setSchemaName(table.getSchema().getFullName());
+        tableColumn.setSchemaName(schema.getCatalogName());
         tableColumn.setTableName(table.getName());
         tableColumn.setOrdinalPosition(column.getOrdinalPosition());
         tableColumn.setColumnName(column.getName());
