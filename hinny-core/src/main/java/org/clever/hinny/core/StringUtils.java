@@ -47,7 +47,7 @@ public class StringUtils {
      * @param firstUpperCase 首字母是否大写
      * @return 转换好的字符串
      */
-    public static String underlineToCamel(String param, boolean firstUpperCase) {
+    public static String underlineToCamel(String param, Boolean firstUpperCase) {
         if (org.apache.commons.lang3.StringUtils.isBlank(param)) {
             return param;
         }
