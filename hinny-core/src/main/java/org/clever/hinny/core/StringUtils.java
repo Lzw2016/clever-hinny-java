@@ -26,7 +26,7 @@ public class StringUtils {
      * @param param 需要转换的字符串
      * @return 转换好的字符串
      */
-    public static String camelToUnderline(String param) {
+    public String camelToUnderline(String param) {
         return StrFormatter.camelToUnderline(param);
     }
 
@@ -36,7 +36,7 @@ public class StringUtils {
      * @param param 需要转换的字符串
      * @return 转换好的字符串
      */
-    public static String underlineToCamel(String param) {
+    public String underlineToCamel(String param) {
         return StrFormatter.underlineToCamel(param);
     }
 
@@ -47,12 +47,12 @@ public class StringUtils {
      * @param firstUpperCase 首字母是否大写
      * @return 转换好的字符串
      */
-    public static String underlineToCamel(String param, Boolean firstUpperCase) {
+    public String underlineToCamel(String param, Object firstUpperCase) {
         if (org.apache.commons.lang3.StringUtils.isBlank(param)) {
             return param;
         }
         String res = StrFormatter.underlineToCamel(param);
-        if (firstUpperCase) {
+        if (firstUpperCase instanceof Boolean && (Boolean) firstUpperCase) {
             res = String.valueOf(res.charAt(0)).toUpperCase() + res.substring(1);
         }
         return res;
