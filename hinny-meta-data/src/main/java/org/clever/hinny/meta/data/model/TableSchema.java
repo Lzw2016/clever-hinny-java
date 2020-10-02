@@ -4,7 +4,9 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 作者：lizw <br/>
@@ -28,6 +30,10 @@ public class TableSchema implements Serializable {
      * 表注释说明
      */
     private String description;
+    /**
+     * 其他列属性
+     */
+    private final Map<String, Object> attributes = new HashMap<>();
     /**
      * 数据库列
      */

@@ -17,6 +17,7 @@ public class ConvertToTableSchema {
         tableSchema.setSchemaName(schema.getCatalogName());
         tableSchema.setTableName(table.getName());
         tableSchema.setDescription(table.getRemarks());
+        tableSchema.getAttributes().putAll(table.getAttributes());
         return tableSchema;
     }
 }
