@@ -10,7 +10,6 @@
     <contextName>${APP_NAME}</contextName>
 
     <!--自定义日志级别-->
-    <logger name="schemacrawler" level="WARN"/>
     <!--<logger name="org.clever" level="DEBUG"/>-->
     <!--<logger name="org.clever.hinny.api.require" level="INFO"/>-->
     <!--<logger name="org.springframework" level="INFO"/>-->
