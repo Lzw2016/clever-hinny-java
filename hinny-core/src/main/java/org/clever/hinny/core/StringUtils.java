@@ -1,5 +1,7 @@
 package org.clever.hinny.core;
 
+import org.clever.common.utils.StrFormatter;
+
 import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.List;
@@ -17,6 +19,26 @@ public class StringUtils {
 
     // Other
     //----------------------------------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * 字符串驼峰转下划线格式
+     *
+     * @param param 需要转换的字符串
+     * @return 转换好的字符串
+     */
+    public static String camelToUnderline(String param) {
+        return StrFormatter.camelToUnderline(param);
+    }
+
+    /**
+     * 字符串下划线转驼峰格式
+     *
+     * @param param 需要转换的字符串
+     * @return 转换好的字符串
+     */
+    public static String underlineToCamel(String param) {
+        return StrFormatter.underlineToCamel(param);
+    }
 
     /**
      * 获取字符串byte[]数据
@@ -745,7 +767,7 @@ public class StringUtils {
      * </pre>
      */
     public int lastIndexOf(CharSequence seq, int searchChar, int startPos) {
-        return org.clever.common.utils.StringUtils.lastIndexOf(seq, searchChar,startPos);
+        return org.clever.common.utils.StringUtils.lastIndexOf(seq, searchChar, startPos);
     }
 
     /**
