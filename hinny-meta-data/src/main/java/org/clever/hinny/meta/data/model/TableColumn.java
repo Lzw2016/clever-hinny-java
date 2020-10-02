@@ -85,6 +85,10 @@ public class TableColumn implements Serializable {
      */
     private Boolean partOfUniqueIndex;
     /**
+     * 字段映射的Java类型
+     */
+    private Class<?> mappedClass;
+    /**
      * 其他列属性
      */
     private final Map<String, Object> attributes = new HashMap<>();

@@ -31,6 +31,7 @@ public class ConvertToTableColumn {
         tableColumn.setPartOfIndex(column.isPartOfIndex());
         tableColumn.setPartOfPrimaryKey(column.isPartOfPrimaryKey());
         tableColumn.setPartOfUniqueIndex(column.isPartOfUniqueIndex());
+        tableColumn.setMappedClass(column.getColumnDataType().getTypeMappedClass());
         tableColumn.getAttributes().putAll(column.getAttributes());
         return tableColumn;
     }
