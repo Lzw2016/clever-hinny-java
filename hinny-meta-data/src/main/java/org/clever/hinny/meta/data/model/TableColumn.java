@@ -3,6 +3,7 @@ package org.clever.hinny.meta.data.model;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -86,5 +87,5 @@ public class TableColumn implements Serializable {
     /**
      * 其他列属性
      */
-    private Map<String, Object> attributes;
+    private final Map<String, Object> attributes = new HashMap<>();
 }

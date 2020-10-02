@@ -29,7 +29,7 @@ public class ConvertToTableColumn {
         tableColumn.setPartOfIndex(column.isPartOfIndex());
         tableColumn.setPartOfPrimaryKey(column.isPartOfPrimaryKey());
         tableColumn.setPartOfUniqueIndex(column.isPartOfUniqueIndex());
-        tableColumn.setAttributes(column.getAttributes());
+        tableColumn.getAttributes().putAll(column.getAttributes());
         return tableColumn;
     }
 }
