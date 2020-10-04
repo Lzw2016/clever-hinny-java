@@ -59,6 +59,7 @@
         <module>hinny-data-rabbitmq</module>
         <module>hinny-data-kafka</module>
         <module>hinny-mvc</module>
+        <module>hinny-security</module>
     </modules>
 
     <properties>
@@ -108,6 +109,16 @@
             <dependency>
                 <groupId>org.clever</groupId>
                 <artifactId>hinny-data-kafka</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.clever</groupId>
+                <artifactId>hinny-mvc</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.clever</groupId>
+                <artifactId>hinny-security</artifactId>
                 <version>${revision}</version>
             </dependency>
             <!--clever common-->

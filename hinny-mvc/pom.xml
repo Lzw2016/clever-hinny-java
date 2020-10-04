@@ -19,10 +19,6 @@
             <groupId>org.clever</groupId>
             <artifactId>clever-common-model</artifactId>
         </dependency>
-        <!--        <dependency>-->
-        <!--            <groupId>org.clever</groupId>-->
-        <!--            <artifactId>clever-common-utils</artifactId>-->
-        <!--        </dependency>-->
         <!--clever hinny-->
         <dependency>
             <groupId>org.clever</groupId>
