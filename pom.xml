@@ -51,6 +51,7 @@
 
     <modules>
         <module>hinny-core</module>
+        <module>hinny-freemarker</module>
         <module>hinny-data-common</module>
         <module>hinny-data-jdbc</module>
         <module>hinny-meta-data</module>
@@ -79,6 +80,11 @@
             <dependency>
                 <groupId>org.clever</groupId>
                 <artifactId>hinny-core</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.clever</groupId>
+                <artifactId>hinny-freemarker</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
