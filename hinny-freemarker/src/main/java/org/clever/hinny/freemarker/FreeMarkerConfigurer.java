@@ -2,15 +2,17 @@ package org.clever.hinny.freemarker;
 
 import freemarker.cache.StringTemplateLoader;
 import freemarker.template.Configuration;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.context.annotation.Bean;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.stereotype.Component;
 
 /**
  * 作者：lizw <br/>
  * 创建时间：2020/10/04 22:17 <br/>
  */
-@org.springframework.context.annotation.Configuration
-public class FreeMarkerConfigurer {
+@Component
+public class FreeMarkerConfigurer implements ApplicationContextAware {
     /**
      * FreeMarker容器
      */
@@ -20,14 +22,14 @@ public class FreeMarkerConfigurer {
         return CONFIG;
     }
 
-    @Bean
-    public Configuration configuration(ObjectProvider<Configuration> configuration) {
+    @SuppressWarnings("NullableProblems")
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         try {
-            CONFIG = configuration.getIfAvailable();
+            CONFIG = applicationContext.getBean(Configuration.class);
         } catch (Exception e) {
             CONFIG = createConfiguration();
         }
-        return CONFIG;
     }
 
     private static Configuration createConfiguration() {
