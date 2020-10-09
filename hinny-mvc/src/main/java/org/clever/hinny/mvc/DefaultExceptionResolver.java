@@ -205,6 +205,7 @@ public class DefaultExceptionResolver implements ExceptionResolver {
             errorResponse = newErrorResponse(request, response, ex);
             errorResponse.setMessage("客户端请求错误");
         } else {
+            log.debug("[ScriptHandler]-全局的异常处理  ", ex);
             response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
             errorResponse = newErrorResponse(request, response, ex);
         }
