@@ -38,6 +38,11 @@ public class HttpRequestWrapper {
     protected HttpContext httpContext;
     private final HttpServletRequest delegate;
 
+    /**
+     * 缓存 body Data Map
+     */
+    protected Map<String, Object> bodyMap;
+
     // public HttpRequestWrapper(HttpContext httpContext) {
     //     Assert.notNull(httpContext, "参数httpContext不能为空");
     //     this.httpContext = httpContext;
@@ -850,7 +855,10 @@ public class HttpRequestWrapper {
      */
     @SuppressWarnings("unchecked")
     protected Map<String, Object> getBodyMap() throws IOException {
-        Map<String, Object> bodyMap = new HashMap<>();
+        if (bodyMap != null) {
+            return bodyMap;
+        }
+        bodyMap = new HashMap<>();
         final String body = StringUtils.trim(IOUtils.toString(delegate.getReader()));
         // body 内容为空
         if (StringUtils.isBlank(body)) {
