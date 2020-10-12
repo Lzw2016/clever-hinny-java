@@ -859,6 +859,10 @@ public class HttpRequestWrapper {
             return bodyMap;
         }
         bodyMap = new HashMap<>();
+        try {
+            delegate.getReader().reset();
+        } catch (Exception ignored) {
+        }
         final String body = StringUtils.trim(IOUtils.toString(delegate.getReader()));
         // body 内容为空
         if (StringUtils.isBlank(body)) {
