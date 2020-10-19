@@ -683,8 +683,8 @@ public class JdbcDataSource extends AbstractDataSource {
         }
         page.setRecords(listData);
         // 排序信息
-        List<String> orderFieldsTmp = pagination.getOrderFieldsSql();
-        List<String> sortsTmp = pagination.getSortsSql();
+        List<String> orderFieldsTmp = pagination.getOrderFields();
+        List<String> sortsTmp = pagination.getSorts();
         for (int i = 0; i < orderFieldsTmp.size(); i++) {
             String fieldSql = orderFieldsTmp.get(i);
             String sort = sortsTmp.get(i);

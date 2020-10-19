@@ -1,5 +1,6 @@
 package org.clever.hinny.mvc.http;
 
+import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -34,6 +35,16 @@ import java.util.*;
  * 创建时间：2019/09/20 17:27 <br/>
  */
 public class HttpRequestWrapper {
+    final String ParamName_OrderFields = "orderFields";
+    final String ParamName_Sorts = "sorts";
+    final String ParamName_OrderField = "orderField";
+    final String ParamName_Sort = "sort";
+    final String ParamName_FieldsMapping = "fieldsMapping";
+
+    final String ParamName_PageSize = "pageSize";
+    final String ParamName_PageNo = "pageNo";
+    final String ParamName_IsSearchCount = "isSearchCount";
+
     private final ConversionService conversionService;
     protected HttpContext httpContext;
     private final HttpServletRequest delegate;
@@ -479,49 +490,93 @@ public class HttpRequestWrapper {
     /**
      * 获取数据库排序查询参数
      */
+    @SuppressWarnings("DuplicatedCode")
+    @SneakyThrows
     public Map<String, Object> getQueryBySort() {
-        Map<String, Object> queryBySort = new HashMap<>(5);
         Map<String, String[]> paramMap = delegate.getParameterMap();
+        Map<String, Object> requestData = this.getRequestData();
+        Map<String, Object> queryBySort = new HashMap<>(5);
         // 高优先级排序字段
-        String[] orderFields = paramMap.get("orderFields");
-        queryBySort.put("orderFields", orderFields);
-        String[] sorts = paramMap.get("sorts");
-        queryBySort.put("sorts", sorts);
-        // 低优先级排序字段
-        String[] orderField = paramMap.get("orderField");
-        if (orderField != null && orderField.length > 0) {
-            queryBySort.put("orderField", orderField[0]);
+        String[] orderFields = paramMap.get(ParamName_OrderFields);
+        if (orderFields != null) {
+            queryBySort.put(ParamName_OrderFields, orderFields);
+        } else {
+            Object obj = requestData.get(ParamName_OrderFields);
+            if (obj instanceof List) {
+                queryBySort.put(ParamName_OrderFields, ((List<?>) obj).toArray());
+            }
         }
-        String[] sort = paramMap.get("sort");
+        String[] sorts = paramMap.get(ParamName_Sorts);
+        if (sorts != null) {
+            queryBySort.put(ParamName_Sorts, sorts);
+        } else {
+            Object obj = requestData.get(ParamName_Sorts);
+            if (obj instanceof List) {
+                queryBySort.put(ParamName_Sorts, ((List<?>) obj).toArray());
+            }
+        }
+        // 低优先级排序字段
+        String[] orderField = paramMap.get(ParamName_OrderField);
+        if (orderField != null && orderField.length > 0) {
+            queryBySort.put(ParamName_OrderField, orderField[0]);
+        } else {
+            Object obj = requestData.get(ParamName_OrderField);
+            if (obj != null) {
+                queryBySort.put(ParamName_OrderField, String.valueOf(obj));
+            }
+        }
+        String[] sort = paramMap.get(ParamName_Sort);
         if (sort != null && sort.length > 0) {
-            queryBySort.put("sort", sort[0]);
+            queryBySort.put(ParamName_Sort, sort[0]);
+        } else {
+            Object obj = requestData.get(ParamName_Sort);
+            if (obj != null) {
+                queryBySort.put(ParamName_Sort, String.valueOf(obj));
+            }
         }
         // 排序字段 映射Map
-        queryBySort.put("fieldsMapping", new HashMap<>());
+        queryBySort.put(ParamName_FieldsMapping, new HashMap<>());
         return queryBySort;
     }
 
     /**
      * 获取数据库分页查询参数
      */
+    @SneakyThrows
     public Map<String, Object> getQueryByPage() {
+        Map<String, String[]> paramMap = delegate.getParameterMap();
+        Map<String, Object> requestData = this.getRequestData();
         Map<String, Object> queryByPage = new HashMap<>(8);
         queryByPage.putAll(getQueryBySort());
-        Map<String, String[]> paramMap = delegate.getParameterMap();
         // 每页的数据量(1 <= pageSize <= 100)
-        String[] pageSize = paramMap.get("pageSize");
+        String[] pageSize = paramMap.get(ParamName_PageSize);
         if (pageSize != null && pageSize.length > 0) {
-            queryByPage.put("pageSize", NumberUtils.toInt(pageSize[0], 10));
+            queryByPage.put(ParamName_PageSize, NumberUtils.toInt(pageSize[0], 10));
+        } else {
+            Object obj = requestData.get(ParamName_PageSize);
+            if (obj != null) {
+                queryByPage.put(ParamName_PageSize, NumberUtils.toInt(String.valueOf(obj), 10));
+            }
         }
         // 当前页面的页码数(pageNo >= 1)
-        String[] pageNo = paramMap.get("pageNo");
+        String[] pageNo = paramMap.get(ParamName_PageNo);
         if (pageNo != null && pageNo.length > 0) {
-            queryByPage.put("pageNo", NumberUtils.toInt(pageNo[0], 1));
+            queryByPage.put(ParamName_PageNo, NumberUtils.toInt(pageNo[0], 1));
+        } else {
+            Object obj = requestData.get(ParamName_PageNo);
+            if (obj != null) {
+                queryByPage.put(ParamName_PageNo, NumberUtils.toInt(String.valueOf(obj), 1));
+            }
         }
         // 当前页面的页码数(pageNo >= 1)
-        String[] isSearchCount = paramMap.get("isSearchCount");
+        String[] isSearchCount = paramMap.get(ParamName_IsSearchCount);
         if (isSearchCount != null && isSearchCount.length > 0) {
-            queryByPage.put("isSearchCount", BooleanUtils.toBoolean(isSearchCount[0]));
+            queryByPage.put(ParamName_IsSearchCount, BooleanUtils.toBoolean(isSearchCount[0]));
+        } else {
+            Object obj = requestData.get(ParamName_IsSearchCount);
+            if (obj != null) {
+                queryByPage.put(ParamName_IsSearchCount, BooleanUtils.toBoolean(String.valueOf(obj)));
+            }
         }
         return queryByPage;
     }
