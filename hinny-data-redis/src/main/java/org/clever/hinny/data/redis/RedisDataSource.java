@@ -25,7 +25,6 @@ import java.util.concurrent.TimeUnit;
  * 作者： lzw<br/>
  * 创建时间：2019-10-06 22:01 <br/>
  */
-@SuppressWarnings("DuplicatedCode")
 @Slf4j
 public class RedisDataSource extends AbstractDataSource {
     private final LettuceClientBuilder lettuceClientBuilder;
@@ -293,7 +292,7 @@ public class RedisDataSource extends AbstractDataSource {
     }
 
     /**
-     * 仅当 newkey 不存在时，将 key 改名为 newkey
+     * 仅当 newKey 不存在时，将 key 改名为 newKey
      *
      * @param oldKey oldKey
      * @param newKey newKey
@@ -535,7 +534,7 @@ public class RedisDataSource extends AbstractDataSource {
      * key 所储存的值减去给定的减量值（decrement）
      *
      * @param key   key
-     * @param delta 增量值
+     * @param delta 减量值
      */
     public Long vDecrement(String key, Double delta) {
         return redisTemplate.opsForValue().decrement(key, delta.longValue());
@@ -738,20 +737,7 @@ public class RedisDataSource extends AbstractDataSource {
         Assert.notNull(callback, "ScanCallback不能为空");
         ScanOptions scanOptions = ScanOptions.scanOptions().count(count.longValue()).match(pattern).build();
         Cursor<Map.Entry<Object, Object>> cursor = redisTemplate.opsForHash().scan(key, scanOptions);
-        while (cursor.hasNext()) {
-            Map.Entry<Object, Object> entry = cursor.next();
-            boolean needBreak;
-            try {
-                needBreak = callback.next(entry);
-            } catch (Exception e) {
-                needBreak = true;
-                log.warn(e.getMessage(), e);
-            }
-            if (needBreak) {
-                cursor.close();
-                break;
-            }
-        }
+        cursorForeach(cursor, callback);
     }
 
     // --------------------------------------------------------------------------------------------
@@ -1314,20 +1300,7 @@ public class RedisDataSource extends AbstractDataSource {
         Assert.notNull(callback, "ScanCallback不能为空");
         ScanOptions scanOptions = ScanOptions.scanOptions().count(count.longValue()).match(pattern).build();
         Cursor<Object> cursor = redisTemplate.opsForSet().scan(key, scanOptions);
-        while (cursor.hasNext()) {
-            Object value = cursor.next();
-            boolean needBreak;
-            try {
-                needBreak = callback.next(value);
-            } catch (Exception e) {
-                needBreak = true;
-                log.warn(e.getMessage(), e);
-            }
-            if (needBreak) {
-                cursor.close();
-                break;
-            }
-        }
+        cursorForeach(cursor, callback);
     }
 
     // --------------------------------------------------------------------------------------------
@@ -1446,14 +1419,7 @@ public class RedisDataSource extends AbstractDataSource {
      */
     public List<ZSetValue> zsRangeWithScores(String key, Number start, Number end) {
         Set<ZSetOperations.TypedTuple<Object>> set = redisTemplate.opsForZSet().rangeWithScores(key, start.longValue(), end.longValue());
-        if (set == null) {
-            return Collections.emptyList();
-        }
-        List<ZSetValue> result = new ArrayList<>(set.size());
-        for (ZSetOperations.TypedTuple<Object> typedTuple : set) {
-            result.add(new ZSetValue(typedTuple.getValue(), typedTuple.getScore()));
-        }
-        return result;
+        return zSetToList(set);
     }
 
     /**
@@ -1476,14 +1442,7 @@ public class RedisDataSource extends AbstractDataSource {
      */
     public List<ZSetValue> zsRangeByScoreWithScores(String key, Number min, Number max) {
         Set<ZSetOperations.TypedTuple<Object>> set = redisTemplate.opsForZSet().rangeByScoreWithScores(key, min.doubleValue(), max.doubleValue());
-        if (set == null) {
-            return Collections.emptyList();
-        }
-        List<ZSetValue> result = new ArrayList<>(set.size());
-        for (ZSetOperations.TypedTuple<Object> typedTuple : set) {
-            result.add(new ZSetValue(typedTuple.getValue(), typedTuple.getScore()));
-        }
-        return result;
+        return zSetToList(set);
     }
 
     /**
@@ -1510,14 +1469,7 @@ public class RedisDataSource extends AbstractDataSource {
      */
     public List<ZSetValue> zsRangeByScoreWithScores(String key, Number min, Number max, Number offset, Number count) {
         Set<ZSetOperations.TypedTuple<Object>> set = redisTemplate.opsForZSet().rangeByScoreWithScores(key, min.doubleValue(), max.doubleValue(), offset.longValue(), count.longValue());
-        if (set == null) {
-            return Collections.emptyList();
-        }
-        List<ZSetValue> result = new ArrayList<>(set.size());
-        for (ZSetOperations.TypedTuple<Object> typedTuple : set) {
-            result.add(new ZSetValue(typedTuple.getValue(), typedTuple.getScore()));
-        }
-        return result;
+        return zSetToList(set);
     }
 
     /**
@@ -1540,14 +1492,7 @@ public class RedisDataSource extends AbstractDataSource {
      */
     public List<ZSetValue> zsReverseRangeWithScores(String key, Number start, Number end) {
         Set<ZSetOperations.TypedTuple<Object>> set = redisTemplate.opsForZSet().reverseRangeWithScores(key, start.longValue(), end.longValue());
-        if (set == null) {
-            return Collections.emptyList();
-        }
-        List<ZSetValue> result = new ArrayList<>(set.size());
-        for (ZSetOperations.TypedTuple<Object> typedTuple : set) {
-            result.add(new ZSetValue(typedTuple.getValue(), typedTuple.getScore()));
-        }
-        return result;
+        return zSetToList(set);
     }
 
     /**
@@ -1570,14 +1515,7 @@ public class RedisDataSource extends AbstractDataSource {
      */
     public List<ZSetValue> zsReverseRangeByScoreWithScores(String key, Number min, Number max) {
         Set<ZSetOperations.TypedTuple<Object>> set = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(key, min.doubleValue(), max.doubleValue());
-        if (set == null) {
-            return Collections.emptyList();
-        }
-        List<ZSetValue> result = new ArrayList<>(set.size());
-        for (ZSetOperations.TypedTuple<Object> typedTuple : set) {
-            result.add(new ZSetValue(typedTuple.getValue(), typedTuple.getScore()));
-        }
-        return result;
+        return zSetToList(set);
     }
 
     /**
@@ -1604,14 +1542,7 @@ public class RedisDataSource extends AbstractDataSource {
      */
     public List<ZSetValue> zsReverseRangeByScoreWithScores(String key, Number min, Number max, Number offset, Number count) {
         Set<ZSetOperations.TypedTuple<Object>> set = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(key, min.doubleValue(), max.doubleValue(), offset.longValue(), count.longValue());
-        if (set == null) {
-            return Collections.emptyList();
-        }
-        List<ZSetValue> result = new ArrayList<>(set.size());
-        for (ZSetOperations.TypedTuple<Object> typedTuple : set) {
-            result.add(new ZSetValue(typedTuple.getValue(), typedTuple.getScore()));
-        }
-        return result;
+        return zSetToList(set);
     }
 
     /**
@@ -1778,21 +1709,7 @@ public class RedisDataSource extends AbstractDataSource {
      * @param equalsMax equalsMax
      */
     public Set<Object> zsRangeByLex(String key, Object minValue, boolean equalsMin, Object maxValue, boolean equalsMax) {
-        RedisZSetCommands.Range range = RedisZSetCommands.Range.range();
-        if (minValue != null) {
-            if (equalsMin) {
-                range.gte(minValue);
-            } else {
-                range.gt(minValue);
-            }
-        }
-        if (maxValue != null) {
-            if (equalsMax) {
-                range.lte(maxValue);
-            } else {
-                range.lt(maxValue);
-            }
-        }
+        RedisZSetCommands.Range range = newRange(minValue, equalsMin, maxValue, equalsMax);
         return redisTemplate.opsForZSet().rangeByLex(key, range);
     }
 
@@ -1808,21 +1725,7 @@ public class RedisDataSource extends AbstractDataSource {
      * @param offset    offset
      */
     public Set<Object> zsRangeByLex(String key, Object minValue, boolean equalsMin, Object maxValue, boolean equalsMax, Number count, Number offset) {
-        RedisZSetCommands.Range range = RedisZSetCommands.Range.range();
-        if (minValue != null) {
-            if (equalsMin) {
-                range.gte(minValue);
-            } else {
-                range.gt(minValue);
-            }
-        }
-        if (maxValue != null) {
-            if (equalsMax) {
-                range.lte(maxValue);
-            } else {
-                range.lt(maxValue);
-            }
-        }
+        RedisZSetCommands.Range range = newRange(minValue, equalsMin, maxValue, equalsMax);
         RedisZSetCommands.Limit limit;
         if (count != null || offset != null) {
             limit = RedisZSetCommands.Limit.limit();
@@ -1977,7 +1880,7 @@ public class RedisDataSource extends AbstractDataSource {
     }
 
     /**
-     * 获取一个或多个成员位置的Geohash表示
+     * 获取一个或多个成员位置的GeoHash表示
      *
      * @param key     key
      * @param members members
@@ -1987,7 +1890,7 @@ public class RedisDataSource extends AbstractDataSource {
     }
 
     /**
-     * 获取一个或多个成员位置的Geohash表示
+     * 获取一个或多个成员位置的GeoHash表示
      *
      * @param key     key
      * @param members members
@@ -2026,6 +1929,56 @@ public class RedisDataSource extends AbstractDataSource {
     // --------------------------------------------------------------------------------------------
     // 其它 操作
     // --------------------------------------------------------------------------------------------
+
+    /**
+     * 迭代Cursor数据
+     */
+    private <T> void cursorForeach(Cursor<T> cursor, ScanCallback<T> callback) throws IOException {
+        while (cursor.hasNext()) {
+            T entry = cursor.next();
+            boolean needBreak;
+            try {
+                needBreak = callback.next(entry);
+            } catch (Exception e) {
+                needBreak = true;
+                log.warn(e.getMessage(), e);
+            }
+            if (needBreak) {
+                cursor.close();
+                break;
+            }
+        }
+    }
+
+    private <T> List<ZSetValue> zSetToList(Set<ZSetOperations.TypedTuple<T>> set) {
+        if (set == null) {
+            return new ArrayList<>();
+        }
+        List<ZSetValue> result = new ArrayList<>(set.size());
+        for (ZSetOperations.TypedTuple<T> typedTuple : set) {
+            result.add(new ZSetValue(typedTuple.getValue(), typedTuple.getScore()));
+        }
+        return result;
+    }
+
+    private RedisZSetCommands.Range newRange(Object minValue, boolean equalsMin, Object maxValue, boolean equalsMax) {
+        RedisZSetCommands.Range range = RedisZSetCommands.Range.range();
+        if (minValue != null) {
+            if (equalsMin) {
+                range.gte(minValue);
+            } else {
+                range.gt(minValue);
+            }
+        }
+        if (maxValue != null) {
+            if (equalsMax) {
+                range.lte(maxValue);
+            } else {
+                range.lt(maxValue);
+            }
+        }
+        return range;
+    }
 
     private RedisGeoCommands.GeoLocation<Object> getGeoLocation(PointValue pointValue) {
         Assert.notNull(pointValue, "PointValue不能为空");
