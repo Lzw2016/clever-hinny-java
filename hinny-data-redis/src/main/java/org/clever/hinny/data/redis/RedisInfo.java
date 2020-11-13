@@ -123,7 +123,7 @@ public class RedisInfo implements Serializable {
             name = node.getName();
             host = node.getHost();
             port = node.getPort();
-            type = node.getType();
+            type = String.valueOf(node.getType());
             masterId = node.getMasterId();
         }
 
@@ -146,7 +146,7 @@ public class RedisInfo implements Serializable {
         /**
          * 节点类型
          */
-        private RedisNode.NodeType type;
+        private String type;
         /**
          * 主节点ID
          */
