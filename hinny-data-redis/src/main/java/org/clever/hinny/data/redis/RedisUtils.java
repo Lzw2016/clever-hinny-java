@@ -157,20 +157,57 @@ public class RedisUtils {
 
     protected static RedisInfo.SocketInfo getRedisSocketInfo(RedisSocketConfiguration configuration) {
         RedisInfo.SocketInfo socketInfo = new RedisInfo.SocketInfo();
-
+        socketInfo.setSocket(configuration.getSocket());
+        socketInfo.setDatabase(configuration.getDatabase());
         return socketInfo;
     }
 
     protected static RedisInfo.StandaloneInfo getRedisStandaloneInfo(RedisStandaloneConfiguration configuration) {
         RedisInfo.StandaloneInfo standaloneInfo = new RedisInfo.StandaloneInfo();
-
+        standaloneInfo.setHostName(configuration.getHostName());
+        standaloneInfo.setPort(configuration.getPort());
+        standaloneInfo.setDatabase(configuration.getDatabase());
         return standaloneInfo;
     }
 
     protected static RedisInfo.StaticMasterReplicaInfo getRedisStaticMasterReplicaInfo(RedisStaticMasterReplicaConfiguration configuration) {
         RedisInfo.StaticMasterReplicaInfo staticMasterReplicaInfo = new RedisInfo.StaticMasterReplicaInfo();
-
+        List<RedisInfo.StandaloneInfo> nodes = new ArrayList<>();
+        for (RedisStandaloneConfiguration node : configuration.getNodes()) {
+            nodes.add(new RedisInfo.StandaloneInfo(node));
+        }
+        staticMasterReplicaInfo.setNodes(nodes);
+        staticMasterReplicaInfo.setDatabase(configuration.getDatabase());
         return staticMasterReplicaInfo;
+    }
+
+    protected static void fill(RedisInfo redisInfo, RedisStandaloneConfiguration redisStandaloneConfiguration) {
+        RedisInfo.StandaloneInfo standaloneInfo = getRedisStandaloneInfo(redisStandaloneConfiguration);
+        if (redisInfo.getClusterInfo() == null
+                && redisInfo.getSentinelInfo() == null
+                && redisInfo.getSocketInfo() == null
+                && redisInfo.getStaticMasterReplicaInfo() == null
+                || !Objects.equals(standaloneInfo.getHostName(), "localhost")
+                || !Objects.equals(standaloneInfo.getPort(), 6379)) {
+            redisInfo.setStandaloneInfo(standaloneInfo);
+        }
+    }
+
+    protected static void fill(RedisInfo redisInfo, Object configObj) {
+        if (configObj == null) {
+            return;
+        }
+        if (redisInfo.getClusterInfo() == null && configObj instanceof RedisClusterConfiguration) {
+            redisInfo.setClusterInfo(getRedisClusterInfo((RedisClusterConfiguration) configObj));
+        } else if (redisInfo.getSocketInfo() == null && configObj instanceof RedisSocketConfiguration) {
+            redisInfo.setSocketInfo(getRedisSocketInfo((RedisSocketConfiguration) configObj));
+        } else if (redisInfo.getSentinelInfo() == null && configObj instanceof RedisSentinelConfiguration) {
+            redisInfo.setSentinelInfo(getRedisSentinelInfo((RedisSentinelConfiguration) configObj));
+        } else if (redisInfo.getStandaloneInfo() == null && configObj instanceof RedisStandaloneConfiguration) {
+            fill(redisInfo, (RedisStandaloneConfiguration) configObj);
+        } else if (configObj instanceof RedisStaticMasterReplicaConfiguration) {
+            redisInfo.setStaticMasterReplicaInfo(getRedisStaticMasterReplicaInfo((RedisStaticMasterReplicaConfiguration) configObj));
+        }
     }
 
     protected static RedisInfo getRedisInfo(LettuceConnectionFactory lettuceConnectionFactory) {
@@ -184,28 +221,34 @@ public class RedisUtils {
         if (lettuceConnectionFactory.getSocketConfiguration() != null) {
             redisInfo.setSocketInfo(getRedisSocketInfo(lettuceConnectionFactory.getSocketConfiguration()));
         }
-        // TODO ?? 需要判断null?
-        redisInfo.setStandaloneInfo(getRedisStandaloneInfo(lettuceConnectionFactory.getStandaloneConfiguration()));
+        fill(redisInfo, lettuceConnectionFactory.getStandaloneConfiguration());
         Object configObj = getField(LettuceConnectionFactory.class, "configuration", lettuceConnectionFactory);
-        if (configObj == null) {
-            return redisInfo;
-        }
-        if (redisInfo.getClusterInfo() == null && configObj instanceof RedisClusterConfiguration) {
-            redisInfo.setClusterInfo(getRedisClusterInfo((RedisClusterConfiguration) configObj));
-        } else if (redisInfo.getSocketInfo() == null && configObj instanceof RedisSocketConfiguration) {
-            redisInfo.setSocketInfo(getRedisSocketInfo((RedisSocketConfiguration) configObj));
-        } else if (redisInfo.getSentinelInfo() == null && configObj instanceof RedisSentinelConfiguration) {
-            redisInfo.setSentinelInfo(getRedisSentinelInfo((RedisSentinelConfiguration) configObj));
-        } else if (redisInfo.getStandaloneInfo() == null && configObj instanceof RedisStandaloneConfiguration) {
-            redisInfo.setStandaloneInfo(getRedisStandaloneInfo((RedisStandaloneConfiguration) configObj));
-        } else if (configObj instanceof RedisStaticMasterReplicaConfiguration) {
-            redisInfo.setStaticMasterReplicaInfo(getRedisStaticMasterReplicaInfo((RedisStaticMasterReplicaConfiguration) configObj));
-        }
+        fill(redisInfo, configObj);
         return redisInfo;
     }
 
+    protected static RedisInfo getRedisInfo(JedisConnectionFactory jedisConnectionFactory) {
+        RedisInfo redisInfo = new RedisInfo();
+        if (jedisConnectionFactory.getClusterConfiguration() != null) {
+            redisInfo.setClusterInfo(getRedisClusterInfo(jedisConnectionFactory.getClusterConfiguration()));
+        }
+        if (jedisConnectionFactory.getSentinelConfiguration() != null) {
+            redisInfo.setSentinelInfo(getRedisSentinelInfo(jedisConnectionFactory.getSentinelConfiguration()));
+        }
+        fill(redisInfo, jedisConnectionFactory.getStandaloneConfiguration());
+        Object configObj = getField(JedisConnectionFactory.class, "configuration", jedisConnectionFactory);
+        fill(redisInfo, configObj);
+        return redisInfo;
+    }
 
-//    public RedisInfo getRedisInfo(RedisTemplate<?, ?> redisTemplate) {
-//        redisTemplate.getConnectionFactory()
-//    }
+    public static RedisInfo getRedisInfo(RedisTemplate<?, ?> redisTemplate) {
+        RedisConnectionFactory connectionFactory = redisTemplate.getConnectionFactory();
+        if (connectionFactory instanceof JedisConnectionFactory) {
+            return getRedisInfo((JedisConnectionFactory) connectionFactory);
+        }
+        if (connectionFactory instanceof LettuceConnectionFactory) {
+            return getRedisInfo((LettuceConnectionFactory) connectionFactory);
+        }
+        return null;
+    }
 }

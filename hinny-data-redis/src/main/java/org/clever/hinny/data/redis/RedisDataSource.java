@@ -1930,10 +1930,9 @@ public class RedisDataSource extends AbstractDataSource {
     // 其它 操作
     // --------------------------------------------------------------------------------------------
 
-//    public RedisInfo getInfo() {
-//        redisTemplate.
-//    }
-
+    public RedisInfo getInfo() {
+        return RedisUtils.getRedisInfo(redisTemplate);
+    }
 
     public RedisDataSourceStatus getStatus() {
         return RedisUtils.getRedisDataSourceStatus(redisTemplate);
