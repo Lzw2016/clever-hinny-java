@@ -2,11 +2,13 @@ package org.clever.hinny.data.redis;
 
 import lombok.extern.slf4j.Slf4j;
 import org.clever.common.utils.tuples.TupleTow;
+import org.clever.hinny.data.redis.support.LettuceClientBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.scripting.support.ResourceScriptSource;
 
@@ -22,7 +24,8 @@ import java.util.Objects;
  */
 @Slf4j
 public class RedisRateLimiterTest {
-    private RedisDataSource redisDataSource;
+    private LettuceClientBuilder lettuceClientBuilder;
+    private StringRedisTemplate redisDataSource;
     @SuppressWarnings("rawtypes")
     private DefaultRedisScript<List> redisScript;
 
@@ -34,25 +37,24 @@ public class RedisRateLimiterTest {
         properties.setPort(6379);
         properties.setTimeout(Duration.ofSeconds(10));
         properties.setDatabase(6);
-         properties.setPassword("lizhiwei1993");
+        properties.setPassword("lizhiwei1993");
         RedisProperties.Pool pool = new RedisProperties.Pool();
         pool.setMaxActive(16);
         pool.setMaxIdle(8);
         pool.setMinIdle(1);
         pool.setMaxWait(Duration.ofSeconds(1));
         properties.getLettuce().setPool(pool);
-        redisDataSource = new RedisDataSource(properties);
-
+        lettuceClientBuilder = new LettuceClientBuilder(properties);
+        redisDataSource = new StringRedisTemplate(lettuceClientBuilder.getRedisConnectionFactory());
         redisScript = new DefaultRedisScript<>();
         redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/request_rate_limiter.lua")));
         redisScript.setResultType(List.class);
     }
 
     @After
-    public void close() throws Exception {
-        redisDataSource.close();
+    public void close() {
+        lettuceClientBuilder.destroy();
     }
-
 
     /**
      * @param id            限流ID
@@ -71,9 +73,10 @@ public class RedisRateLimiterTest {
                 String.valueOf(replenishRate),
                 String.valueOf(burstCapacity),
                 String.valueOf(Instant.now().getEpochSecond()),
-                String.valueOf(reqNum),
-                "123"
+                String.valueOf(reqNum)
         );
+
+        assert results != null && results.size() >= 2;
         return TupleTow.creat(Objects.equals(results.get(0), 1L), results.get(1));
     }
 
