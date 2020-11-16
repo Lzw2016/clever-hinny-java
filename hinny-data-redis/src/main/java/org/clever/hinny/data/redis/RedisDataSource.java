@@ -14,6 +14,7 @@ import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Point;
 import org.springframework.data.redis.connection.*;
 import org.springframework.data.redis.core.*;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.util.Assert;
 
 import java.io.IOException;
@@ -1917,6 +1918,14 @@ public class RedisDataSource extends AbstractDataSource {
      */
     public List<Point> geoPosition(String key, Collection<Object> members) {
         return redisTemplate.opsForGeo().position(key, members.toArray());
+    }
+
+    // --------------------------------------------------------------------------------------------
+    // execute 操作
+    // --------------------------------------------------------------------------------------------
+
+    public <T> T execute(RedisScript<T> script, List<String> keys, Object... args) {
+        return redisTemplate.execute(script, keys, args);
     }
 
     // 事务，批量处理
