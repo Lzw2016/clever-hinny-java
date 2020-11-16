@@ -41,7 +41,7 @@ public abstract class AbstractMyBatisMapperSql implements MyBatisMapperSql {
     }
 
     /**
-     * 获取 SqlSource
+     * 获取 BoundSql
      */
     public BoundSql getBoundSql(String sqlId, Object parameter) {
         SqlSource sqlSource = sqlSourceMap.get(sqlId);
