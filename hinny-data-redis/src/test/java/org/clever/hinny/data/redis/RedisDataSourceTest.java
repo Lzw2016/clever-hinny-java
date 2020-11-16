@@ -1,7 +1,6 @@
 package org.clever.hinny.data.redis;
 
 import lombok.extern.slf4j.Slf4j;
-import org.clever.hinny.data.redis.RedisDataSource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -138,7 +137,7 @@ public class RedisDataSourceTest {
     }
 
     @Test
-    public void zsetTest() {
+    public void zSetTest() {
 //        Collection<ZSetValue> values = new ArrayList<>();
 //        values.add(new ZSetValue("lzw", 50d));
 //        values.add(new ZSetValue("wxf", 70d));
@@ -158,10 +157,38 @@ public class RedisDataSourceTest {
     }
 
     @Test
-    public void kExpire(){
+    public void kExpire() {
         redisDataSource.vSet("lzw333", new Date());
-        log.info("### res3 ->{}", redisDataSource.kExpire("lzw333",100000));
-        log.info("### res3 ->{}", redisDataSource.kExpireAt("lzw333","2020-07-18 18:08:00"));
+        log.info("### res3 ->{}", redisDataSource.kExpire("lzw333", 100000));
+        log.info("### res3 ->{}", redisDataSource.kExpireAt("lzw333", "2020-07-18 18:08:00"));
         redisDataSource.vSet("lzw-123456", new Date(), 5000000L);
+    }
+
+    @Test
+    public void kType() {
+        log.info("--> {}", redisDataSource.kType("lzw-123456"));
+        log.info("--> {}", redisDataSource.kType("qwer"));
+        log.info("--> {}", redisDataSource.kType("set1"));
+        log.info("--> {}", redisDataSource.kType("zset1"));
+        log.info("--> {}", redisDataSource.kType("aaaaaaa"));
+    }
+
+    @Test
+    public void getInfo() {
+        log.info("--> {}", redisDataSource.getInfo());
+        log.info("--> {}", redisDataSource.getStatus());
+    }
+
+    @Test
+    public void vSetGet() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("t1", "t1");
+        map.put("t2", "t2");
+        map.put("t3", "t3");
+        map.put("t4", "t4");
+        map.put("t5", 100);
+        redisDataSource.vSet("vSetGet", map);
+        log.info("--> {}", redisDataSource.vGet("vSetGet"));
+        log.info("--> {}", redisDataSource.vGet("vSetGet").getClass()); // java.util.LinkedHashMap
     }
 }
