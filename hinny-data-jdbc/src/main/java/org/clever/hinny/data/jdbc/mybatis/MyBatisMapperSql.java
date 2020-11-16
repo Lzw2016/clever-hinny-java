@@ -22,5 +22,5 @@ public interface MyBatisMapperSql {
      * @param sqlId     SQL ID
      * @param parameter SQL参数
      */
-    BoundSql getSqlSource(String sqlId, Object parameter);
+    BoundSql getBoundSql(String sqlId, Object parameter);
 }

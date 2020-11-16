@@ -629,14 +629,14 @@ public class MyBatisJdbcDataSource extends AbstractDataSource {
         if (parameter == null) {
             parameter = new HashMap<>();
         }
-        BoundSql boundSql = mapperSql.getSqlSource(sqlId, parameter);
+        BoundSql boundSql = mapperSql.getBoundSql(sqlId, parameter);
         Assert.notNull(boundSql, "SQL不存在，sqlId=" + sqlId);
         return TupleTow.creat(boundSql.getNamedParameterSql(), boundSql.getParameterMap());
     }
 
     private String getSql(String sqlId) {
         Assert.hasText(sqlId, "参数sqlId不能为空");
-        BoundSql boundSql = mapperSql.getSqlSource(sqlId, new HashMap<>());
+        BoundSql boundSql = mapperSql.getBoundSql(sqlId, new HashMap<>());
         return boundSql.getNamedParameterSql();
     }
 }
