@@ -1,5 +1,13 @@
 for i = 1, #ARGV do
-    redis.log(redis.LOG_WARNING, i, "=", ARGV[i])
+    redis.log(redis.LOG_WARNING, i, "=", tonumber(ARGV[i])/2.0)
+end
+
+
+redis.call("set", "test", "111,222,333")
+local s = redis.call("get", "test")
+redis.log(redis.LOG_WARNING, "s=", s)
+for w in string.gmatch(s, "%d+") do
+    redis.log(redis.LOG_WARNING, "w=", tonumber(w))
 end
 
 

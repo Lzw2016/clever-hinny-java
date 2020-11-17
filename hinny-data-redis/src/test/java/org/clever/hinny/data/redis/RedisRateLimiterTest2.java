@@ -2,6 +2,8 @@ package org.clever.hinny.data.redis;
 
 import lombok.extern.slf4j.Slf4j;
 import org.clever.common.utils.tuples.TupleTow;
+import org.clever.hinny.data.redis.model.RateLimiterConfig;
+import org.clever.hinny.data.redis.model.RateLimiterRes;
 import org.clever.hinny.data.redis.support.LettuceClientBuilder;
 import org.junit.After;
 import org.junit.Before;
@@ -14,6 +16,7 @@ import org.springframework.scripting.support.ResourceScriptSource;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -33,11 +36,11 @@ public class RedisRateLimiterTest2 {
     public void init() {
         RedisProperties properties = new RedisProperties();
         properties.setSsl(false);
-        properties.setHost("redis5.msvc.top");
+        properties.setHost("127.0.0.1");
         properties.setPort(6379);
         properties.setTimeout(Duration.ofSeconds(10));
         properties.setDatabase(6);
-        properties.setPassword("lizhiwei1993");
+//        properties.setPassword("lizhiwei1993");
         RedisProperties.Pool pool = new RedisProperties.Pool();
         pool.setMaxActive(16);
         pool.setMaxIdle(8);
@@ -98,6 +101,33 @@ public class RedisRateLimiterTest2 {
             }
             idx++;
             break;
+        }
+        long end = System.currentTimeMillis();
+        log.info("耗时: {}ms | 速率: {}", end - start, sum * 1000.0 / (end - start));
+    }
+
+
+    @Test
+    public void rateLimiterTest2() throws InterruptedException {
+        RedisRateLimiter redisRateLimiter = new RedisRateLimiter(redisDataSource);
+        List<RateLimiterConfig> rateLimiterConfigList = new ArrayList<>();
+        rateLimiterConfigList.add(new RateLimiterConfig(30, 50));
+        rateLimiterConfigList.add(new RateLimiterConfig(20, 35));
+        rateLimiterConfigList.add(new RateLimiterConfig(10, 15));
+        int sum = 100;
+        int idx = 0;
+        long start = System.currentTimeMillis();
+        while (sum > idx) {
+            boolean limited = false;
+            List<RateLimiterRes> list = redisRateLimiter.isAllowed("/a/b|27050267", rateLimiterConfigList);
+            for (RateLimiterRes rateLimiterRes : list) {
+                limited = limited || rateLimiterRes.isLimited();
+            }
+            if (limited) {
+                Thread.sleep(5);
+                continue;
+            }
+            idx++;
         }
         long end = System.currentTimeMillis();
         log.info("耗时: {}ms | 速率: {}", end - start, sum * 1000.0 / (end - start));
