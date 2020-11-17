@@ -87,12 +87,3 @@ redis.call("setex", timestamp_key, timestamp_key_ttl, timestamp_new_value)
 
 redis.log(redis.LOG_WARNING, "------------------------------------------------------------------------------------------------------------")
 return result
-
-
-
-
-
-
-
-
-
