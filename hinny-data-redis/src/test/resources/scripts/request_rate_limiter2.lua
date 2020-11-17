@@ -3,11 +3,8 @@ for i = 1, #ARGV do
 end
 
 
-redis.call("set", "test", "111,222,333")
-local s = redis.call("get", "test")
-redis.log(redis.LOG_WARNING, "s=", s)
-for w in string.gmatch(s, "%d+") do
-    redis.log(redis.LOG_WARNING, "w=", tonumber(w))
+for item in string.gmatch("111,222,333", "[^,]+") do
+    redis.log(redis.LOG_WARNING, "item=", item)
 end
 
 

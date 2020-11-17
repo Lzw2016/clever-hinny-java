@@ -111,9 +111,9 @@ public class RedisRateLimiterTest2 {
     public void rateLimiterTest2() throws InterruptedException {
         RedisRateLimiter redisRateLimiter = new RedisRateLimiter(redisDataSource);
         List<RateLimiterConfig> rateLimiterConfigList = new ArrayList<>();
-        rateLimiterConfigList.add(new RateLimiterConfig(30, 50));
-        rateLimiterConfigList.add(new RateLimiterConfig(20, 35));
-        rateLimiterConfigList.add(new RateLimiterConfig(10, 15));
+//        rateLimiterConfigList.add(new RateLimiterConfig(30, 50));
+//        rateLimiterConfigList.add(new RateLimiterConfig(20, 35));
+        rateLimiterConfigList.add(new RateLimiterConfig(3, 15));
         int sum = 100;
         int idx = 0;
         long start = System.currentTimeMillis();
@@ -124,7 +124,7 @@ public class RedisRateLimiterTest2 {
                 limited = limited || rateLimiterRes.isLimited();
             }
             if (limited) {
-                Thread.sleep(5);
+                Thread.sleep(1000);
                 continue;
             }
             idx++;
