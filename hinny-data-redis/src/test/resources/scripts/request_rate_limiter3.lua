@@ -10,7 +10,7 @@ for i = 2, #KEYS do
     tokens_keys[i - 1] = {key, ARGV[argvIndex - 1], ARGV[argvIndex]}
 end
 
-redis.log(redis.LOG_WARNING, "timestamp_key=", timestamp_key)
+-- redis.log(redis.LOG_WARNING, "timestamp_key=", timestamp_key)
 
 -- 获取最后更新时间
 local timestamp_value = tostring(redis.call("get", timestamp_key))
@@ -18,7 +18,7 @@ if timestamp_value == nil then
   timestamp_value = ""
 end
 
-redis.log(redis.LOG_WARNING, "timestamp_value=", timestamp_value)
+-- redis.log(redis.LOG_WARNING, "timestamp_value=", timestamp_value)
 
 -- 每个令牌桶的最后刷新时间
 local last_refreshed_times = {}
@@ -38,7 +38,7 @@ for i = 1, #tokens_keys do
     local times = config[2]         -- 在times秒内
     local limit = config[3]         -- 最多请求limit次
     local key_ttl = times * 2       -- 令牌桶key的过期时间
-    redis.log(redis.LOG_WARNING, "key=", key, "|times=", times, "|limit=", limit)
+    -- redis.log(redis.LOG_WARNING, "key=", key, "|times=", times, "|limit=", limit)
     -- 当前令牌桶最后更新时间
     local last_refreshed = last_refreshed_times[i]
     if last_refreshed == nil then
@@ -54,11 +54,11 @@ for i = 1, #tokens_keys do
     if need_filled_tokens >= 1 then
         last_refreshed = now - (how_long % times)
     end
-    last_refreshed_times[i] = last_refreshed;
     -- 令牌桶上次请求剩余令牌数量
     local last_tokens = tonumber(redis.call("get", key))
     if last_tokens == nil then
       last_tokens = limit
+      last_refreshed = now
     end
     -- 令牌桶当前请求剩余令牌数量
     local filled_tokens = math.min(limit, need_filled_tokens + last_tokens)
@@ -70,8 +70,10 @@ for i = 1, #tokens_keys do
     end
     -- 更新令牌桶剩余令牌数量
     redis.call("setex", key, key_ttl, new_tokens)
-    -- limited, left
+    -- 设置返回数据项 limited, left
     result[i] = {limited, new_tokens}
+    -- 更新last_refreshed
+    last_refreshed_times[i] = last_refreshed
 end
 
 -- 更新最后请求时间
@@ -85,5 +87,5 @@ for i = 1, #last_refreshed_times do
 end
 redis.call("setex", timestamp_key, timestamp_key_ttl, timestamp_new_value)
 
-redis.log(redis.LOG_WARNING, "------------------------------------------------------------------------------------------------------------")
+-- redis.log(redis.LOG_WARNING, "------------------------------------------------------------------------------------------------------------")
 return result

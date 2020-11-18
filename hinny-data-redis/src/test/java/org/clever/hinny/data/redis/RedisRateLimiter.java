@@ -66,9 +66,9 @@ public class RedisRateLimiter {
             args.add(String.valueOf(rateLimiterConfig.getLimit()));
         }
         List<List<Long>> results = (List<List<Long>>) redisTemplate.execute(redisScript, keys, args.toArray());
-        if (log.isDebugEnabled()) {
-            log.debug("[{}] results -> {}", reqId, results);
-        }
+        // if (log.isDebugEnabled()) {
+        //     log.debug("[{}] results -> {}", reqId, results);
+        // }
         for (int i = 0; i < rateLimiterConfigList.size(); i++) {
             assert results != null;
             List<Long> result = results.get(i);

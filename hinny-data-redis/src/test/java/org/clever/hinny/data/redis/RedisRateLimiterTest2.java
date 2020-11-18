@@ -13,6 +13,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 作者：lizw <br/>
@@ -75,6 +76,38 @@ public class RedisRateLimiterTest2 {
 
     @Test
     public void rateLimiterTest3() throws InterruptedException {
-
+        final long sum = 30 + 1;
+        final AtomicLong count = new AtomicLong(0);
+        final AtomicLong rateLimitCount = new AtomicLong(0);
+        final String reqId = "/a/b|27050267";
+        final RedisRateLimiter redisRateLimiter = new RedisRateLimiter(redisDataSource);
+        final List<RateLimiterConfig> rateLimiterConfigList = new ArrayList<>();
+        rateLimiterConfigList.add(new RateLimiterConfig("L3", 5, 10));
+        final int threadCount = 20;
+        final long start = System.currentTimeMillis();
+        for (int i = 0; i < threadCount; i++) {
+            new Thread(() -> {
+                while (sum > count.get()) {
+                    rateLimitCount.incrementAndGet();
+                    List<RateLimiterRes> list = redisRateLimiter.rateLimit(reqId, rateLimiterConfigList);
+                    if (list.stream().noneMatch(RateLimiterRes::isLimited)) {
+                        count.incrementAndGet();
+                        log.info("count -> {}", list);
+                    }
+                }
+            }).start();
+        }
+        while (sum > count.get()) {
+            // noinspection BusyWait
+            Thread.sleep(5);
+        }
+        final long end = System.currentTimeMillis();
+        log.info(
+                "耗时: {}ms | 速率: {}次/s | Redis请求次数: {} | Redis处理速率: {}次/s",
+                end - start,
+                sum * 1000.0 / (end - start),
+                rateLimitCount.get(),
+                rateLimitCount.get() * 1000.0 / (end - start)
+        );
     }
 }
