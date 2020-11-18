@@ -7,7 +7,7 @@ for i = 2, #KEYS do
     local key = KEYS[i]
     local argvIndex = i * 2 - 1 -- 原始表达式: (i-1) * 2 + 1
     -- key, times, limit
-    tokens_keys[i-1] = {key, ARGV[argvIndex-1], ARGV[argvIndex]}
+    tokens_keys[i - 1] = {key, ARGV[argvIndex - 1], ARGV[argvIndex]}
 end
 
 redis.log(redis.LOG_WARNING, "timestamp_key=", timestamp_key)
@@ -50,9 +50,9 @@ for i = 1, #tokens_keys do
     end
     -- 时间差
     local how_long = math.max(0, now - last_refreshed)
-    local need_filled_tokens = math.floor(how_long/times) * limit;
+    local need_filled_tokens = math.floor(how_long / times) * limit;
     if need_filled_tokens >= 1 then
-        last_refreshed = now
+        last_refreshed = now - (how_long % times)
     end
     last_refreshed_times[i] = last_refreshed;
     -- 令牌桶上次请求剩余令牌数量

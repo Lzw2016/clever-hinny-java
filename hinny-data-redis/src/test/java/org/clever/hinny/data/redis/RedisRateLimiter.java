@@ -53,7 +53,7 @@ public class RedisRateLimiter {
     }
 
     @SuppressWarnings("unchecked")
-    public List<RateLimiterRes> isAllowed(String reqId, List<RateLimiterConfig> rateLimiterConfigList) {
+    public List<RateLimiterRes> rateLimit(String reqId, List<RateLimiterConfig> rateLimiterConfigList) {
         checkConfig(rateLimiterConfigList);
         List<RateLimiterRes> resList = new ArrayList<>(rateLimiterConfigList.size());
         List<String> keys = new ArrayList<>(rateLimiterConfigList.size() + 1);
@@ -66,7 +66,7 @@ public class RedisRateLimiter {
             args.add(String.valueOf(rateLimiterConfig.getLimit()));
         }
         List<List<Long>> results = (List<List<Long>>) redisTemplate.execute(redisScript, keys, args.toArray());
-        log.info("results -> {}", results);
+        log.info("[{}] results -> {}", reqId, results);
         for (int i = 0; i < rateLimiterConfigList.size(); i++) {
             assert results != null;
             List<Long> result = results.get(i);
