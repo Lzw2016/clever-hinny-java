@@ -51,9 +51,9 @@ public class RedisRateLimiterTest2 {
     public void rateLimiterTest2() throws InterruptedException {
         RedisRateLimiter redisRateLimiter = new RedisRateLimiter(redisDataSource);
         List<RateLimiterConfig> rateLimiterConfigList = new ArrayList<>();
-        rateLimiterConfigList.add(new RateLimiterConfig(30, 50));
-        rateLimiterConfigList.add(new RateLimiterConfig(20, 35));
-        rateLimiterConfigList.add(new RateLimiterConfig(3, 15));
+        rateLimiterConfigList.add(new RateLimiterConfig("L1", 30, 50));
+        rateLimiterConfigList.add(new RateLimiterConfig("L2", 20, 35));
+        rateLimiterConfigList.add(new RateLimiterConfig("L3", 3, 15));
         int sum = 100;
         int idx = 0;
         long start = System.currentTimeMillis();
@@ -71,5 +71,10 @@ public class RedisRateLimiterTest2 {
         }
         long end = System.currentTimeMillis();
         log.info("耗时: {}ms | 速率: {}", end - start, sum * 1000.0 / (end - start));
+    }
+
+    @Test
+    public void rateLimiterTest3() throws InterruptedException {
+
     }
 }

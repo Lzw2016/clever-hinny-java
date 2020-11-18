@@ -11,6 +11,10 @@ import java.io.Serializable;
 @Data
 public class RateLimiterConfig implements Serializable {
     /**
+     * 限流配置标记ID
+     */
+    private String markId;
+    /**
      * 时间段(单位: 秒)
      */
     private int times;
@@ -22,7 +26,13 @@ public class RateLimiterConfig implements Serializable {
     public RateLimiterConfig() {
     }
 
-    public RateLimiterConfig(int times, int limit) {
+    /**
+     * @param markId 限流配置标记ID
+     * @param times  时间段(单位: 秒)
+     * @param limit  请求次数限制
+     */
+    public RateLimiterConfig(String markId, int times, int limit) {
+        this.markId = markId;
         this.times = times;
         this.limit = limit;
     }
