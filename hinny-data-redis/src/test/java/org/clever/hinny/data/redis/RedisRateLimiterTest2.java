@@ -34,9 +34,9 @@ public class RedisRateLimiterTest2 {
         properties.setDatabase(6);
 //        properties.setPassword("lizhiwei1993");
         RedisProperties.Pool pool = new RedisProperties.Pool();
-        pool.setMaxActive(16);
-        pool.setMaxIdle(8);
-        pool.setMinIdle(1);
+        pool.setMaxActive(512);
+        pool.setMaxIdle(128);
+        pool.setMinIdle(64);
         pool.setMaxWait(Duration.ofSeconds(1));
         properties.getLettuce().setPool(pool);
         lettuceClientBuilder = new LettuceClientBuilder(properties);
@@ -76,14 +76,14 @@ public class RedisRateLimiterTest2 {
 
     @Test
     public void rateLimiterTest3() throws InterruptedException {
-        final long sum = 30 + 1;
+        final long sum = 100 + 1;
         final AtomicLong count = new AtomicLong(0);
         final AtomicLong rateLimitCount = new AtomicLong(0);
         final String reqId = "/a/b|27050267";
         final RedisRateLimiter redisRateLimiter = new RedisRateLimiter(redisDataSource);
         final List<RateLimiterConfig> rateLimiterConfigList = new ArrayList<>();
         rateLimiterConfigList.add(new RateLimiterConfig("L3", 5, 10));
-        final int threadCount = 20;
+        final int threadCount = 30;
         final long start = System.currentTimeMillis();
         for (int i = 0; i < threadCount; i++) {
             new Thread(() -> {
@@ -99,7 +99,7 @@ public class RedisRateLimiterTest2 {
         }
         while (sum > count.get()) {
             // noinspection BusyWait
-            Thread.sleep(5);
+            Thread.sleep(100);
         }
         final long end = System.currentTimeMillis();
         log.info(
