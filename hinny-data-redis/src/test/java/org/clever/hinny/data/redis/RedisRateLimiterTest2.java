@@ -13,6 +13,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -76,13 +77,14 @@ public class RedisRateLimiterTest2 {
 
     @Test
     public void rateLimiterTest3() throws InterruptedException {
-        final long sum = 100 + 1;
+        final long sum = 1000 + 1;
         final AtomicLong count = new AtomicLong(0);
         final AtomicLong rateLimitCount = new AtomicLong(0);
         final String reqId = "/a/b|27050267";
         final RedisRateLimiter redisRateLimiter = new RedisRateLimiter(redisDataSource);
         final List<RateLimiterConfig> rateLimiterConfigList = new ArrayList<>();
-        rateLimiterConfigList.add(new RateLimiterConfig("L3", 5, 10));
+        rateLimiterConfigList.add(new RateLimiterConfig("L1", 5, 10));
+        rateLimiterConfigList.add(new RateLimiterConfig("L3", 5, 100));
         final int threadCount = 30;
         final long start = System.currentTimeMillis();
         for (int i = 0; i < threadCount; i++) {
@@ -90,7 +92,7 @@ public class RedisRateLimiterTest2 {
                 while (sum > count.get()) {
                     rateLimitCount.incrementAndGet();
                     List<RateLimiterRes> list = redisRateLimiter.rateLimit(reqId, rateLimiterConfigList);
-                    if (list.stream().noneMatch(RateLimiterRes::isLimited)) {
+                    if (list.stream().noneMatch(res -> Objects.equals("L3", res.getConfig().getMarkId()) && res.isLimited())) {
                         count.incrementAndGet();
                         log.info("count -> {}", list);
                     }
