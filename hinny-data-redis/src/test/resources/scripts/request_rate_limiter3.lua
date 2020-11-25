@@ -58,7 +58,7 @@ for i = 1, #tokens_keys do
     local last_tokens = tonumber(redis.call("get", key))
     if last_tokens == nil then
       last_tokens = limit
-      last_refreshed = now
+      last_refreshed = (now + times)
     end
     -- 令牌桶当前请求剩余令牌数量
     local filled_tokens = math.min(limit, need_filled_tokens + last_tokens)
