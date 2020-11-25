@@ -155,7 +155,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
                 }
             } else if (handler instanceof ParameterizableViewController) {
                 support = false;
-            } else {
+            } else if (!handler.getClass().getName().startsWith("org.springframework.")) {
                 log.warn("未知的Handler类型，覆盖Script Handler | {}", handler.getClass());
                 support = false;
             }
