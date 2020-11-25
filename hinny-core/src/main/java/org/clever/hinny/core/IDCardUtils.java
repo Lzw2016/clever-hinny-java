@@ -4,10 +4,10 @@ package org.clever.hinny.core;
  * 作者：lizw <br/>
  * 创建时间：2020/07/28 22:34 <br/>
  */
-public class IdCardUtils {
-    public static final IdCardUtils Instance = new IdCardUtils();
+public class IDCardUtils {
+    public static final IDCardUtils Instance = new IDCardUtils();
 
-    private IdCardUtils() {
+    private IDCardUtils() {
     }
 
     /**
@@ -16,15 +16,15 @@ public class IdCardUtils {
      * @param idCard 15位身份编码
      * @return 18位身份编码，失败返回null
      */
-    public String conver15CardTo18(String idCard) {
-        return org.clever.common.utils.IdCardUtils.conver15CardTo18(idCard);
+    public String convert15CardTo18(String idCard) {
+        return org.clever.common.utils.IDCardUtils.convert15CardTo18(idCard);
     }
 
     /**
      * 验证身份证是否合法
      */
     public boolean validateCard(String idCard) {
-        return org.clever.common.utils.IdCardUtils.validateCard(idCard);
+        return org.clever.common.utils.IDCardUtils.validateCard(idCard);
     }
 
     /**
@@ -34,7 +34,7 @@ public class IdCardUtils {
      * @return 是否合法
      */
     public boolean validateIdCard18(String idCard) {
-        return org.clever.common.utils.IdCardUtils.validateIdCard18(idCard);
+        return org.clever.common.utils.IDCardUtils.validateIdCard18(idCard);
     }
 
     /**
@@ -44,7 +44,7 @@ public class IdCardUtils {
      * @return 是否合法
      */
     public boolean validateIdCard15(String idCard) {
-        return org.clever.common.utils.IdCardUtils.validateIdCard15(idCard);
+        return org.clever.common.utils.IDCardUtils.validateIdCard15(idCard);
     }
 
     /**
@@ -60,7 +60,7 @@ public class IdCardUtils {
      * </p>
      */
     public String[] validateIdCard10(String idCard) {
-        return org.clever.common.utils.IdCardUtils.validateIdCard10(idCard);
+        return org.clever.common.utils.IDCardUtils.validateIdCard10(idCard);
     }
 
     /**
@@ -70,7 +70,7 @@ public class IdCardUtils {
      * @return 验证码是否符合
      */
     public boolean validateTWCard(String idCard) {
-        return org.clever.common.utils.IdCardUtils.validateTWCard(idCard);
+        return org.clever.common.utils.IDCardUtils.validateTWCard(idCard);
     }
 
     /**
@@ -88,7 +88,7 @@ public class IdCardUtils {
      * @return 验证码是否符合
      */
     public boolean validateHKCard(String idCard) {
-        return org.clever.common.utils.IdCardUtils.validateHKCard(idCard);
+        return org.clever.common.utils.IDCardUtils.validateHKCard(idCard);
     }
 
     /**
@@ -98,7 +98,7 @@ public class IdCardUtils {
      * @return 年龄
      */
     public int getAgeByIdCard(String idCard) {
-        return org.clever.common.utils.IdCardUtils.getAgeByIdCard(idCard);
+        return org.clever.common.utils.IDCardUtils.getAgeByIdCard(idCard);
     }
 
     /**
@@ -108,7 +108,7 @@ public class IdCardUtils {
      * @return 生日(yyyyMMdd)
      */
     public String getBirthByIdCard(String idCard) {
-        return org.clever.common.utils.IdCardUtils.getBirthByIdCard(idCard);
+        return org.clever.common.utils.IDCardUtils.getBirthByIdCard(idCard);
     }
 
     /**
@@ -118,7 +118,7 @@ public class IdCardUtils {
      * @return 生日(yyyy)
      */
     public Short getYearByIdCard(String idCard) {
-        return org.clever.common.utils.IdCardUtils.getYearByIdCard(idCard);
+        return org.clever.common.utils.IDCardUtils.getYearByIdCard(idCard);
     }
 
     /**
@@ -128,7 +128,7 @@ public class IdCardUtils {
      * @return 生日(MM)
      */
     public Short getMonthByIdCard(String idCard) {
-        return org.clever.common.utils.IdCardUtils.getMonthByIdCard(idCard);
+        return org.clever.common.utils.IDCardUtils.getMonthByIdCard(idCard);
     }
 
     /**
@@ -138,7 +138,7 @@ public class IdCardUtils {
      * @return 生日(dd)
      */
     public Short getDateByIdCard(String idCard) {
-        return org.clever.common.utils.IdCardUtils.getDateByIdCard(idCard);
+        return org.clever.common.utils.IDCardUtils.getDateByIdCard(idCard);
     }
 
     /**
@@ -148,7 +148,7 @@ public class IdCardUtils {
      * @return 性别(M 男, F 女, N 未知)
      */
     public String getGenderByIdCard(String idCard) {
-        return org.clever.common.utils.IdCardUtils.getGenderByIdCard(idCard);
+        return org.clever.common.utils.IDCardUtils.getGenderByIdCard(idCard);
     }
 
     /**
@@ -158,6 +158,6 @@ public class IdCardUtils {
      * @return 省级编码。
      */
     public String getProvinceByIdCard(String idCard) {
-        return org.clever.common.utils.IdCardUtils.getProvinceByIdCard(idCard);
+        return org.clever.common.utils.IDCardUtils.getProvinceByIdCard(idCard);
     }
 }
