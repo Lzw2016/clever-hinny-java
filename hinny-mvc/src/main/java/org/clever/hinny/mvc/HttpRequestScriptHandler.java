@@ -12,6 +12,9 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
+import org.springframework.web.cors.CorsProcessor;
+import org.springframework.web.cors.CorsUtils;
+import org.springframework.web.cors.DefaultCorsProcessor;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.mvc.ParameterizableViewController;
@@ -54,6 +57,10 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
      */
     protected final Set<String> supportSuffix;
     /**
+     * 跨域配置
+     */
+    protected final ScriptHandlerCorsConfig corsConfig;
+    /**
      * 引擎实例对象池
      */
     protected final EngineInstancePool<E, T> engineInstancePool;
@@ -61,16 +68,22 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
      * 异常处理对象
      */
     protected final ExceptionResolver exceptionResolver;
+    /**
+     * 跨域处理器 CorsProcessor
+     */
+    protected final CorsProcessor corsProcessor = new DefaultCorsProcessor();
 
     /**
      * @param prefixMapping      “请求路径”和“脚本路径”映射规则
      * @param supportSuffix      支持的请求后缀
+     * @param corsConfig         跨域配置
      * @param engineInstancePool 引擎实例对象池
      * @param exceptionResolver  异常处理对象
      */
     public HttpRequestScriptHandler(
             LinkedHashMap<String, String> prefixMapping,
             Set<String> supportSuffix,
+            ScriptHandlerCorsConfig corsConfig,
             EngineInstancePool<E, T> engineInstancePool,
             ExceptionResolver exceptionResolver) {
         Assert.notNull(engineInstancePool, "参数engineInstancePool不能为空");
@@ -80,6 +93,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
         supportSuffix = supportSuffix != null ? supportSuffix : new HashSet<>(Arrays.asList("", ".json", ".action"));
         supportSuffix = supportSuffix.stream().filter(Objects::nonNull).map(StringUtils::trim).collect(Collectors.toSet());
         this.supportSuffix = Collections.unmodifiableSet(supportSuffix);
+        this.corsConfig = corsConfig == null ? new ScriptHandlerCorsConfig() : corsConfig;
         this.engineInstancePool = engineInstancePool;
         this.exceptionResolver = exceptionResolver;
     }
@@ -88,7 +102,7 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
      * @param engineInstancePool 引擎实例对象池
      */
     public HttpRequestScriptHandler(EngineInstancePool<E, T> engineInstancePool) {
-        this(null, null, engineInstancePool, null);
+        this(null, null, null, engineInstancePool, null);
     }
 
     /**
@@ -396,6 +410,18 @@ public abstract class HttpRequestScriptHandler<E, T> implements HandlerIntercept
     @SuppressWarnings("NullableProblems")
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        // 跨域处理
+        boolean supportCors = corsProcessor.processRequest(corsConfig.getCorsConfiguration(), request, response);
+        if (supportCors) {
+            boolean preFlightRequest = CorsUtils.isPreFlightRequest(request);
+            if (preFlightRequest) {
+                // 是预检请求(OPTIONS)
+                return false;
+            }
+        } else {
+            // 不支持跨域
+            return false;
+        }
         try {
             return !handle(request, response, handler);
         } catch (Exception e) {
