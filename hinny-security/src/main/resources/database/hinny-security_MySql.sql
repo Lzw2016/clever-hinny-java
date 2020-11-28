@@ -113,12 +113,12 @@ create index user_domain_uid on user_domain (uid);
 ==================================================================================================================== */
 create table user_role
 (
-    domain_id           bigint          not null                                                comment '域id',
     uid                 varchar(63)     not null                                                comment '用户id',
     role_id             bigint          not null                                                comment '角色id',
+    domain_id           bigint          not null                                                comment '域id',
     create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
-    primary key (domain_id, uid, role_id)
+    primary key (uid, role_id)
 ) comment = '用户-角色';
 create index user_role_uid on user_role (uid);
 create index user_role_role_id on user_role (role_id);
@@ -132,12 +132,12 @@ create index user_role_role_id on user_role (role_id);
 ==================================================================================================================== */
 create table role_permission
 (
-    domain_id           bigint          not null                                                comment '域id',
     role_id             bigint          not null                                                comment '角色id',
     permission_id       bigint          not null                                                comment '权限id',
+    domain_id           bigint          not null                                                comment '域id',
     create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
-    primary key (domain_id, role_id, permission_id)
+    primary key (role_id, permission_id)
 ) comment = '角色-权限';
 create index role_permission_role_id on role_permission (role_id);
 create index role_permission_permission_id on role_permission (permission_id);
@@ -156,7 +156,7 @@ create table api_permission
     class               varchar(255)    not null        collate utf8_bin                        comment 'controller类名称',
     method              varchar(255)    not null        collate utf8_bin                        comment 'controller类的方法名称',
     method_params       varchar(255)    not null        collate utf8_bin                        comment 'controller类的方法参数签名',
-    api_url             varchar(255)    not null                                                comment 'API接口地址(只用作显示使用)',
+    api_path            varchar(255)    not null                                                comment 'API接口地址(只用作显示使用)',
     api_exist           int(1)          not null        default 1                               comment 'API接口是否存在，0：不存在；1：存在',
     create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
@@ -166,7 +166,7 @@ create index api_permission_permission_id on api_permission (permission_id);
 create index api_permission_class on api_permission (class);
 create index api_permission_method on api_permission (method);
 create index api_permission_method_params on api_permission (method_params);
-create index api_permission_api_url on api_permission (api_url);
+create index api_permission_api_path on api_permission (api_path);
 /*------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------*/
@@ -179,19 +179,17 @@ create table menu_permission
 (
     id                  bigint          not null                                                comment '菜单权限id(系统自动生成且不会变化)',
     permission_id       bigint          not null                                                comment '权限id',
-# 菜单图标
-# 菜单路由信息
-#
+    path                varchar(255)    not null        collate utf8_bin                        comment '菜单路径',
+    name                varchar(63)     not null                                                comment '菜单名称',
+    icon                varchar(63)                                                             comment '菜单图标',
+    hide_mode           int(1)          not null        default 0                               comment '菜单隐藏模式，0：不隐藏；1：隐藏当前菜单和子菜单，2:隐藏子菜单',
+    ext_config          text                                                                    comment '菜单扩展配置',
     create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
     primary key (id)
 ) comment = '菜单权限表(permission子表)';
 create index menu_permission_permission_id on menu_permission (permission_id);
-create index menu_permission_ on menu_permission (permission_id);
-create index menu_permission_ on menu_permission (permission_id);
-create index menu_permission_ on menu_permission (permission_id);
-create index menu_permission_ on menu_permission (permission_id);
-create index menu_permission_ on menu_permission (permission_id);
+create index menu_permission_path on menu_permission (path);
 /*------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------*/
@@ -223,16 +221,17 @@ create table jwt_token
     id                  bigint          not null                                                comment 'JWT-Token id(系统自动生成且不会变化)',
     domain_id           bigint          not null                                                comment '域id',
     uid                 varchar(63)     not null                                                comment '用户id',
-    token               text            not null                                                comment 'token数据',
+    token               varchar(1023)   not null                                                comment 'token数据',
     expired_time        datetime(3)                                                             comment 'JWT-Token过期时间(空表示永不过期)',
     disable             int(1)          not null        default 0                               comment 'JWT-Token是否禁用，0:未禁用, 1:已禁用',
     refresh_token       varchar(127)    not null                                                comment '刷新Token',
-    refresh_token_state int(1)          not null        default 1                               comment '刷新Token状态，0:无效, 1:有效',
+    refresh_token_state int(1)          not null        default 1                               comment '刷新Token状态，0:无效(未使用), 1:有效(已使用)',
     create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
     primary key (id)
 ) comment = 'JWT-Token表';
 create index jwt_token_uid on jwt_token (uid);
+create index jwt_token_expired_time on jwt_token (expired_time);
 create index jwt_token_refresh_token on jwt_token (refresh_token);
 /*------------------------------------------------------------------------------------------------------------------------
 
@@ -261,7 +260,30 @@ create index remember_me_token_uid on remember_me_token (uid);
 
 
 /* ====================================================================================================================
-    user_login_log -- 用户登录日志 TODO 登录失败也要记录日志
+    validate_code -- 验证码
+==================================================================================================================== */
+create table validate_code
+(
+    id                  bigint          not null                                                comment '记住我Token id(系统自动生成且不会变化)',
+    domain_id           bigint          not null                                                comment '域id',
+    uid                 varchar(63)     not null                                                comment '用户id',
+    code                varchar(15)     not null                                                comment '验证码',
+    type                int(1)          not null        default 1                               comment '验证码类型，1:登录验证码，2:找回密码验证码，3:重置验证码',
+    expired_time        datetime(3)     not null                                                comment '验证码过期时间',
+    validate_time       datetime(3)                                                             comment '验证码验证时间(使用时间)',
+    create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
+    update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
+    primary key (id)
+) comment = '验证码';
+create index validate_code_uid on validate_code (uid);
+create index validate_code_code on validate_code (code);
+/*------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------*/
+
+
+/* ====================================================================================================================
+    user_login_log -- 用户登录日志
 ==================================================================================================================== */
 create table user_login_log
 (
@@ -270,9 +292,9 @@ create table user_login_log
     uid                 varchar(63)     not null                                                comment '用户id',
     login_time          datetime(3)     not null                                                comment '登录时间',
     login_ip            varchar(63)     not null                                                comment '登录IP',
-    auth_info           text            not null                                                comment '登录的用户信息',
-    jwt_token_id        bigint          not null                                                comment 'JWT-Token id',
-    login_state         int(1)          not null        default 0                               comment '登录状态，1:已登录，2:登录已过期',
+    login_state         int(1)          not null        default 0                               comment '登录状态，0:登录失败，1:登录成功',
+    request_data        varchar(1023)   not null                                                comment '登录请求数据',
+    jwt_token_id        bigint                                                                  comment 'JWT-Token id',
     create_at           datetime(3)     not null        default current_timestamp(3)            comment '创建时间',
     update_at           datetime(3)                     on update current_timestamp(3)          comment '更新时间',
     primary key (id)
@@ -283,76 +305,4 @@ create index user_login_jwt_token_id on user_login_log (jwt_token_id);
 /*------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
