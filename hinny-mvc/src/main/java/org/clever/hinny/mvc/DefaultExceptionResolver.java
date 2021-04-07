@@ -2,11 +2,11 @@ package org.clever.hinny.mvc;
 
 import com.alibaba.excel.exception.ExcelAnalysisException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.xmlbeans.impl.piccolo.util.DuplicateKeyException;
 import org.clever.common.exception.BusinessException;
 import org.clever.common.model.ValidMessage;
 import org.clever.common.model.response.ErrorResponse;
 import org.springframework.beans.TypeMismatchException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.validation.BindException;
