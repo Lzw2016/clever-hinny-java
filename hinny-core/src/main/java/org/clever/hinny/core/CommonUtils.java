@@ -23,6 +23,13 @@ public class CommonUtils {
     }
 
     /**
+     * 放弃当前CPU使用权(当前线程放弃本次CPU时间)
+     */
+    public void yield(Number millis) {
+        Thread.yield();
+    }
+
+    /**
      * 获取对象的 hashcode
      */
     public Integer hashCode(Object object) {
@@ -78,5 +85,12 @@ public class CommonUtils {
             return null;
         }
         return obj.getClass().getName();
+    }
+
+    /**
+     * 返回对象的字符串表形式
+     */
+    public String toString(Object obj) {
+        return String.valueOf(obj);
     }
 }
