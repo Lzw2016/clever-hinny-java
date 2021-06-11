@@ -93,4 +93,14 @@ public class CommonUtils {
     public String toString(Object obj) {
         return String.valueOf(obj);
     }
+
+    /**
+     * 返回对象的字符串表形式
+     *
+     * @param obj 指定对象
+     * @param def 默认字符串
+     */
+    public String toString(Object obj, String def) {
+        return obj == null ? def : String.valueOf(obj);
+    }
 }
